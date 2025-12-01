@@ -40,6 +40,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+
 @RestController /* ARQUITETURA REST */
 @RequestMapping(value = "/usuario")
 @Tag(name = "Usuarios")
@@ -50,8 +51,15 @@ public class UsuarioController {
 	@Autowired
 	private RoleRepository roleRepository;
 
-	@GetMapping(value = "/obter-por-login/{login}", produces = "application/json")
+	@Autowired
+	private UsuarioService service;
 
+	@GetMapping("/listar")
+	public Page<Usuario> listar(Pageable pageable) {
+		return usuarioRepository.findAll(pageable);
+	}
+
+	@GetMapping(value = "/obter-por-login/{login}", produces = "application/json")
 	public ResponseEntity<?> usuarioPorLogin(@PathVariable String login) {
 
 		Usuario usuario = usuarioRepository.findUserByLogin(login);
@@ -83,44 +91,18 @@ public class UsuarioController {
 		return new ResponseEntity<>(usuariosDTO, HttpStatus.OK);
 	}
 
-	@GetMapping("/listar")
-	public Page<Usuario> listar(Pageable pageable) {
-		return usuarioRepository.findAll(pageable);
-	}
-
 	@PostMapping(value = "/", produces = "application/json")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> cadastrar(@RequestBody Usuario usuario) {
+	// @PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> cadastrar(@RequestBody Usuario usuario) throws Exception {
 
-		String senhacriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
-		usuario.setSenha(senhacriptografada);
-
-		String nomeRole = usuario.getRoles().iterator().next().getNomeRole();
-		Role roleUser = roleRepository.findByNomeRole(nomeRole);
-		if (roleUser == null) {
-			roleUser = new Role();
-			roleUser.setNomeRole(nomeRole);
-			roleRepository.save(roleUser);
-		}
-
-		usuario.getRoles().clear();
-		usuario.getRoles().add(roleUser);
-
-		Usuario userTemporario = usuarioRepository.findUserByLogin(usuario.getLogin());
-
-		if (userTemporario != null) {
-			usuario.setId(userTemporario.getId());
-		}
-
-		Usuario usuarioSalvo = usuarioRepository.save(usuario);
-
+		service.salvar(usuario);
 		return ResponseEntity.ok(Map.of("message", "Registro salvo com sucesso!"));
 
 	}
 
 	@PutMapping(value = "/", produces = "application/json")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> atualizar(@RequestBody Usuario usuario) {
+	// @PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> atualizar(@RequestBody Usuario usuario) throws Exception {
 
 		Usuario userTemporario = usuarioRepository.findUserByLogin(usuario.getLogin());
 
@@ -150,24 +132,16 @@ public class UsuarioController {
 		usuario.getRoles().clear();
 		usuario.getRoles().add(roleUser);
 
-		Usuario usuarioSalvo = usuarioRepository.save(usuario);
+		service.salvar(usuario);
 
 		return ResponseEntity.ok(Map.of("message", "Registro atualizado com sucesso!"));
-
 	}
 
 	@DeleteMapping(value = "/{id}", produces = "application/json")
-	@PreAuthorize("hasAnyRole('ADMIN')")
+	// @PreAuthorize("hasAnyRole('ADMIN')")
 	public ResponseEntity<?> delete(@PathVariable Long id) throws Exception {
 
-		Optional<Usuario> user = usuarioRepository.findById(id);
-
-		if (user.get().getRoles().iterator().next().getNomeRole().equals(TipoRole.ROLE_ADMIN.name())) {
-			throw new Exception("Voce não tem permissão para excluir um Administrador");
-
-		}
-
-		usuarioRepository.deleteById(id);
+		service.excluir(id);
 
 		return ResponseEntity.ok(Map.of("message", "Removido com sucesso!"));
 	}

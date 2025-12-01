@@ -60,6 +60,7 @@ public class UsuarioService {
     @Transactional(rollbackFor = Exception.class)
     public Usuario salvar(Usuario objeto) throws Exception {
 
+ 
         List<UsuarioEmpresa> itensUsuarioEmpresas = objeto.getItensUsuarioEmpresa();
         objeto.setItensUsuarioEmpresa(null);
 

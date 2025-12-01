@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.api_orcafacil.enums.TipoCliente;
 import com.api_orcafacil.model.usuario.Usuario;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -67,6 +68,7 @@ public class Cliente {
     private Long id_usuario;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime dt_cadastro;
 
     @PrePersist
@@ -81,8 +83,6 @@ public class Cliente {
     public void setId_cliente(Long id_cliente) {
         this.id_cliente = id_cliente;
     }
-
-  
 
     public TipoCliente getTp_cliente() {
         return tp_cliente;

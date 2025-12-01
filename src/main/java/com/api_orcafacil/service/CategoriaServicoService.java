@@ -1,41 +1,37 @@
 package com.api_orcafacil.service;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.api_orcafacil.context.TenantContext;
-import com.api_orcafacil.model.Cliente;
-import com.api_orcafacil.repository.ClienteRepository;
-import com.api_orcafacil.util.TenantUtil;
+import com.api_orcafacil.model.CategoriaServico;
+import com.api_orcafacil.repository.CategoriaServicoRepository;
+
 
 @Service
-public class ClienteService {
+public class CategoriaServicoService {
 
     @Autowired
-    private ClienteRepository repository;
+    private CategoriaServicoRepository repository;
 
     @Autowired
     private ValidacaoService validacaoService;
 
-    public static final Function<Cliente, Long> ID_FUNCTION = Cliente::getId_cliente;
+    public static final Function<CategoriaServico, Long> ID_FUNCTION = CategoriaServico::getId_categoriaservico;
 
-    public static final Function<Cliente, String> SEQUENCIA_FUNCTION = Cliente::getNu_cpfcnpj;
+    public static final Function<CategoriaServico, String> SEQUENCIA_FUNCTION = CategoriaServico::getCd_categoriaservico;
 
     @Transactional(rollbackFor = Exception.class)
-    public Cliente salvar(Cliente objeto) throws Exception {
+    public CategoriaServico salvar(CategoriaServico objeto) throws Exception {
 
         validarObjeto(objeto);
 
         return repository.save(objeto);
     }
 
-    public void validarObjeto(Cliente objeto) throws Exception {
+    public void validarObjeto(CategoriaServico objeto) throws Exception {
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
                 repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto)),
@@ -45,14 +41,20 @@ public class ClienteService {
             String tenant = TenantContext.getTenantId();
             objeto.setIdTenant(tenant);
         }
-
     }
 
-    public Cliente buscarPorId(Long id) throws Exception {
+    public CategoriaServico buscarPorId(Long id) throws Exception {
 
-        Optional<Cliente> objeto = repository.findById(id);
+        Optional<CategoriaServico> objeto = repository.findById(id);
 
         return objeto.isPresent() ? objeto.get() : null;
     }
 
+  
+    public String sequencia() throws Exception {
+
+        String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial());
+
+        return sq_sequencia;
+    }
 }

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.api_orcafacil.controller.base.BaseControllerJpa;
 import com.api_orcafacil.model.usuario.Role;
 import com.api_orcafacil.model.usuario.Usuario;
 import com.api_orcafacil.repository.usuario.RoleRepository;
@@ -28,7 +30,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/role")
 @Tag(name = "Role")
-public class RoleController {
+public class RoleController extends BaseControllerJpa<Role, Long> {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
@@ -38,6 +40,14 @@ public class RoleController {
     @Autowired
     private RoleService service;
 
+    public RoleController(JpaRepository<Role, Long> repository) {
+        super(repository);
+    }
+
+    @Override
+    protected List<String> getSearchableFields() {
+        return List.of( "nomeRole");
+    }
 
     @PostMapping(value = "/cadastrar", produces = "application/json")
     public ResponseEntity<?> criarNovaRole(@RequestBody Role objeto) throws Exception {
@@ -93,6 +103,7 @@ public class RoleController {
 
     }
 
+
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<?> obterRoleId(@PathVariable Long id) {
 
@@ -112,11 +123,11 @@ public class RoleController {
     }
 
     @DeleteMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<?> deletar(@PathVariable Long id) {
+    public ResponseEntity<?> deletar(@PathVariable Long id) throws Exception {
 
         service.excluir(id);
 
-		return ResponseEntity.ok(Map.of("message", "Removido com sucesso!"));
+        return ResponseEntity.ok(Map.of("message", "Removido com sucesso!"));
 
     }
 }

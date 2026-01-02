@@ -112,7 +112,7 @@ public class UsuarioService {
             List<UsuarioEmpresa> itens) throws Exception {
 
         Function<Usuario, Long> getIdFunctionMestre = Usuario::getId;
-        Function<UsuarioEmpresa, Long> getIdFunction = UsuarioEmpresa::getId_usuarioempresa;
+        Function<UsuarioEmpresa, Long> getIdFunction = UsuarioEmpresa::getIdUsuarioempresa;
 
         Long idMestre = getIdFunctionMestre.apply(objeto);
 
@@ -125,12 +125,12 @@ public class UsuarioService {
 
         if (itens != null && itens.size() > 0) {
             for (UsuarioEmpresa item : itens) {
-                item.setId_usuario(idMestre);
+                item.setIdUsuario(idMestre);
 
                 Long idExistente = getIdFunction.apply(item);
 
                 if (idExistente == null || idExistente == 0) {
-                    item.setId_usuarioempresa(null);
+                    item.setIdUsuarioempresa(null);
                 }
 
                 validarItemUsuarioEmpresa(item, itens, objeto);
@@ -145,20 +145,20 @@ public class UsuarioService {
     public void validarItemUsuarioEmpresa(UsuarioEmpresa item,
             List<UsuarioEmpresa> itens, Usuario objeto) throws Exception {
 
-        if (item.getId_empresa() == null) {
+        if (item.getIdEmpresa() == null) {
             throw new Exception("A empresa vinculada não pode ser nula.");
         }
 
         boolean existeVinculoBanco = usuarioEmpresaRepository
-                .existsByIdUsuarioAndIdEmpresa(objeto.getId(), item.getId_empresa());
+                .existsByIdUsuarioAndIdEmpresa(objeto.getId(), item.getIdEmpresa());
 
-        if (existeVinculoBanco && (item.getId_usuarioempresa() == null || item.getId_usuarioempresa() == 0)) {
+        if (existeVinculoBanco && (item.getIdUsuarioempresa() == null || item.getIdUsuarioempresa() == 0)) {
             throw new Exception("O usuário já está vinculado a esta empresa.");
         }
 
         long countMesmoTenant = itens.stream()
-                .filter(i -> i.getId_empresa() != null &&
-                        i.getId_empresa().equals(item.getId_empresa()))
+                .filter(i -> i.getIdEmpresa() != null &&
+                        i.getIdEmpresa().equals(item.getIdEmpresa()))
                 .count();
 
         if (countMesmoTenant > 1) {

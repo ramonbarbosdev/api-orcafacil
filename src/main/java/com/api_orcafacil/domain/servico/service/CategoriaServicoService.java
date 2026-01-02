@@ -20,9 +20,9 @@ public class CategoriaServicoService {
     @Autowired
     private ValidacaoService validacaoService;
 
-    public static final Function<CategoriaServico, Long> ID_FUNCTION = CategoriaServico::getId_categoriaservico;
+    public static final Function<CategoriaServico, Long> ID_FUNCTION = CategoriaServico::getIdCategoriaservico;
 
-    public static final Function<CategoriaServico, String> SEQUENCIA_FUNCTION = CategoriaServico::getCd_categoriaservico;
+    public static final Function<CategoriaServico, String> SEQUENCIA_FUNCTION = CategoriaServico::getCdCategoriaservico;
 
     @Transactional(rollbackFor = Exception.class)
     public CategoriaServico salvar(CategoriaServico objeto) throws Exception {

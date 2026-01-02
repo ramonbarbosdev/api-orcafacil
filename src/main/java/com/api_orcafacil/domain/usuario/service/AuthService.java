@@ -61,7 +61,7 @@ public class AuthService {
 
         String login = obj.getLogin();
         String senha = obj.getSenha();
-        String idTenant = obj.getId_tenant();
+        String idTenant = obj.getIdTenant();
         Boolean isAreaDev = obj.getIsAreaDev();
 
         var usernamePassword = new UsernamePasswordAuthenticationToken(login, senha);
@@ -192,16 +192,16 @@ public class AuthService {
         Empresa empresa = empresaService.verificarExistenciaPorNome(nomeBase);
         if (empresa == null) {
             empresa = new Empresa();
-            empresa.setNm_empresa(nomeBase);
-            empresa.setFl_ativo(true);
-            empresa.setCd_empresa(empresaService.sequencia());
+            empresa.setNmEmpresa(nomeBase);
+            empresa.setFlAtivo(true);
+            empresa.setCdEmpresa(empresaService.sequencia());
             empresa = empresaService.salvar(empresa);
 
         }
 
         UsuarioEmpresa usuarioEmpresa = new UsuarioEmpresa();
-        usuarioEmpresa.setId_usuario(objeto.getId());
-        usuarioEmpresa.setId_empresa(empresa.getId_empresa());
+        usuarioEmpresa.setIdUsuario(objeto.getId());
+        usuarioEmpresa.setIdEmpresa(empresa.getIdEmpresa());
         objeto.getItensUsuarioEmpresa().add(usuarioEmpresa);
     }
 

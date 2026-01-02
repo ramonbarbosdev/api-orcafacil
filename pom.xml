@@ -139,6 +139,14 @@
 			<version>4.7.1</version>
 		</dependency>
 		<!--openia-->
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.32</version>
+			<scope>provided</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>

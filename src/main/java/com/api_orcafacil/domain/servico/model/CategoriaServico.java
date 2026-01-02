@@ -23,7 +23,15 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Entity
 @Table(name = "categoria_servico")
@@ -32,75 +40,32 @@ public class CategoriaServico {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_categoriaservico")
     @SequenceGenerator(name = "seq_categoriaservico", sequenceName = "seq_categoriaservico", allocationSize = 1)
-    private Long id_categoriaservico;
+    @Column(name = "id_categoriaservico")
+    private Long idCategoriaservico;
 
     @NotBlank(message = "O código é obrigatorio!")
-    private String cd_categoriaservico;
+    @Column(name = "cd_categoriaservico")
+    private String cdCategoriaservico;
 
     @NotBlank(message = "O tenant é obrigatorio!")
     @Column(name = "id_tenant", nullable = false)
     private String idTenant;
 
     @NotBlank(message = "O nome é obrigatorio!")
-    private String nm_categoriaservico;
+    @Column(name = "nm_categoriaservico")
+    private String nmCategoriaservico;
 
-    private String ds_observacoes;
+    @Column(name = "ds_observacoes")
+    private String dsObservacoes;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime dt_cadastro;
+    private LocalDateTime dtCadastro    ;
 
     @PrePersist
     protected void onCreate() {
-        this.dt_cadastro = LocalDateTime.now();
+        this.dtCadastro = LocalDateTime.now();
     }
 
-    public Long getId_categoriaservico() {
-        return id_categoriaservico;
-    }
-
-    public void setId_categoriaservico(Long id_categoriaservico) {
-        this.id_categoriaservico = id_categoriaservico;
-    }
-
-    public String getIdTenant() {
-        return idTenant;
-    }
-
-    public void setIdTenant(String idTenant) {
-        this.idTenant = idTenant;
-    }
-
-    public String getNm_categoriaservico() {
-        return nm_categoriaservico;
-    }
-
-    public void setNm_categoriaservico(String nm_categoriaservico) {
-        this.nm_categoriaservico = nm_categoriaservico;
-    }
-
-    public String getDs_observacoes() {
-        return ds_observacoes;
-    }
-
-    public void setDs_observacoes(String ds_observacoes) {
-        this.ds_observacoes = ds_observacoes;
-    }
-
-    public LocalDateTime getDt_cadastro() {
-        return dt_cadastro;
-    }
-
-    public void setDt_cadastro(LocalDateTime dt_cadastro) {
-        this.dt_cadastro = dt_cadastro;
-    }
-
-    public String getCd_categoriaservico() {
-        return cd_categoriaservico;
-    }
-
-    public void setCd_categoriaservico(String cd_categoriaservico) {
-        this.cd_categoriaservico = cd_categoriaservico;
-    }
 
 }

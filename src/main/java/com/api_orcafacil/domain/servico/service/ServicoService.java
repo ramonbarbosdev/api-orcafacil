@@ -22,9 +22,9 @@ public class ServicoService {
     @Autowired
     private ValidacaoService validacaoService;
 
-    public static final Function<Servico, Long> ID_FUNCTION = Servico::getId_servico;
+    public static final Function<Servico, Long> ID_FUNCTION = Servico::getIdCategoriaservico;
 
-    public static final Function<Servico, String> SEQUENCIA_FUNCTION = Servico::getCd_servico;
+    public static final Function<Servico, String> SEQUENCIA_FUNCTION = Servico::getCdServico;
 
     @Transactional(rollbackFor = Exception.class)
     public Servico salvar(Servico objeto) throws Exception {

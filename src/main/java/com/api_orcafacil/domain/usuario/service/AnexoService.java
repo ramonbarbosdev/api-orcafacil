@@ -52,7 +52,7 @@ public class AnexoService {
             Anexo anexo = salvarModelAnexo(caminhoImage, id, file);
 
             String bucketUrl = "https://" + bucket + ".sfo3.digitaloceanspaces.com/";
-            String urlImagem = anexo.getNm_model() + "/" + anexo.getId_model() + "/" + anexo.getNm_anexo();
+            String urlImagem = anexo.getNmModel() + "/" + anexo.getIdModel() + "/" + anexo.getNmAnexo();
             String urlCompleta = bucketUrl + urlImagem;
 
             return urlCompleta;
@@ -104,11 +104,11 @@ public class AnexoService {
         String url = upload(file, nm_model, id_model, Optional.empty());
 
         Anexo anexo = new Anexo();
-        anexo.setNm_model(nm_model);
-        anexo.setId_model(id_model);
-        anexo.setNm_anexo(file.getOriginalFilename());
-        anexo.setContent_type(file.getContentType());
-        anexo.setNu_tamanho(file.getSize());
+        anexo.setNmModel(nm_model);
+        anexo.setIdModel(id_model);
+        anexo.setNmAnexo(file.getOriginalFilename());
+        anexo.setContentType(file.getContentType());
+        anexo.setNuTamanho(file.getSize());
         anexo.setUrl(url);
         anexoRepository.save(anexo);
 
@@ -129,7 +129,7 @@ public class AnexoService {
         for (Anexo item : anexo) {
             delete(extrairChaveDoUrl(item.getUrl()));
 
-            anexoRepository.deleteById(item.getId_anexo());
+            anexoRepository.deleteById(item.getIdAnexo());
         }
 
     }
@@ -152,7 +152,7 @@ public class AnexoService {
 
         for (Anexo anexo : listagemAnexo) {
 
-            deletarPorIdAnexo(anexo.getId_anexo());
+            deletarPorIdAnexo(anexo.getIdAnexo());
         }
 
     }

@@ -30,8 +30,8 @@ public class UsuarioOnlineService {
         UsuarioOnline objeto;
         if (entity.isPresent()) {
             objeto = entity.get();
-            objeto.setDt_ultimologin(LocalDateTime.now());
-            objeto.setFl_ativo(true);
+            objeto.setDtUltimologin(LocalDateTime.now());
+            objeto.setFlAtivo(true);
         } else {
             objeto = new UsuarioOnline(username);
         }
@@ -42,7 +42,7 @@ public class UsuarioOnlineService {
     /** Marca o usuário como offline (logout ou inatividade) */
     public void removerUsuario(String username) {
         repository.findByLogin(username).ifPresent(u -> {
-            u.setFl_ativo(false);
+            u.setFlAtivo(false);
             repository.save(u);
         });
     }
@@ -52,7 +52,7 @@ public class UsuarioOnlineService {
         List<UsuarioOnline> lista = new ArrayList<>();
         repository.findAll().forEach(lista::add);
         return lista.stream()
-                .filter(UsuarioOnline::getFl_ativo)
+                .filter(UsuarioOnline::getFlAtivo)
                 .toList();
     }
 
@@ -70,7 +70,7 @@ public class UsuarioOnlineService {
     /** Verifica se está online */
     public boolean isOnline(String username) {
         return repository.findByLogin(username)
-                .map(UsuarioOnline::getFl_ativo)
+                .map(UsuarioOnline::getFlAtivo)
                 .orElse(false);
     }
 }

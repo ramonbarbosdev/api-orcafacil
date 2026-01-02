@@ -32,7 +32,7 @@ public class Role implements GrantedAuthority {
 	@NotBlank(message = "O nome é obrigatorio!")
 	private String nomeRole; // Permissão
 
-	@OneToMany(mappedBy = "id_role", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "idRole", cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
 	public List<RotaPermission> itensRotaPermission = new ArrayList<RotaPermission>();
 
 

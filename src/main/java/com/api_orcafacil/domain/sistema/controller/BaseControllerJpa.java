@@ -1,12 +1,15 @@
 package com.api_orcafacil.domain.sistema.controller;
 
-import java.util.Collections;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,49 +18,65 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.api_orcafacil.domain.sistema.model.GenericSpecification;
-import com.api_orcafacil.domain.sistema.service.ValidacaoService;
+
+import org.springframework.data.jpa.domain.JpaSort;
+import org.springframework.data.domain.Sort;
 
 public abstract class BaseControllerJpa<T, ID> {
 
     protected final JpaRepository<T, ID> repository;
 
-    @Autowired
-    private ValidacaoService validacaoService;
-
     public BaseControllerJpa(JpaRepository<T, ID> repository) {
         this.repository = repository;
+    }
+
+    private Class<?> getEntityClass() {
+        return (Class<?>) ((java.lang.reflect.ParameterizedType) getClass()
+                .getGenericSuperclass())
+                .getActualTypeArguments()[0];
     }
 
     /**
      * Método opcional — controllers NÃO são obrigados a sobrescrever.
      */
     protected List<String> getSearchableFields() {
-        return Collections.emptyList();
+        Class<?> entityClass = getEntityClass();
+
+        List<String> fields = new ArrayList<>();
+
+        Arrays.stream(entityClass.getDeclaredFields())
+                .map(Field::getName)
+                .forEach(fields::add);
+
+        return fields;
     }
 
     @GetMapping("/listar")
     public Page<T> listar(
             Pageable pageable,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            @RequestParam Map<String, String> params) {
+
+        Map<String, String> columnFilters = new HashMap<>(params);
+        columnFilters.remove("page");
+        columnFilters.remove("size");
+        columnFilters.remove("sort");
+        columnFilters.remove("search");
 
         boolean temCamposPesquisa = !getSearchableFields().isEmpty();
 
-        // Se NÃO tem campos pesquisáveis -> só pagina
-        if (!temCamposPesquisa) {
+        if (!temCamposPesquisa && columnFilters.isEmpty()) {
             return repository.findAll(pageable);
         }
 
-        // Só aplica specification SE o repo for JpaSpecificationExecutor
         if (repository instanceof JpaSpecificationExecutor) {
-
             @SuppressWarnings("unchecked")
             JpaSpecificationExecutor<T> specRepo = (JpaSpecificationExecutor<T>) repository;
 
-            var spec = new GenericSpecification<T>(search, getSearchableFields());
+            var spec = new GenericSpecification<T>(search, columnFilters, getSearchableFields());
             return specRepo.findAll(spec, pageable);
         }
 
-        // Caso não implemente specification
         return repository.findAll(pageable);
     }
 
@@ -88,4 +107,5 @@ public abstract class BaseControllerJpa<T, ID> {
         repository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Registro deletado com sucesso"));
     }
+
 }

@@ -25,9 +25,9 @@ public class EmpresaService {
     @Autowired
     private ValidacaoService validacaoService;
 
-    public static final Function<Empresa, Long> ID_FUNCTION = Empresa::getId_empresa;
+    public static final Function<Empresa, Long> ID_FUNCTION = Empresa::getIdEmpresa;
 
-    public static final Function<Empresa, String> SEQUENCIA_FUNCTION = Empresa::getCd_empresa;
+    public static final Function<Empresa, String> SEQUENCIA_FUNCTION = Empresa::getCdEmpresa;
 
     @Transactional(rollbackFor = Exception.class)
     public Empresa salvar(Empresa objeto) throws Exception {
@@ -43,8 +43,8 @@ public class EmpresaService {
                 repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto)),
                 ID_FUNCTION);
 
-        if (objeto.getId_tenant() == null || objeto.getId_tenant().isEmpty()) {
-            objeto.setId_tenant(TenantUtil.generateTenantId());
+        if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
+            objeto.setIdTenant(TenantUtil.generateTenantId());
         }
     }
 

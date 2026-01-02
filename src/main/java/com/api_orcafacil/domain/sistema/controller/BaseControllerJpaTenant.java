@@ -1,6 +1,7 @@
 package com.api_orcafacil.domain.sistema.controller;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,23 +41,31 @@ public abstract class BaseControllerJpaTenant<T, ID> {
     @GetMapping("/listar")
     public Page<T> listar(
             Pageable pageable,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            @RequestParam Map<String, String> params) {
 
         String tenantId = TenantContext.getTenantId();
 
+        Map<String, String> columnFilters = new HashMap<>(params);
+        columnFilters.remove("page");
+        columnFilters.remove("size");
+        columnFilters.remove("sort");
+        columnFilters.remove("search");
+
         boolean temCamposPesquisa = !getSearchableFields().isEmpty();
 
-        if (!temCamposPesquisa) {
+        if (!temCamposPesquisa && columnFilters.isEmpty()) {
             return repository.findByIdTenant(tenantId, pageable);
         }
 
         if (repository instanceof JpaSpecificationExecutor) {
-
             @SuppressWarnings("unchecked")
             JpaSpecificationExecutor<T> specRepo = (JpaSpecificationExecutor<T>) repository;
 
-            var spec = new GenericSpecification<T>(search, getSearchableFields())
-                    .and((root, query, cb) -> cb.equal(root.get("idTenant"), tenantId));
+            var spec = new GenericSpecification<T>(
+                    search,
+                    columnFilters,
+                    getSearchableFields()).and((root, query, cb) -> cb.equal(root.get("idTenant"), tenantId));
 
             return specRepo.findAll(spec, pageable);
         }

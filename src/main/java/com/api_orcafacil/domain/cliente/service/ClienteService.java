@@ -24,9 +24,9 @@ public class ClienteService {
     @Autowired
     private ValidacaoService validacaoService;
 
-    public static final Function<Cliente, Long> ID_FUNCTION = Cliente::getId_cliente;
+    public static final Function<Cliente, Long> ID_FUNCTION = Cliente::getIdCliente;
 
-    public static final Function<Cliente, String> SEQUENCIA_FUNCTION = Cliente::getNu_cpfcnpj;
+    public static final Function<Cliente, String> SEQUENCIA_FUNCTION = Cliente::getNuCpfcnpj;
 
     @Transactional(rollbackFor = Exception.class)
     public Cliente salvar(Cliente objeto) throws Exception {

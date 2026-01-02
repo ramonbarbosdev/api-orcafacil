@@ -25,9 +25,10 @@ public interface UsuarioEmpresaRepository extends JpaRepository<UsuarioEmpresa, 
         @Query(value = "DELETE FROM usuario_empresa  WHERE id_usuario = ?1 ", nativeQuery = true)
         void deleteByIdMestre(Long id);
 
-        @Query("SELECT CASE WHEN COUNT(ue) > 0 THEN true ELSE false END " +
-                        "FROM UsuarioEmpresa ue " +
-                        "WHERE ue.id_usuario = :idUsuario AND ue.id_empresa = :idEmpresa")
+        @Query(value=   """
+                        SELECT CASE WHEN COUNT(ue) > 0 THEN true ELSE false END
+                        FROM usuario_empresa ue
+                        WHERE ue.id_usuario = :idUsuario AND ue.id_empresa = :idEmpresa""", nativeQuery = true)
         boolean existsByIdUsuarioAndIdEmpresa(@Param("idUsuario") Long idUsuario,
                         @Param("idEmpresa") Long idEmpresa);
 

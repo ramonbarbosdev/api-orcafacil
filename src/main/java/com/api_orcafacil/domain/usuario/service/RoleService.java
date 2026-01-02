@@ -59,14 +59,14 @@ public class RoleService {
                 itens,
                 rotaPermissionRepository::findbyIdRole,
                 rotaPermissionRepository::deleteById,
-                RotaPermission::getId_rotapermission);
+                RotaPermission::getIdRotapermission);
 
         if (itens != null && itens.size() > 0) {
             for (RotaPermission item : itens) {
-                item.setId_role(objeto.getId());
+                item.setIdRole(objeto.getId());
 
-                if (item.getId_rotapermission() == null || item.getId_rotapermission() == 0) {
-                    item.setId_rotapermission(null);
+                if (item.getIdRotapermission() == null || item.getIdRotapermission() == 0) {
+                    item.setIdRotapermission(null);
                 }
 
                 validarItemRotaPermissaoObjeto(item, itens, objeto);

@@ -21,7 +21,15 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "usuario_empresa")
 public class UsuarioEmpresa {
@@ -29,7 +37,8 @@ public class UsuarioEmpresa {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_usuarioempresa")
     @SequenceGenerator(name = "seq_usuarioempresa", sequenceName = "seq_usuarioempresa", allocationSize = 1)
-    private Long id_usuarioempresa;
+    @Column(name = "id_usuarioempresa")
+    private Long idUsuarioempresa;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", insertable = false, updatable = false)
@@ -37,7 +46,7 @@ public class UsuarioEmpresa {
     private Usuario usuario;
 
     @Column(name = "id_usuario")
-    private Long id_usuario;
+    private Long idUsuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_empresa", insertable = false, updatable = false)
@@ -45,62 +54,14 @@ public class UsuarioEmpresa {
     private Empresa empresa;
 
     @Column(name = "id_empresa")
-    private Long id_empresa;
+    private Long idEmpresa;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
-    private LocalDateTime dt_cadastro;
+    private LocalDateTime dtCadastro;
 
     @PrePersist
     protected void onCreate() {
-        this.dt_cadastro = LocalDateTime.now();
-    }
-
-    public Long getId_usuarioempresa() {
-        return id_usuarioempresa;
-    }
-
-    public void setId_usuarioempresa(Long id_usuarioempresa) {
-        this.id_usuarioempresa = id_usuarioempresa;
-    }
-
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public Long getId_usuario() {
-        return id_usuario;
-    }
-
-    public void setId_usuario(Long id_usuario) {
-        this.id_usuario = id_usuario;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
-    }
-
-    public Long getId_empresa() {
-        return id_empresa;
-    }
-
-    public void setId_empresa(Long id_empresa) {
-        this.id_empresa = id_empresa;
-    }
-
-    public LocalDateTime getDt_cadastro() {
-        return dt_cadastro;
-    }
-
-    public void setDt_cadastro(LocalDateTime dt_cadastro) {
-        this.dt_cadastro = dt_cadastro;
+        this.dtCadastro = LocalDateTime.now();
     }
 
 }

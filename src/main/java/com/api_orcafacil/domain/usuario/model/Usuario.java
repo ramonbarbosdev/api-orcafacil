@@ -62,7 +62,7 @@ public class Usuario implements UserDetails {
 	)
 	private Set<Role> roles = new HashSet<>();
 
-	@OneToMany(mappedBy = "id_usuario", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = false)
+	@OneToMany(mappedBy = "idUsuario", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = false)
 	public List<UsuarioEmpresa> itensUsuarioEmpresa = new ArrayList<UsuarioEmpresa>();
 
 	public String getImg() {

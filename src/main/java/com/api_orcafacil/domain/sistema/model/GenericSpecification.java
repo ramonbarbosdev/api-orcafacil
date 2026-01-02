@@ -15,9 +15,11 @@ public class GenericSpecification<T> implements Specification<T> {
     private final Map<String, String> columnFilters;
     private final List<String> searchableFields;
 
-    public GenericSpecification(String search,
+    public GenericSpecification(
+            String search,
             Map<String, String> columnFilters,
             List<String> searchableFields) {
+
         this.search = search;
         this.columnFilters = (columnFilters != null ? columnFilters : Map.of());
         this.searchableFields = (searchableFields != null ? searchableFields : List.of());
@@ -31,23 +33,22 @@ public class GenericSpecification<T> implements Specification<T> {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        // aplicar filtros por coluna
+        // filtros por coluna
         for (var entry : columnFilters.entrySet()) {
-            String field = entry.getKey();
-            String value = entry.getValue();
+            String field = normalize(entry.getKey());
+            String value = normalize(entry.getValue());
 
-            // converte automÃ¡tico se for transient
             field = transientMap.getOrDefault(field, field);
 
-            if (!isValid(field, value))
+            if (!isValid(field, value)) {
                 continue;
+            }
 
-            try {
-                Path<?> path = resolvePath(root, field);
-                Class<?> type = path.getJavaType();
+            Path<?> path = resolvePath(root, field);
+            Predicate predicate = createPredicate(cb, path, path.getJavaType(), value);
 
-                predicates.add(createPredicate(cb, path, type, value));
-            } catch (Exception ignored) {
+            if (predicate != null) {
+                predicates.add(predicate);
             }
         }
 
@@ -58,15 +59,14 @@ public class GenericSpecification<T> implements Specification<T> {
 
             for (String field : searchableFields) {
 
-                field = transientMap.getOrDefault(field, field);
+                field = normalize(transientMap.getOrDefault(field, field));
 
-                try {
-                    Path<?> path = resolvePath(root, field);
-                    if (path.getJavaType().equals(String.class)) {
-                        globalPreds.add(cb.like(cb.lower(path.as(String.class)), term));
-                    }
+                Path<?> path = resolvePath(root, field);
 
-                } catch (Exception ignored) {
+                if (String.class.isAssignableFrom(path.getJavaType())) {
+                    globalPreds.add(
+                            cb.like(cb.lower(path.as(String.class)), term)
+                    );
                 }
             }
 
@@ -75,19 +75,19 @@ public class GenericSpecification<T> implements Specification<T> {
             }
         }
 
-        boolean usuarioAplicouFiltro = (search != null && !search.isBlank()) ||
-                !columnFilters.isEmpty();
+        boolean usuarioAplicouFiltro =
+                isValid(search) || !columnFilters.isEmpty();
 
         if (predicates.isEmpty()) {
             return usuarioAplicouFiltro
-                    ? cb.disjunction() // forÃ§a retornar 0 resultados
-                    : cb.conjunction(); // sem filtro = retorna tudo
+                    ? cb.disjunction()
+                    : cb.conjunction();
         }
 
         return cb.and(predicates.toArray(new Predicate[0]));
     }
 
-    // metodos de suporte
+    // ================= SUPORTE =================
 
     private boolean isValid(String s) {
         return s != null && !s.isBlank();
@@ -97,91 +97,94 @@ public class GenericSpecification<T> implements Specification<T> {
         return isValid(field) && isValid(value);
     }
 
-    private Path<?> resolvePath(From<?, ?> root, String field) {
-        if (!field.contains("."))
-            return root.get(field);
-        String[] parts = field.split("\\.");
-        From<?, ?> join = root;
-        for (int i = 0; i < parts.length - 1; i++) {
-            join = join.join(parts[i], JoinType.LEFT);
-        }
-        return join.get(parts[parts.length - 1]);
+    private String normalize(String value) {
+        return value == null ? null : value.trim();
     }
 
-    private Predicate createPredicate(CriteriaBuilder cb, Path<?> path, Class<?> type, String value) {
+    private Path<?> resolvePath(From<?, ?> root, String field) {
+        try {
+            if (!field.contains(".")) {
+                return root.get(field);
+            }
 
-        // String â†’ LIKE
-        if (type.equals(String.class)) {
-            return cb.like(cb.lower(path.as(String.class)), "%" + value.toLowerCase() + "%");
+            String[] parts = field.split("\\.");
+            From<?, ?> join = root;
+
+            for (int i = 0; i < parts.length - 1; i++) {
+                join = join.join(parts[i], JoinType.LEFT);
+            }
+
+            return join.get(parts[parts.length - 1]);
+
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Campo inválido para filtro: " + field, e);
+        }
+    }
+
+    private Predicate createPredicate(
+            CriteriaBuilder cb,
+            Path<?> path,
+            Class<?> type,
+            String value) {
+
+        // String
+        if (String.class.isAssignableFrom(type)) {
+            return cb.like(
+                    cb.lower(path.as(String.class)),
+                    "%" + value.toLowerCase() + "%"
+            );
         }
 
-        // NÃºmero â†’ igualdade
+        // Long
+        if (type.equals(Long.class)) {
+            return cb.equal(path, Long.valueOf(value));
+        }
+
+        // Integer
+        if (type.equals(Integer.class)) {
+            return cb.equal(path, Integer.valueOf(value));
+        }
+
+        // Double / BigDecimal
         if (Number.class.isAssignableFrom(type)) {
-            try {
-                // aqui vocÃª poderia fazer um cast por tipo (Integer, Long, etc.)
-                Number num = Double.valueOf(value);
-                return cb.equal(path, num);
-            } catch (Exception ignored) {
-                // se o valor não é nÃºmero vÃ¡lido â†’ filtro impossivel â†’ nenhum registro
-                return cb.disjunction();
-            }
-        }
-
-        // LocalDate
-        if (type.equals(LocalDate.class)) {
-            try {
-                LocalDate d = LocalDate.parse(value);
-                return cb.equal(path, d);
-            } catch (Exception ignored) {
-                return cb.disjunction();
-            }
-        }
-
-        // LocalDateTime
-        if (type.equals(LocalDateTime.class)) {
-            try {
-                LocalDateTime dt = LocalDateTime.parse(value);
-                return cb.equal(path, dt);
-            } catch (Exception ignored) {
-                return cb.disjunction();
-            }
+            return cb.equal(path, Double.valueOf(value));
         }
 
         // Boolean
         if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-            if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
-                return cb.disjunction();
-            }
             return cb.equal(path, Boolean.valueOf(value));
+        }
+
+        // LocalDate
+        if (type.equals(LocalDate.class)) {
+            return cb.equal(path, LocalDate.parse(value));
+        }
+
+        // LocalDateTime
+        if (type.equals(LocalDateTime.class)) {
+            return cb.equal(path, LocalDateTime.parse(value));
         }
 
         // Enum
         if (type.isEnum()) {
-            try {
-                Object enumValue = Enum.valueOf((Class<Enum>) type, value.toUpperCase());
-                return cb.equal(path, enumValue);
-            } catch (Exception ignored) {
-                // fallback: tentar LIKE no nome do enum (se estiver mapeado como STRING)
-                return cb.like(cb.lower(path.as(String.class)), "%" + value.toLowerCase() + "%");
-            }
+            Object enumValue = Enum.valueOf((Class<Enum>) type, value.toUpperCase());
+            return cb.equal(path, enumValue);
         }
 
-        // Tipo estranho â†’ não sabemos filtrar â†’ nenhum resultado
-        return cb.disjunction();
+        return null;
     }
 
-    // mapeia getters @Transient â†’ caminho real
+    // ================= TRANSIENT =================
+
     private Map<String, String> mapTransientGetters(Class<?> entityClass) {
         Map<String, String> result = new HashMap<>();
 
         for (Method method : entityClass.getMethods()) {
-            if (method.isAnnotationPresent(Transient.class) &&
-                    method.getName().startsWith("get")) {
+            if (method.isAnnotationPresent(Transient.class)
+                    && method.getName().startsWith("get")) {
 
                 String transientName = lowerCamelFromGetter(method.getName());
-                String realPath = inferFieldPath(method);
-
-                result.put(transientName, realPath);
+                result.put(transientName, inferFieldPath(method));
             }
         }
 
@@ -193,26 +196,14 @@ public class GenericSpecification<T> implements Specification<T> {
         return Character.toLowerCase(base.charAt(0)) + base.substring(1);
     }
 
-    // private String inferFieldPath(Method method) {
-    // // getNmProjetista -> projetista.nm_projetista
-    // String name = lowerCamelFromGetter(method.getName());
-    // if (name.contains("_")) {
-    // String[] parts = name.split("_");
-    // return parts[1] + "." + name.substring(parts[1].length() + 1);
-    // }
-    // return name;
-    // }
-
     private String inferFieldPath(Method method) {
-        String name = lowerCamelFromGetter(method.getName()); // ex: nm_projetista
+        String name = lowerCamelFromGetter(method.getName());
 
-        // trata padrÃ£o de nomes com underline
         if (name.contains("_")) {
             String[] parts = name.split("_", 2);
-            String rel = parts[1]; // projetista
-            return rel + "." + name; // projetista.nm_projetista
+            return parts[1] + "." + name;
         }
 
-        return name; // Ex: nome
+        return name;
     }
 }

@@ -1,5 +1,8 @@
 package com.api_orcafacil.domain.sistema.controller;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,11 +34,25 @@ public abstract class BaseControllerJpaTenant<T, ID> {
         this.repository = repository;
     }
 
+    private Class<?> getEntityClass() {
+        return (Class<?>) ((java.lang.reflect.ParameterizedType) getClass()
+                .getGenericSuperclass())
+                .getActualTypeArguments()[0];
+    }
+
     /**
      * Método opcional — controllers NÃO são obrigados a sobrescrever.
      */
     protected List<String> getSearchableFields() {
-        return Collections.emptyList();
+        Class<?> entityClass = getEntityClass();
+
+        List<String> fields = new ArrayList<>();
+
+        Arrays.stream(entityClass.getDeclaredFields())
+                .map(Field::getName)
+                .forEach(fields::add);
+
+        return fields;
     }
 
     @GetMapping("/listar")

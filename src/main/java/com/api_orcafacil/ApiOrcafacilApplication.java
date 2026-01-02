@@ -18,8 +18,8 @@ import com.api_orcafacil.config.DotenvLoader;
 
 @SpringBootApplication
 @ComponentScan(basePackages = { "com.*" })
-@EntityScan(basePackages = { "com.api_orcafacil.model" })
-@EnableJpaRepositories(basePackages = { "com.api_orcafacil.repository" })
+@EntityScan(basePackages = { "com.api_orcafacil.*" })
+@EnableJpaRepositories(basePackages = { "com.api_orcafacil.*" })
 @EnableTransactionManagement
 @EnableWebMvc
 @RestController

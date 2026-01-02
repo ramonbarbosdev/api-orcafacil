@@ -12,8 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import com.api_orcafacil.ApplicationContextLoad;
-import com.api_orcafacil.model.usuario.Usuario;
-import com.api_orcafacil.repository.usuario.UsuarioRepository;
+import com.api_orcafacil.domain.usuario.model.Usuario;
+import com.api_orcafacil.domain.usuario.repository.UsuarioRepository;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

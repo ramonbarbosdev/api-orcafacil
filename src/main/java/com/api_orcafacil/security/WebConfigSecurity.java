@@ -19,7 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.api_orcafacil.service.ImplementacaoUserDetailsService;
+import com.api_orcafacil.domain.sistema.service.ImplementacaoUserDetailsService;
 
 @Configuration
 @EnableWebSecurity

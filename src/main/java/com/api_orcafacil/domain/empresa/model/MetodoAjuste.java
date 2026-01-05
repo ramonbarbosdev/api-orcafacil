@@ -1,8 +1,8 @@
-package com.api_orcafacil.domain.configuracao.model;
+package com.api_orcafacil.domain.empresa.model;
 
 import java.time.LocalDateTime;
 
-import com.api_orcafacil.domain.empresa.model.Empresa;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -51,8 +51,8 @@ public class MetodoAjuste {
     @JoinColumn(name = "id_campopersonalizado", insertable = false, updatable = false)
     private CampoPersonalizado campoPersonalizado;
 
-    @Column(name = "id_empresa")
-    private Long idEmpresa;
+    @Column(name = "id_campopersonalizado")
+    private Long idCampoPersonalizado;
 
     @Column(name = "vl_incremento", nullable = false)
     private Double vlIncremento;

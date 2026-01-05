@@ -1,0 +1,28 @@
+package com.api_orcafacil.domain.empresa.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.api_orcafacil.domain.empresa.model.MetodoPrecificacao;
+import com.api_orcafacil.domain.empresa.model.PlanoAssinatura;
+import com.api_orcafacil.domain.empresa.repository.MetodoPrecificacaoRepository;
+import com.api_orcafacil.domain.empresa.repository.PlanoAssinaturaRepository;
+
+
+@Service
+public class MetodoPrecificacaoService {
+
+    @Autowired
+    private MetodoPrecificacaoRepository repository;
+
+    @Transactional(rollbackFor = Exception.class)
+    public MetodoPrecificacao salvar(MetodoPrecificacao objeto) throws Exception {
+
+        objeto = repository.save(objeto);
+
+        return objeto;
+    }
+
+
+}

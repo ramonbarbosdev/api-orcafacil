@@ -61,7 +61,8 @@ public class EmpresaController extends BaseControllerJpa<Empresa, Long> {
     @GetMapping(value = "/obter-por-tenant", produces = "application/json")
     public ResponseEntity<?> obterEmpresaPorTenant(@RequestHeader("X-Tenant-ID") String tenantId) throws Exception {
 
-        Empresa objeto = repository.findByIdTenant(tenantId);
+        Empresa objeto = repository.findByIdTenant(tenantId).orElseThrow(() -> new IllegalStateException(
+                                    "Empresa não cadastrado"));
 
         return ResponseEntity.ok(objeto);
     }

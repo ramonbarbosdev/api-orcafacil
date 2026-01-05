@@ -46,7 +46,6 @@ public class MetodoPrecificacao {
     @Column(name = "nm_metodoprecificacao")
     private String nmMetodoPrecificacao;
 
-    @NotBlank(message = "O descrição é obrigatorio!")
     @Column(name = "ds_metodoprecificacao")
     private String dsMetodoPrecificacao;
 
@@ -56,6 +55,11 @@ public class MetodoPrecificacao {
     @PrePersist
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
+    }
+
+    public MetodoPrecificacao orElseThrow(Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
     }
 
 }

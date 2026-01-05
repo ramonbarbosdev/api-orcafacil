@@ -1,8 +1,14 @@
 package com.api_orcafacil.domain.empresa.model;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 
 @Getter
 @Setter
@@ -42,16 +49,12 @@ public class EmpresaMetodoPrecificacao {
     @Column(name = "id_metodoprecificacao")
     private Long idMetodoPrecificacao;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_empresa", insertable = false, updatable = false)
-    @JsonIgnore
-    private Empresa empresa;
+    @Column(name = "id_tenant", nullable = false)
+    private String idTenant;
 
-    @Column(name = "id_empresa")
-    private Long idEmpresa;
-
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "configuracao", columnDefinition = "jsonb")
-    private String configuracao;
+    private Map<String, Object> configuracao;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
@@ -61,4 +64,5 @@ public class EmpresaMetodoPrecificacao {
         this.dtCadastro = LocalDateTime.now();
     }
 
+ 
 }

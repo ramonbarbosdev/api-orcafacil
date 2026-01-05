@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.api_orcafacil.domain.empresa.model.MetodoPrecificacao;
 import com.api_orcafacil.domain.empresa.model.PlanoAssinatura;
+import com.api_orcafacil.domain.empresa.service.MetodoPrecificacaoService;
 import com.api_orcafacil.domain.empresa.service.PlanoAssinaturaService;
 import com.api_orcafacil.domain.sistema.controller.BaseController;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpa;
@@ -23,26 +25,25 @@ import com.api_orcafacil.domain.usuario.dto.UsuarioDTO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping(value = "/planoassinatura", produces = "application/json")
-@Tag(name = "Plano de assinatura")
-public class PlanoAssinaturaController extends BaseControllerJpa<PlanoAssinatura, Long> {
+@RequestMapping(value = "metodoprecificacao", produces = "application/json")
+@Tag(name = "Metodo Precificacao")
+public class MetodoPrecificacaoController extends BaseControllerJpa<MetodoPrecificacao, Long> {
 
     @Autowired
-    private PlanoAssinaturaService service;
+    private MetodoPrecificacaoService service;
 
- 
-    public PlanoAssinaturaController(JpaRepository<PlanoAssinatura, Long> repository) {
+    public MetodoPrecificacaoController(JpaRepository<MetodoPrecificacao, Long> repository) {
         super(repository);
     }
-
   
     @PostMapping(value = "/cadastrar", produces = "application/json")
-    public ResponseEntity<?> cadastrar(@RequestBody PlanoAssinatura objeto) throws Exception {
+    public ResponseEntity<?> cadastrar(@RequestBody MetodoPrecificacao objeto) throws Exception {
 
-        PlanoAssinatura objetoSalvo =  service.salvar(objeto);
+        MetodoPrecificacao objetoSalvo =  service.salvar(objeto);
 
         return new ResponseEntity<>(Map.of("message", "Registro salvo com sucesso"), HttpStatus.CREATED);
     }
+
 
     
 

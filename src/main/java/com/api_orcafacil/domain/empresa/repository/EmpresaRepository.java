@@ -37,6 +37,6 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
         List<Empresa> buscarEmpresaPorTenantUsuario(
                         @Param("id_usuario") Long id_usuario);
 
-        Empresa findByIdTenant(String idTenant);
+        Optional<Empresa> findByIdTenant(String idTenant);
 
 }

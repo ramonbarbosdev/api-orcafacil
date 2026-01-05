@@ -21,7 +21,8 @@ public class ConfiguracaoOrcamentoService {
 
         return repository.findByIdTenant(idTenant)
             .orElseGet(() -> {
-                Empresa empresa = empresaRepository.findByIdTenant(idTenant);;
+                Empresa empresa = empresaRepository.findByIdTenant(idTenant).orElseThrow(() -> new IllegalStateException(
+                                    "Empresa não cadastrado"));
 
                 ConfiguracaoOrcamento cfg = new ConfiguracaoOrcamento();
                 cfg.setIdEmpresa(empresa.getIdEmpresa());

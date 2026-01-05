@@ -1,8 +1,8 @@
-package com.api_orcafacil.domain.empresa.model;
+package com.api_orcafacil.domain.precificacao.model;
 
 import java.time.LocalDateTime;
 
-
+import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;

@@ -1,14 +1,19 @@
-package com.api_orcafacil.domain.empresa.model;
+package com.api_orcafacil.domain.precificacao.model;
 
 import java.beans.Transient;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.api_orcafacil.enums.TipoCliente;
+import com.api_orcafacil.enums.TipoPrecificacao;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,6 +24,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,9 +44,10 @@ public class MetodoPrecificacao {
     @Column(name = "id_metodoprecificacao")
     private Long idMetodoPrecificacao;
 
-    @NotBlank(message = "O codigo é obrigatorio!")
+    @Enumerated(EnumType.STRING)
     @Column(name = "cd_metodoprecificacao")
-    private String cdMetodoPrecificacao;
+    @NotNull(message = "O codigo é obrigatorio!")
+    private TipoPrecificacao cdMetodoPrecificacao;
 
     @NotBlank(message = "O nome é obrigatorio!")
     @Column(name = "nm_metodoprecificacao")
@@ -49,17 +56,16 @@ public class MetodoPrecificacao {
     @Column(name = "ds_metodoprecificacao")
     private String dsMetodoPrecificacao;
 
+    @jakarta.persistence.Transient
+    @JsonProperty("campos")
+    private List<CampoMetodoDTO> campos;
+
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
 
     @PrePersist
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
-    }
-
-    public MetodoPrecificacao orElseThrow(Object object) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
     }
 
 }

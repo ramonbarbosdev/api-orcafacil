@@ -1,4 +1,4 @@
-package com.api_orcafacil.domain.empresa.model;
+package com.api_orcafacil.domain.precificacao.model;
 
 import java.time.LocalDateTime;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.api_orcafacil.domain.empresa.repository;
+package com.api_orcafacil.domain.precificacao.repository;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.api_orcafacil.domain.empresa.model.Empresa;
-import com.api_orcafacil.domain.empresa.model.MetodoPrecificacao;
+import com.api_orcafacil.domain.precificacao.model.MetodoPrecificacao;
 
 import jakarta.transaction.Transactional;
 

@@ -46,6 +46,15 @@ public class EmpresaService {
         if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
             objeto.setIdTenant(TenantUtil.generateTenantId());
         }
+
+        validarCdEmpresa(objeto.getCdEmpresa());
+    }
+
+    private void validarCdEmpresa(String cdEmpresa) {
+        if (cdEmpresa == null || !cdEmpresa.matches("^(\\d{11}|\\d{14})$")) {
+            throw new IllegalArgumentException(
+                    "CNPJ/CPF deve conter 11 (CPF) ou 14 (CNPJ) dígitos numéricos");
+        }
     }
 
     public Empresa buscarPorId(Long id) throws Exception {

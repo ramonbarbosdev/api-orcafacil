@@ -11,10 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.api_orcafacil.context.TenantContext;
 import com.api_orcafacil.domain.empresa.model.Empresa;
+import com.api_orcafacil.domain.empresa.repository.EmpresaRepository;
 import com.api_orcafacil.domain.empresa.service.EmpresaService;
 import com.api_orcafacil.domain.sistema.controller.BaseController;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpa;
@@ -31,8 +34,12 @@ public class EmpresaController extends BaseControllerJpa<Empresa, Long> {
     @Autowired
     private EmpresaService service;
 
+    @Autowired
+    private EmpresaRepository repository;
+
     public EmpresaController(JpaRepository<Empresa, Long> repository) {
         super(repository);
+
     }
 
     @PostMapping(value = "/cadastrar", produces = "application/json")
@@ -49,6 +56,14 @@ public class EmpresaController extends BaseControllerJpa<Empresa, Long> {
         String resposta = service.sequencia();
 
         return new ResponseEntity<>(Map.of("sequencia", resposta), HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/obter-por-tenant", produces = "application/json")
+    public ResponseEntity<?> obterEmpresaPorTenant(@RequestHeader("X-Tenant-ID") String tenantId) throws Exception {
+
+        Empresa objeto = repository.findByIdTenant(tenantId);
+
+        return ResponseEntity.ok(objeto);
     }
 
 }

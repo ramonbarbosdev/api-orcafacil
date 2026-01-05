@@ -40,7 +40,7 @@ public class MetodoAjuste {
     private Long idMetodoAjuste;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_empresa", nullable = false)
+    @JoinColumn(name = "id_empresa", insertable = false, updatable = false)
     @JsonIgnore
     private Empresa empresa;
 
@@ -48,7 +48,7 @@ public class MetodoAjuste {
     private Long idEmpresa;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_campopersonalizado", nullable = false)
+    @JoinColumn(name = "id_campopersonalizado", insertable = false, updatable = false)
     private CampoPersonalizado campoPersonalizado;
 
     @Column(name = "id_empresa")

@@ -80,6 +80,7 @@ public class AuthService {
                 "nome", objeto.getNome(),
                 "role", objeto.getRoles().iterator().next().getNomeRole(),
                 "token", token,
+                "idTenant", idTenant,
                 "isAreaDev", isAreaDev != null && isAreaDev ? true : false,
                 "img", objeto.getImg() == null ? "" : objeto.getImg());
 

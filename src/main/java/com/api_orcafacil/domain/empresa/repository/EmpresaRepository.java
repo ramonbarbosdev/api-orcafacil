@@ -17,24 +17,26 @@ import jakarta.transaction.Transactional;
 @Transactional
 public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 
-    @Query(value = "SELECT CASE WHEN MAX(c.cd_empresa) IS NULL THEN '0' ELSE MAX(c.cd_empresa) END FROM empresa c ", nativeQuery = true)
-    Long obterSequencial();
+        @Query(value = "SELECT CASE WHEN MAX(c.cd_empresa) IS NULL THEN '0' ELSE MAX(c.cd_empresa) END FROM empresa c ", nativeQuery = true)
+        Long obterSequencial();
 
-    @Query(value = "SELECT *  FROM empresa b WHERE b.cd_empresa = ?1 limit 1  ", nativeQuery = true)
-    Optional<Empresa> verificarCodigoExistente(String codigo);
+        @Query(value = "SELECT *  FROM empresa b WHERE b.cd_empresa = ?1 limit 1  ", nativeQuery = true)
+        Optional<Empresa> verificarCodigoExistente(String codigo);
 
-    @Query(value = "SELECT *  FROM empresa b WHERE b.nm_empresa = ?1 limit 1  ", nativeQuery = true)
-    Optional<Empresa> verificarNomeExistente(String nome);
+        @Query(value = "SELECT *  FROM empresa b WHERE b.nm_empresa = ?1 limit 1  ", nativeQuery = true)
+        Optional<Empresa> verificarNomeExistente(String nome);
 
-    @Query(value = """
-            SELECT e.*
-            FROM empresa e
-            JOIN usuario_empresa ue ON ue.id_empresa = e.id_empresa
-            WHERE  ue.id_usuario = :id_usuario
-            AND e.fl_ativo = true;
+        @Query(value = """
+                        SELECT e.*
+                        FROM empresa e
+                        JOIN usuario_empresa ue ON ue.id_empresa = e.id_empresa
+                        WHERE  ue.id_usuario = :id_usuario
+                        AND e.fl_ativo = true;
 
-                                     """, nativeQuery = true)
-    List<Empresa> buscarEmpresaPorTenantUsuario(
-            @Param("id_usuario") Long id_usuario);
+                                                 """, nativeQuery = true)
+        List<Empresa> buscarEmpresaPorTenantUsuario(
+                        @Param("id_usuario") Long id_usuario);
+
+        Empresa findByIdTenant(String idTenant);
 
 }

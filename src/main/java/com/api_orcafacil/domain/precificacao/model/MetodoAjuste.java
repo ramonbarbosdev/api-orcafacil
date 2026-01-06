@@ -3,10 +3,14 @@ package com.api_orcafacil.domain.precificacao.model;
 import java.time.LocalDateTime;
 
 import com.api_orcafacil.domain.empresa.model.Empresa;
+import com.api_orcafacil.enums.TipoAjuste;
+import com.api_orcafacil.enums.TipoOperacaoAjuste;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,21 +35,20 @@ public class MetodoAjuste {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_metodo_ajuste")
-    @SequenceGenerator(
-        name = "seq_metodo_ajuste",
-        sequenceName = "seq_metodo_ajuste",
-        allocationSize = 1
-    )
+    @SequenceGenerator(name = "seq_metodo_ajuste", sequenceName = "seq_metodo_ajuste", allocationSize = 1)
     @Column(name = "id_metodoajuste")
     private Long idMetodoAjuste;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_empresa", insertable = false, updatable = false)
-    @JsonIgnore
-    private Empresa empresa;
+    @Column(name = "id_tenant", nullable = false)
+    private String idTenant;
 
-    @Column(name = "id_empresa")
-    private Long idEmpresa;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_empresametodoprecificacao", insertable = false, updatable = false)
+    @JsonIgnore
+    private EmpresaMetodoPrecificacao empresaMetodoPrecificacao;
+
+    @Column(name = "id_empresametodoprecificacao", nullable = false)
+    private Long idEmpresaMetodoPrecificacao;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_campopersonalizado", insertable = false, updatable = false)
@@ -53,6 +56,17 @@ public class MetodoAjuste {
 
     @Column(name = "id_campopersonalizado")
     private Long idCampoPersonalizado;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tp_ajuste", nullable = false)
+    private TipoAjuste tpAjuste;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tp_operacao", nullable = false)
+    private TipoOperacaoAjuste tpOperacao;
+
+    @Column(name = "vl_condicao", nullable = false)
+    private String vlCondicao;
 
     @Column(name = "vl_incremento", nullable = false)
     private Double vlIncremento;

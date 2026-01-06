@@ -1,6 +1,5 @@
 package com.api_orcafacil.domain.precificacao.model;
 
-
 import java.time.LocalDateTime;
 
 import com.api_orcafacil.domain.empresa.model.Empresa;
@@ -36,13 +35,9 @@ public class CampoPersonalizado {
     @Column(name = "id_campopersonalizado")
     private Long idCampoPersonalizado;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_empresa", insertable = false, updatable = false)
-    @JsonIgnore
-    private Empresa empresa;
 
-    @Column(name = "id_empresa")
-    private Long idEmpresa;
+    @Column(name = "id_tenant", nullable = false)
+    private String idTenant;
 
     @Column(name = "cd_campopersonalizado", nullable = false, length = 50)
     private String cdCampoPersonalizado;
@@ -51,7 +46,7 @@ public class CampoPersonalizado {
     private String nmCampoPersonalizado;
 
     @Column(name = "tp_campopersonalizado", nullable = false, length = 20)
-    private String tpCampoPersonalizado;  // TEXT | BOOLEAN | NUMBER (futuro)
+    private String tpCampoPersonalizado; // TEXT | BOOLEAN | NUMBER (futuro)
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;

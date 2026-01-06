@@ -74,8 +74,7 @@ public class MetodoAjuste {
     @NotNull(message = "O tipo da operação é obrigatorio!")
     private TipoOperacaoAjuste tpOperacao;
 
-    @Column(name = "vl_condicao", nullable = false)
-    @NotBlank(message = "O valor esperado é obrigatorio!")
+    @Column(name = "vl_condicao")
     private String vlCondicao;
 
     @Column(name = "vl_incremento", nullable = false)

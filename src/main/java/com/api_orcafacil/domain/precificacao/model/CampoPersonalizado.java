@@ -16,6 +16,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,18 +37,21 @@ public class CampoPersonalizado {
     @Column(name = "id_campopersonalizado")
     private Long idCampoPersonalizado;
 
-
     @Column(name = "id_tenant", nullable = false)
+    @NotNull(message = "O tenant é obrigatorio!")
     private String idTenant;
 
     @Column(name = "cd_campopersonalizado", nullable = false, length = 50)
+    @NotBlank(message = "O código é obrigatorio!")
     private String cdCampoPersonalizado;
 
     @Column(name = "nm_campopersonalizado", nullable = false, length = 100)
+    @NotBlank(message = "O nome é obrigatorio!")
     private String nmCampoPersonalizado;
 
     @Column(name = "tp_campopersonalizado", nullable = false, length = 20)
-    private String tpCampoPersonalizado; // TEXT | BOOLEAN | NUMBER (futuro)
+    @NotBlank(message = "O tipo é obrigatorio!")
+    private String tpCampoPersonalizado; 
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;

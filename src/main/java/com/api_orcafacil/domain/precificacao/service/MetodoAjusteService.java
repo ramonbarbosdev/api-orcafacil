@@ -1,6 +1,7 @@
 package com.api_orcafacil.domain.precificacao.service;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,18 @@ public class MetodoAjusteService {
     @Autowired
     private MetodoAjusteRepository repository;
 
+    @Autowired
+    private EmpresaMetodoPrecificacaoRepository empresaMetodoPrecificacaoRepository;
+
     @Transactional(rollbackFor = Exception.class)
     public MetodoAjuste salvar(MetodoAjuste objeto) {
+
+        Optional<EmpresaMetodoPrecificacao> empresaMetodo = Optional.ofNullable(empresaMetodoPrecificacaoRepository
+                .findByIdTenant(objeto.getIdTenant())
+                .orElseThrow(() -> new IllegalStateException(
+                        "A Empresa Método de precificação não encontrada")));
+
+        objeto.setIdEmpresaMetodoPrecificacao(empresaMetodo.get().getIdEmpresaMetodoPrecificacao());
 
         return repository.save(objeto);
     }

@@ -23,4 +23,7 @@ public interface MetodoAjusteRepository extends JpaRepository<MetodoAjuste, Long
 
         List<MetodoAjuste> findAllByIdTenant(String idTenant);
 
+         @Query(value = "SELECT *  FROM metodo_ajustes b WHERE b.id_campopersonalizado = ?1 limit 1  ", nativeQuery = true)
+        Optional<MetodoAjuste> verificarCampoExistente(Long codigo);
+
 }

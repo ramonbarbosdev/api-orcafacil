@@ -81,7 +81,6 @@ public class Empresa {
         this.dtCadastro = LocalDateTime.now();
     }
 
-
     @JsonProperty("nmPlanoassinatura")
     public String getNmPlanoassinatura() {
 

@@ -1,6 +1,5 @@
 package com.api_orcafacil.domain.sistema.service;
 
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -18,19 +17,15 @@ import com.api_orcafacil.domain.usuario.model.Usuario;
 import com.api_orcafacil.domain.usuario.repository.UsuarioRepository;
 import com.api_orcafacil.enums.TipoRole;
 
-
-
 @Service
 public class ValidacaoService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    
-    public <T> String  gerarSequencia(Long sequencia) throws Exception {
-          Long ultima_sequencia = Optional
+    public <T> String gerarSequencia(Long sequencia) throws Exception {
+        Long ultima_sequencia = Optional
                 .ofNullable(sequencia).orElse(0L);
-
 
         Long sq_sequencia = ultima_sequencia + 1;
         String resposta = "%03d".formatted(sq_sequencia);
@@ -38,7 +33,7 @@ public class ValidacaoService {
         return resposta;
     }
 
-    public <T> String  validarCodigoExistenteProjeto(
+    public <T> String validarCodigoExistenteProjeto(
             Long idAtual,
             Optional<T> objetoExistente,
             Function<T, Long> getIdFunction,
@@ -65,18 +60,29 @@ public class ValidacaoService {
             Long idAtual,
             Optional<T> objetoExistente,
             Function<T, Long> getIdFunction) throws Exception {
+        validarCodigoExistente(idAtual, objetoExistente, getIdFunction, null);
+    }
 
-        if (!objetoExistente.isPresent())
-            return;
+    public <T> void validarCodigoExistente(
+            Long idAtual,
+            Optional<T> objetoExistente,
+            Function<T, Long> getIdFunction,
+            String mensagemErroPersonalizada) throws Exception {
 
-        Long idExistente = getIdFunction.apply(objetoExistente.get());
+        objetoExistente.ifPresent(obj -> {
+            Long idExistente = getIdFunction.apply(obj);
 
-        boolean idsDiferentes = (idExistente == null && idAtual != null)
-                || (idExistente != null && !idExistente.equals(idAtual));
+            boolean isNovoRegistro = idAtual == null;
+            boolean idsDiferentes = !isNovoRegistro && !idExistente.equals(idAtual);
 
-        if (idsDiferentes) {
-            throw new Exception("Código já existente!");
-        }
+            // Se tentar cadastrar um códigojá existente para outro registro
+            if (isNovoRegistro || idsDiferentes) {
+                String mensagem = (mensagemErroPersonalizada != null && !mensagemErroPersonalizada.isEmpty())
+                        ? mensagemErroPersonalizada
+                        : "não foi possivel salvar. O código informadojá pertence a outro registro cadastrado. Verifique a listagem ou utilize um novo código.";
+                throw new RuntimeException(mensagem);
+            }
+        });
     }
 
     public <T> Boolean verificarEquivalencia(

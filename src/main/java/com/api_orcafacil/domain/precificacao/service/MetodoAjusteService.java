@@ -2,6 +2,7 @@ package com.api_orcafacil.domain.precificacao.service;
 
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ import com.api_orcafacil.domain.precificacao.repository.CampoPersonalizadoReposi
 import com.api_orcafacil.domain.precificacao.repository.EmpresaMetodoPrecificacaoRepository;
 import com.api_orcafacil.domain.precificacao.repository.MetodoAjusteRepository;
 import com.api_orcafacil.domain.precificacao.repository.MetodoPrecificacaoRepository;
+import com.api_orcafacil.domain.sistema.service.ValidacaoService;
+import com.api_orcafacil.util.TenantUtil;
 
 @Service
 public class MetodoAjusteService {
@@ -29,8 +32,28 @@ public class MetodoAjusteService {
     @Autowired
     private EmpresaMetodoPrecificacaoRepository empresaMetodoPrecificacaoRepository;
 
+    @Autowired
+    private ValidacaoService validacaoService;
+
+    public static final Function<MetodoAjuste, Long> ID_FUNCTION = MetodoAjuste::getIdMetodoAjuste;
+
+    public static final Function<MetodoAjuste, Long> SEQUENCIA_FUNCTION = MetodoAjuste::getIdCampoPersonalizado;
+
     @Transactional(rollbackFor = Exception.class)
-    public MetodoAjuste salvar(MetodoAjuste objeto) {
+    public MetodoAjuste salvar(MetodoAjuste objeto) throws Exception {
+
+        validarObjeto(objeto);
+        
+        return repository.save(objeto);
+    }
+
+    public void validarObjeto(MetodoAjuste objeto) throws Exception {
+        validacaoService.validarCodigoExistente(
+                ID_FUNCTION.apply(objeto),
+                repository.verificarCampoExistente(SEQUENCIA_FUNCTION.apply(objeto)),
+                ID_FUNCTION,
+                "Não foi possivel salvar. Já existe um ajuste com o campo utilizado."
+            );
 
         Optional<EmpresaMetodoPrecificacao> empresaMetodo = Optional.ofNullable(empresaMetodoPrecificacaoRepository
                 .findByIdTenant(objeto.getIdTenant())
@@ -39,7 +62,6 @@ public class MetodoAjusteService {
 
         objeto.setIdEmpresaMetodoPrecificacao(empresaMetodo.get().getIdEmpresaMetodoPrecificacao());
 
-        return repository.save(objeto);
     }
 
 }

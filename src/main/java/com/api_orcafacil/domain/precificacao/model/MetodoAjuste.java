@@ -6,6 +6,7 @@ import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.enums.TipoAjuste;
 import com.api_orcafacil.enums.TipoOperacaoAjuste;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -88,5 +89,14 @@ public class MetodoAjuste {
     @PrePersist
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
+    }
+
+    @JsonProperty("nmCampoPersonalizado")
+    public String getNmCampoPersonalizado() {
+
+        if (campoPersonalizado != null) {
+            return campoPersonalizado.getNmCampoPersonalizado();
+        }
+        return null;    
     }
 }

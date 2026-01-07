@@ -12,43 +12,45 @@ import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.domain.empresa.repository.EmpresaRepository;
 import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
 import com.api_orcafacil.domain.orcamento.model.ConfiguracaoOrcamento;
+import com.api_orcafacil.domain.orcamento.model.Orcamento;
 import com.api_orcafacil.domain.orcamento.repository.CondicaoPagamentoRepository;
 import com.api_orcafacil.domain.orcamento.repository.ConfiguracaoOrcamentoRepository;
+import com.api_orcafacil.domain.orcamento.repository.OrcamentoRepository;
 import com.api_orcafacil.domain.servico.model.Servico;
 import com.api_orcafacil.domain.servico.repository.ServicoRepository;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
 
 @Service
-public class CondicaoPagamentoService {
+public class OrcamentoService {
 
     @Autowired
-    private CondicaoPagamentoRepository repository;
+    private OrcamentoRepository repository;
 
     @Autowired
     private ValidacaoService validacaoService;
 
-    public static final Function<CodicaoPagamento, Long> ID_FUNCTION = CodicaoPagamento::getIdCondicaoPagamento;
+    public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
-    public static final Function<CodicaoPagamento, String> SEQUENCIA_FUNCTION = CodicaoPagamento::getCdCondicaoPagamento;
+    public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
 
     @Transactional(rollbackFor = Exception.class)
-    public CodicaoPagamento salvar(CodicaoPagamento objeto) throws Exception {
+    public Orcamento salvar(Orcamento objeto) throws Exception {
 
         validarObjeto(objeto);
 
         return repository.save(objeto);
     }
 
-    public void validarObjeto(CodicaoPagamento objeto) throws Exception {
+    public void validarObjeto(Orcamento objeto) throws Exception {
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
                 repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto)),
                 ID_FUNCTION);
 
-        // if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
-        //     String tenant = TenantContext.getTenantId();
-        //     objeto.setIdTenant(tenant);
-        // }
+        if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
+            String tenant = TenantContext.getTenantId();
+            objeto.setIdTenant(tenant);
+        }
     }
 
     public String sequencia() throws Exception {

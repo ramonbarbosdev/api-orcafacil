@@ -38,10 +38,6 @@ public class CodicaoPagamento {
     @Column(name = "nm_codicaopagamento")
     private String nmCondicaoPagamento;
 
-    @Column(name = "id_tenant", nullable = false)
-    @NotBlank(message = "O tenant é obrigatorio!")
-    private String idTenant;
-
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
 

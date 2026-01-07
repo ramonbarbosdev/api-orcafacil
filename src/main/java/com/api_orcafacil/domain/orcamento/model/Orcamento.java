@@ -34,9 +34,9 @@ public class Orcamento {
     @NotBlank(message = "O tenant é obrigatorio!")
     private String idTenant;
 
-    @Column(name = "cd_orcamento", nullable = false)
-    @NotBlank(message = "O código é obrigatorio!")
-    private String cdOrcamento;
+    @Column(name = "nu_orcamento", nullable = false)
+    @NotBlank(message = "O número é obrigatorio!")
+    private String nuOrcamento;
 
     @Column(name = "dt_emissao", nullable = false, updatable = false)
     @NotBlank(message = "O emissão é obrigatorio!")
@@ -71,6 +71,13 @@ public class Orcamento {
     @Column(name = "id_codicaopagamento", nullable = false)
     @NotBlank(message = "A condição de  pagamento é obrigatorio!")
     private Long idCondicaoPagamento;
+
+    @Column(name = "dt_prazoentrega", nullable = false, updatable = false)
+    @NotBlank(message = "O Prazo de entrega é obrigatorio!")
+    private LocalDate dtPrazoEntrega;
+
+    @Column(name = "ds_observacoes")
+    private String dsObservacoes;
 
     @Column(name = "vl_custobase", nullable = false, precision = 18, scale = 4)
     @NotBlank(message = "O Valor custo base é obrigatorio!")

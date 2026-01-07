@@ -79,7 +79,7 @@ public class ValidacaoService {
             if (isNovoRegistro || idsDiferentes) {
                 String mensagem = (mensagemErroPersonalizada != null && !mensagemErroPersonalizada.isEmpty())
                         ? mensagemErroPersonalizada
-                        : "não foi possivel salvar. O código informadojá pertence a outro registro cadastrado. Verifique a listagem ou utilize um novo código.";
+                        : "Não foi possivel salvar. O código informado já pertence a outro registro cadastrado. Verifique a listagem ou utilize um novo código.";
                 throw new RuntimeException(mensagem);
             }
         });

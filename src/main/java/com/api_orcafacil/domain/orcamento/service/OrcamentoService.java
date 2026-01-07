@@ -31,8 +31,11 @@ public class OrcamentoService {
     @Autowired
     private ValidacaoService validacaoService;
 
-     @Autowired
+    @Autowired
     private ClienteService clienteService;
+
+    @Autowired
+    private ConfiguracaoOrcamentoService configuracaoOrcamentoService;
 
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
@@ -49,8 +52,6 @@ public class OrcamentoService {
         return objeto;
     }
 
-  
-
     public void validarObjeto(Orcamento objeto) throws Exception {
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
@@ -63,10 +64,14 @@ public class OrcamentoService {
         }
     }
 
-    public String sequencia() throws Exception {
+    public String sequencia(String idTenant) throws Exception {
+
+        ConfiguracaoOrcamento config = configuracaoOrcamentoService.obterPrimeiroObjeto(idTenant);
 
         String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial());
 
-        return sq_sequencia;
+        String sequenciaFinal = config.getPrefixoNumero() + "-"+sq_sequencia;
+
+        return sequenciaFinal;
     }
 }

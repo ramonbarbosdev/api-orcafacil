@@ -6,6 +6,8 @@ import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,15 +31,18 @@ public class ConfiguracaoOrcamento {
     private Long idEmpresa;
 
     @Column(name = "id_tenant", nullable = false)
+    @NotNull(message = "O tenant é obrigatorio!")
     private String idTenant;
 
     @Column(name = "prefixo_numero", nullable = false, length = 10)
-    private String prefixoNumero = "ORC";
+    @NotNull(message = "O prefixo é obrigatorio!")
+    private String prefixoNumero;
 
     @Column(name = "validade_dias", nullable = false)
-    private Integer validadeDias = 30;
+    @NotNull(message = "A validade é obrigatoria!")
+    private Integer validadeDias;
 
-        @Column(name = "termos_padrao", length = 100)
+    @Column(name = "termos_padrao", length = 100)
     private String termosPadrao;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)

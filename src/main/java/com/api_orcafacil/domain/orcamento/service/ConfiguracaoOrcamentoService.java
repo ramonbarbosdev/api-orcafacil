@@ -56,8 +56,8 @@ public class ConfiguracaoOrcamentoService {
         Optional<ConfiguracaoOrcamento> objeto = Optional.ofNullable(
                 repository.findFirstByIdTenantOrderByIdConfiguracaoOrcamentoAsc(idTenant)
                         .orElseThrow(() -> new IllegalStateException(
-                                "Empresa não cadastrado")));
+                                "Configuração não cadastrado")));
 
-        return objeto.get();
+        return obterOuCriarPadrao(idTenant);
     }
 }

@@ -17,9 +17,8 @@ import com.api_orcafacil.context.TenantContext;
 import com.api_orcafacil.domain.orcamento.model.ConfiguracaoOrcamento;
 import com.api_orcafacil.domain.orcamento.service.ConfiguracaoOrcamentoService;
 
-
 @RestController
-@RequestMapping("/configuracao-orcamento")
+@RequestMapping("/configuracaoorcamento")
 public class ConfiguracaoOrcamentoController {
 
     @Autowired
@@ -36,10 +35,11 @@ public class ConfiguracaoOrcamentoController {
     public ResponseEntity<?> salvar(
             @RequestBody ConfiguracaoOrcamento dto, @RequestHeader("X-Tenant-ID") String tenantId) {
 
-
         service.salvar(tenantId, dto);
 
         return new ResponseEntity<>(Map.of("message", "Registro salvo com sucesso"), HttpStatus.CREATED);
 
     }
+
+
 }

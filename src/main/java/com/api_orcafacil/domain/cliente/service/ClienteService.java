@@ -1,5 +1,6 @@
 package com.api_orcafacil.domain.cliente.service;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import com.api_orcafacil.context.TenantContext;
 import com.api_orcafacil.domain.cliente.model.Cliente;
 import com.api_orcafacil.domain.cliente.repository.ClienteRepository;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
+import com.api_orcafacil.enums.TipoCliente;
 import com.api_orcafacil.util.TenantUtil;
 
 @Service
@@ -37,15 +39,16 @@ public class ClienteService {
     }
 
     public void validarObjeto(Cliente objeto) throws Exception {
-        validacaoService.validarCodigoExistente(
-                ID_FUNCTION.apply(objeto),
-                repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto)),
-                ID_FUNCTION);
 
         if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
             String tenant = TenantContext.getTenantId();
             objeto.setIdTenant(tenant);
         }
+
+        validacaoService.validarCodigoExistente(
+                ID_FUNCTION.apply(objeto),
+                repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto), objeto.getIdTenant()),
+                ID_FUNCTION);
 
     }
 
@@ -54,6 +57,39 @@ public class ClienteService {
         Optional<Cliente> objeto = repository.findById(id);
 
         return objeto.isPresent() ? objeto.get() : null;
+    }
+
+    public void registrarClienteAPartirDoOrcamento(Cliente objeto) throws Exception {
+
+        if (objeto == null) {
+            throw new Exception(
+                    "Objeto cliente está null.");
+        }
+        if (objeto.getNuCpfcnpj() == null || objeto.getNuCpfcnpj().isEmpty()) {
+            throw new Exception(
+                    "O CPF/CNPJ é obrigatorio para continuar!");
+        }
+
+        validarObjeto(objeto);
+
+        Optional<Cliente> clienteExistente = repository.verificarCodigoExistente(objeto.getNuCpfcnpj(),
+                objeto.getIdTenant());
+
+        Cliente cliente;
+
+        if (clienteExistente.isPresent()) {
+            cliente = clienteExistente.get();
+        } else {
+            cliente = new Cliente();
+        }
+
+        cliente.setTpCliente(objeto.getNuCpfcnpj().length() > 11 ? TipoCliente.Juridico : TipoCliente.Fisico);
+        cliente.setNuCpfcnpj(objeto.getNuCpfcnpj());
+        cliente.setNmCliente(objeto.getNmCliente());
+        cliente.setNuTelefone(objeto.getNuTelefone());
+        cliente.setDsEmail(objeto.getDsEmail());
+        cliente = salvar(cliente);
+        objeto.setIdCliente(cliente.getIdCliente());
     }
 
 }

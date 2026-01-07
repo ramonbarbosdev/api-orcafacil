@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.context.TenantContext;
+import com.api_orcafacil.domain.cliente.model.Cliente;
+import com.api_orcafacil.domain.cliente.service.ClienteService;
 import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.domain.empresa.repository.EmpresaRepository;
 import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
@@ -29,6 +31,9 @@ public class OrcamentoService {
     @Autowired
     private ValidacaoService validacaoService;
 
+     @Autowired
+    private ClienteService clienteService;
+
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
     public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
@@ -38,8 +43,13 @@ public class OrcamentoService {
 
         validarObjeto(objeto);
 
-        return repository.save(objeto);
+        clienteService.registrarClienteAPartirDoOrcamento(objeto.getCliente());
+
+        // return repository.save(objeto);
+        return objeto;
     }
+
+  
 
     public void validarObjeto(Orcamento objeto) throws Exception {
         validacaoService.validarCodigoExistente(

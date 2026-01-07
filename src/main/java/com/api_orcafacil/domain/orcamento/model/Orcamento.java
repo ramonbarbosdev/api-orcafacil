@@ -48,7 +48,7 @@ public class Orcamento {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cliente", insertable = false, updatable = false)
-    @JsonIgnore
+    // @JsonIgnore
     private Cliente cliente;
 
     @Column(name = "id_cliente", nullable = false)

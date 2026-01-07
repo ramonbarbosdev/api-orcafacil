@@ -18,8 +18,8 @@ import jakarta.transaction.Transactional;
 @Transactional
 public interface ClienteRepository extends BaseRepository<Cliente, Long> {
 
-    @Query(value = "SELECT *  FROM cliente b WHERE b.nu_cpfcnpj = ?1 limit 1  ", nativeQuery = true)
-    Optional<Cliente> verificarCodigoExistente(String codigo);
+    @Query(value = "SELECT *  FROM cliente b WHERE b.nu_cpfcnpj = ?1 and b.id_tenant = ?2 limit 1  ", nativeQuery = true)
+    Optional<Cliente> verificarCodigoExistente(String codigo, String idTenant);
 
 
 }

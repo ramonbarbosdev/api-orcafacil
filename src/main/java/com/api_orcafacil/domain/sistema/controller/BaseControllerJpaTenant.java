@@ -91,8 +91,8 @@ public abstract class BaseControllerJpaTenant<T, ID> {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<T>> obterTodos() {
-        return ResponseEntity.ok(repository.findAll());
+    public ResponseEntity<List<T>> obterTodos(@RequestHeader("X-Tenant-ID") String tenantId) {
+        return ResponseEntity.ok(repository.findAllByIdTenant(tenantId));
     }
 
     @GetMapping("/{id}")

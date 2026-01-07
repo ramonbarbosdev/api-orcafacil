@@ -91,6 +91,7 @@ public class ClienteService {
         cliente.setNmCliente(objeto.getNmCliente());
         cliente.setNuTelefone(objeto.getNuTelefone());
         cliente.setDsEmail(objeto.getDsEmail());
+        cliente.setDsObservacoes(objeto.getDsObservacoes());
         cliente = salvar(cliente);
         objeto.setIdCliente(cliente.getIdCliente());
     }

@@ -70,7 +70,10 @@ public class ClienteService {
                     "O CPF/CNPJ é obrigatorio para continuar!");
         }
 
-        validarObjeto(objeto);
+        if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
+            String tenant = TenantContext.getTenantId();
+            objeto.setIdTenant(tenant);
+        }
 
         Optional<Cliente> clienteExistente = repository.verificarCodigoExistente(objeto.getNuCpfcnpj(),
                 objeto.getIdTenant());

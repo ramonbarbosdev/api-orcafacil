@@ -34,7 +34,7 @@ import com.api_orcafacil.domain.usuario.dto.UsuarioDTO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping(value = "campopersonalizado", produces = "application/json")
+@RequestMapping(value = "/campopersonalizado", produces = "application/json")
 @Tag(name = "Campos Personalizado")
 public class CampoPersonalizadoController extends BaseControllerJpa<CampoPersonalizado, Long> {
 

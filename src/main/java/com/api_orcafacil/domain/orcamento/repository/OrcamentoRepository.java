@@ -13,8 +13,14 @@ import com.api_orcafacil.domain.sistema.repository.BaseRepository;
 public interface OrcamentoRepository extends BaseRepository<Orcamento, Long> {
 
     Optional<Orcamento> findByIdTenant(String idTenant);
-    
-    @Query(value = "SELECT CASE WHEN MAX(c.nu_orcamento) IS NULL THEN '0' ELSE MAX(c.nu_orcamento) END FROM orcamento c ", nativeQuery = true)
+
+    @Query(value = """
+            SELECT COALESCE(
+              MAX(CAST(SUBSTRING(c.nu_orcamento FROM '[0-9]+') AS BIGINT)),
+              0
+            )
+            FROM orcamento c
+            """, nativeQuery = true)
     Long obterSequencial();
 
     @Query(value = "SELECT *  FROM orcamento b WHERE b.nu_orcamento = ?1 limit 1  ", nativeQuery = true)

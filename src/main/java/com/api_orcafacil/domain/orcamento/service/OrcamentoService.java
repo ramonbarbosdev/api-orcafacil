@@ -1,5 +1,6 @@
 package com.api_orcafacil.domain.orcamento.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -15,18 +16,24 @@ import com.api_orcafacil.domain.empresa.repository.EmpresaRepository;
 import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
 import com.api_orcafacil.domain.orcamento.model.ConfiguracaoOrcamento;
 import com.api_orcafacil.domain.orcamento.model.Orcamento;
+import com.api_orcafacil.domain.orcamento.model.OrcamentoItem;
 import com.api_orcafacil.domain.orcamento.repository.CondicaoPagamentoRepository;
 import com.api_orcafacil.domain.orcamento.repository.ConfiguracaoOrcamentoRepository;
+import com.api_orcafacil.domain.orcamento.repository.OrcamentoItemRepository;
 import com.api_orcafacil.domain.orcamento.repository.OrcamentoRepository;
 import com.api_orcafacil.domain.servico.model.Servico;
 import com.api_orcafacil.domain.servico.repository.ServicoRepository;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
+import com.api_orcafacil.util.MestreDetalheUtils;
 
 @Service
 public class OrcamentoService {
 
     @Autowired
     private OrcamentoRepository repository;
+
+    @Autowired
+    private OrcamentoItemRepository orcamentoItemRepository;
 
     @Autowired
     private ValidacaoService validacaoService;
@@ -44,12 +51,48 @@ public class OrcamentoService {
     @Transactional(rollbackFor = Exception.class)
     public Orcamento salvar(Orcamento objeto) throws Exception {
 
+        List<OrcamentoItem> itensOrcamentoItem = objeto.getOrcamentoItem();
+        objeto.setOrcamentoItem(null);
+
         validarObjeto(objeto);
+        clienteService.registrarClienteAPartirDoOrcamento(objeto);
 
-        clienteService.registrarClienteAPartirDoOrcamento(objeto.getCliente());
+        objeto = repository.save(objeto);
+        salvarOrcamentoItemDetalhe(objeto, itensOrcamentoItem);
 
-        // return repository.save(objeto);
-        return objeto;
+        return repository.save(objeto);
+    }
+
+    public void salvarOrcamentoItemDetalhe(Orcamento objeto,
+            List<OrcamentoItem> itens) throws Exception {
+
+        Function<Orcamento, Long> getIdFunctionMestre = Orcamento::getIdOrcamento;
+        Function<OrcamentoItem, Long> getIdFunction = OrcamentoItem::getIdOrcamentoItem;
+
+        Long idMestre = getIdFunctionMestre.apply(objeto);
+
+        MestreDetalheUtils.removerItensGenerico(
+                idMestre,
+                itens,
+                orcamentoItemRepository::findbyIdMestre,
+                orcamentoItemRepository::deleteById,
+                getIdFunction);
+
+        if (itens != null && itens.size() > 0) {
+            for (OrcamentoItem item : itens) {
+                item.setIdOrcamento(idMestre);
+
+                Long idExistente = getIdFunction.apply(item);
+
+                if (idExistente == null || idExistente == 0) {
+                    item.setIdOrcamentoItem(null);
+                }
+
+                item = orcamentoItemRepository.save(item);
+            }
+
+            objeto.setOrcamentoItem(itens);
+        }
     }
 
     public void validarObjeto(Orcamento objeto) throws Exception {
@@ -70,7 +113,7 @@ public class OrcamentoService {
 
         String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial());
 
-        String sequenciaFinal = config.getPrefixoNumero() + "-"+sq_sequencia;
+        String sequenciaFinal = config.getPrefixoNumero() + "-" + sq_sequencia;
 
         return sequenciaFinal;
     }

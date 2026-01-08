@@ -3,6 +3,8 @@ package com.api_orcafacil.domain.orcamento.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.api_orcafacil.domain.cliente.model.Cliente;
 import com.api_orcafacil.domain.empresa.model.Empresa;
@@ -11,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,11 +42,11 @@ public class Orcamento {
     private String nuOrcamento;
 
     @Column(name = "dt_emissao", nullable = false, updatable = false)
-    @NotBlank(message = "O emissão é obrigatorio!")
+    @NotNull(message = "O emissão é obrigatorio!")
     private LocalDate dtEmissao;
 
     @Column(name = "dt_valido", nullable = false, updatable = false)
-    @NotBlank(message = "O válido é obrigatorio!")
+    @NotNull(message = "O válido é obrigatorio!")
     private LocalDate dtValido;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,7 +55,7 @@ public class Orcamento {
     private Cliente cliente;
 
     @Column(name = "id_cliente", nullable = false)
-    @NotBlank(message = "O cliente é obrigatorio!")
+    @NotNull(message = "O cliente é obrigatorio!")
     private Long idCliente;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -60,7 +63,7 @@ public class Orcamento {
     @JsonIgnore
     private EmpresaMetodoPrecificacao empresaMetodoPrecificacao;
 
-    @Column(name = "id_empresametodoprecificacao", nullable = false)
+    @Column(name = "id_empresametodoprecificacao")
     private Long idEmpresaMetodoPrecificacao;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -69,27 +72,30 @@ public class Orcamento {
     private CodicaoPagamento condicaopagamento;
 
     @Column(name = "id_codicaopagamento", nullable = false)
-    @NotBlank(message = "A condição de  pagamento é obrigatorio!")
+    @NotNull(message = "A condição de  pagamento é obrigatorio!")
     private Long idCondicaoPagamento;
 
     @Column(name = "dt_prazoentrega", nullable = false, updatable = false)
-    @NotBlank(message = "O Prazo de entrega é obrigatorio!")
+    @NotNull(message = "O Prazo de entrega é obrigatorio!")
     private LocalDate dtPrazoEntrega;
 
-    @Column(name = "ds_observacoes")
+    @Column(name = "ds_observacoes", columnDefinition = "TEXT")
     private String dsObservacoes;
-
+    
     @Column(name = "vl_custobase", nullable = false, precision = 18, scale = 4)
-    @NotBlank(message = "O Valor custo base é obrigatorio!")
+    @NotNull(message = "O Valor custo base é obrigatorio!")
     private BigDecimal vlCustoBase;
 
     @Column(name = "vl_precobase", nullable = false, precision = 18, scale = 4)
-    @NotBlank(message = "O Preço base é obrigatorio!")
+    @NotNull(message = "O Preço base é obrigatorio!")
     private BigDecimal vlPrecoBase;
 
     @Column(name = "vl_precofinal", nullable = false, precision = 18, scale = 4)
-    @NotBlank(message = "O Preço Final é obrigatorio!")
+    @NotNull(message = "O Preço Final é obrigatorio!")
     private BigDecimal vlPrecoFinal;
+
+    @OneToMany(mappedBy = "idOrcamento", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = false)
+    public List<OrcamentoItem> orcamentoItem = new ArrayList<OrcamentoItem>();
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;

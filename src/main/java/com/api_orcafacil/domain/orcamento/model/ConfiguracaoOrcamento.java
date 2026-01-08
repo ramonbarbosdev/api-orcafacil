@@ -42,7 +42,7 @@ public class ConfiguracaoOrcamento {
     @NotNull(message = "A validade é obrigatoria!")
     private Integer validadeDias;
 
-    @Column(name = "termos_padrao", length = 100)
+    @Column(name = "termos_padrao", columnDefinition = "TEXT")
     private String termosPadrao;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)

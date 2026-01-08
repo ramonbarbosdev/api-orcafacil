@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.api_orcafacil.context.TenantContext;
 import com.api_orcafacil.domain.cliente.model.Cliente;
 import com.api_orcafacil.domain.cliente.repository.ClienteRepository;
+import com.api_orcafacil.domain.orcamento.model.Orcamento;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
 import com.api_orcafacil.enums.TipoCliente;
 import com.api_orcafacil.util.TenantUtil;
@@ -59,7 +60,11 @@ public class ClienteService {
         return objeto.isPresent() ? objeto.get() : null;
     }
 
-    public void registrarClienteAPartirDoOrcamento(Cliente objeto) throws Exception {
+    public void registrarClienteAPartirDoOrcamento(Orcamento obj) throws Exception {
+
+
+        Cliente objeto = obj.getCliente();
+
 
         if (objeto == null) {
             throw new Exception(
@@ -93,7 +98,7 @@ public class ClienteService {
         cliente.setDsEmail(objeto.getDsEmail());
         cliente.setDsObservacoes(objeto.getDsObservacoes());
         cliente = salvar(cliente);
-        objeto.setIdCliente(cliente.getIdCliente());
+        obj.setIdCliente(cliente.getIdCliente());
     }
 
 }

@@ -1,6 +1,5 @@
 package com.api_orcafacil.domain.empresa.model;
 
-
 import java.beans.Transient;
 import java.time.LocalDateTime;
 
@@ -87,9 +86,7 @@ public class Empresa {
         if (planoassinatura != null) {
             return planoassinatura.getNmPlanoAssinatura();
         }
-        return null;    
+        return null;
     }
-
-   
 
 }

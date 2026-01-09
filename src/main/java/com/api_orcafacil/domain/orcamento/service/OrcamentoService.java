@@ -45,6 +45,9 @@ public class OrcamentoService {
     @Autowired
     private ConfiguracaoOrcamentoService configuracaoOrcamentoService;
 
+    @Autowired
+    private OrcamentoItemCampoValorService orcamentoItemCampoValorService ;
+
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
     public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
@@ -91,21 +94,12 @@ public class OrcamentoService {
                     item.setIdOrcamentoItem(null);
                 }
 
-                item = orcamentoItemRepository.save(item);
+                OrcamentoItem itemSalvo = orcamentoItemRepository.save(item);
 
-                //ajuste nescessario
-                if (item.getOrcamentoItemCampoValor() != null) {
-                    for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
+                List<OrcamentoItemCampoValor> campos = item.getOrcamentoItemCampoValor();
 
-                        campo.setIdOrcamentoItem(item.getIdOrcamentoItem());
+                orcamentoItemCampoValorService.salvar(campos, itemSalvo);
 
-                        if (campo.getIdOrcamentoItemCampoValor() == null
-                                || campo.getIdOrcamentoItemCampoValor() == 0) {
-
-                            campo.setIdOrcamentoItemCampoValor(null);
-                        }
-                    }
-                }
             }
 
             objeto.setOrcamentoItem(itens);

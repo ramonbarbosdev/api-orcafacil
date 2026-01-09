@@ -10,6 +10,7 @@ import com.api_orcafacil.domain.cliente.model.Cliente;
 import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -81,7 +82,7 @@ public class Orcamento {
 
     @Column(name = "ds_observacoes", columnDefinition = "TEXT")
     private String dsObservacoes;
-    
+
     @Column(name = "vl_custobase", nullable = false, precision = 18, scale = 4)
     @NotNull(message = "O Valor custo base é obrigatorio!")
     private BigDecimal vlCustoBase;
@@ -103,5 +104,14 @@ public class Orcamento {
     @PrePersist
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
+    }
+
+    @JsonProperty("nmCliente")
+    public String getNmCliente() {
+
+        if (cliente != null) {
+            return cliente.getNmCliente();
+        }
+        return null;
     }
 }

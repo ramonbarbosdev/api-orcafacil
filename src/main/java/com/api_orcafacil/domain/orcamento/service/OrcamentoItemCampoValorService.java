@@ -41,7 +41,8 @@ public class OrcamentoItemCampoValorService {
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
                 repository.verificarCodigoExistente(objeto.getIdCampoPersonalizado()),
-                ID_FUNCTION);
+                ID_FUNCTION,
+            "Não foi possivel salvar, existe materiais repetidos nos ajustes. Verifique a listagem ou utilize um novo material.");
     }
 
     public void excluirPorMestre(Long idMestre) throws Exception {

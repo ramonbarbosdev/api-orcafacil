@@ -83,18 +83,11 @@ public class Orcamento {
     @Column(name = "ds_observacoes", columnDefinition = "TEXT")
     private String dsObservacoes;
 
-    @Column(name = "vl_custobase", nullable = false, precision = 18, scale = 4)
-    @NotNull(message = "O Valor custo base é obrigatorio!")
-    private BigDecimal vlCustoBase;
 
     @Column(name = "vl_precobase", nullable = false, precision = 18, scale = 4)
     @NotNull(message = "O Preço base é obrigatorio!")
     private BigDecimal vlPrecoBase;
-
-    @Column(name = "vl_precofinal", nullable = false, precision = 18, scale = 4)
-    @NotNull(message = "O Preço Final é obrigatorio!")
-    private BigDecimal vlPrecoFinal;
-
+  
     @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrcamentoItem> orcamentoItem = new ArrayList<>();
 

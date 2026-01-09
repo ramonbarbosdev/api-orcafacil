@@ -70,7 +70,7 @@ public class OrcamentoService {
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
                 orcamentoItemCampoValorService.validarObjeto(campo);
-                
+
                 if (campo.getIdOrcamentoItemCampoValor() != null
                         && campo.getIdOrcamentoItemCampoValor() == 0) {
                     campo.setIdOrcamentoItemCampoValor(null);
@@ -122,17 +122,17 @@ public class OrcamentoService {
         custoCalculado = custoCalculado.setScale(2, RoundingMode.HALF_UP);
         precoCalculado = precoCalculado.setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal custoBaseInformado = objeto.getVlCustoBase().setScale(2, RoundingMode.HALF_UP);
+        // BigDecimal custoBaseInformado = objeto.getVlCustoBase().setScale(2, RoundingMode.HALF_UP);
         BigDecimal precoBaseInformado = objeto.getVlPrecoBase().setScale(2, RoundingMode.HALF_UP);
-        BigDecimal precoFinalInformado = objeto.getVlPrecoFinal().setScale(2, RoundingMode.HALF_UP);
+        // BigDecimal precoFinalInformado = objeto.getVlPrecoFinal().setScale(2, RoundingMode.HALF_UP);
 
-        if (custoCalculado.compareTo(custoBaseInformado) != 0) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Custo base inválido. Esperado: %s, Informado: %s",
-                            custoCalculado,
-                            custoBaseInformado));
-        }
+        // if (custoCalculado.compareTo(custoBaseInformado) != 0) {
+        //     throw new IllegalArgumentException(
+        //             String.format(
+        //                     "Custo base inválido. Esperado: %s, Informado: %s",
+        //                     custoCalculado,
+        //                     custoBaseInformado));
+        // }
 
         if (precoCalculado.compareTo(precoBaseInformado) != 0) {
             throw new IllegalArgumentException(
@@ -142,13 +142,13 @@ public class OrcamentoService {
                             precoBaseInformado));
         }
 
-        if (precoBaseInformado.compareTo(precoFinalInformado) != 0) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Preço final inválido. Esperado: %s, Informado: %s",
-                            precoBaseInformado,
-                            precoFinalInformado));
-        }
+        // if (precoBaseInformado.compareTo(precoFinalInformado) != 0) {
+        //     throw new IllegalArgumentException(
+        //             String.format(
+        //                     "Preço final inválido. Esperado: %s, Informado: %s",
+        //                     precoBaseInformado,
+        //                     precoFinalInformado));
+        // }
     }
 
     public String sequencia(String idTenant) throws Exception {

@@ -42,11 +42,11 @@ public class Orcamento {
     @NotBlank(message = "O número é obrigatorio!")
     private String nuOrcamento;
 
-    @Column(name = "dt_emissao", nullable = false, updatable = false)
+    @Column(name = "dt_emissao", nullable = false)
     @NotNull(message = "O emissão é obrigatorio!")
     private LocalDate dtEmissao;
 
-    @Column(name = "dt_valido", nullable = false, updatable = false)
+    @Column(name = "dt_valido", nullable = false)
     @NotNull(message = "O válido é obrigatorio!")
     private LocalDate dtValido;
 
@@ -76,7 +76,7 @@ public class Orcamento {
     @NotNull(message = "A condição de  pagamento é obrigatorio!")
     private Long idCondicaoPagamento;
 
-    @Column(name = "dt_prazoentrega", nullable = false, updatable = false)
+    @Column(name = "dt_prazoentrega", nullable = false)
     @NotNull(message = "O Prazo de entrega é obrigatorio!")
     private LocalDate dtPrazoEntrega;
 

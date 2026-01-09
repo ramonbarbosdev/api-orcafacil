@@ -1,11 +1,14 @@
 package com.api_orcafacil.util;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import com.api_orcafacil.domain.orcamento.model.OrcamentoItem;
 
 public class MestreDetalheUtils {
 
@@ -15,21 +18,41 @@ public class MestreDetalheUtils {
             Function<Long, List<T>> buscarPersistidos,
             Consumer<ID> deletar,
             Function<T, ID> extrairId) {
+        removerItensGenerico(idMaster, itensAtualizados, buscarPersistidos, deletar, extrairId, null);
+    }
 
-        List<T> itensPersistidos = buscarPersistidos.apply(idMaster);
+    public static <T, ID> void removerItensGenerico(
+            Long idMaster,
+            List<T> itensAtualizados,
+            Function<Long, List<T>> buscarPersistidos,
+            Consumer<ID> deletar,
+            Function<T, ID> extrairId,
+            Consumer<T> limparReferencia) {
 
-        for (T itemPersistido : itensPersistidos) {
-            boolean aindaExiste = itensAtualizados.stream()
+        List<T> persistidos = buscarPersistidos.apply(idMaster);
+
+        List<T> atualizados = itensAtualizados != null
+                ? itensAtualizados
+                : new ArrayList<>();
+
+        for (T itemPersistido : persistidos) {
+
+            ID idPersistido = extrairId.apply(itemPersistido);
+
+            boolean aindaExiste = atualizados.stream()
                     .anyMatch(i -> {
-                        ID idItem = extrairId.apply(i);
-                        ID idPersistido = extrairId.apply(itemPersistido);
-                        return idItem != null && idItem.equals(idPersistido);
+                        ID idAtual = extrairId.apply(i);
+                        return idAtual != null && idAtual.equals(idPersistido);
                     });
 
-            if (!aindaExiste) {
-                ID idItemPersistido = extrairId.apply(itemPersistido);
-                if (idItemPersistido != null) {
-                    deletar.accept(idItemPersistido);
+            if (!aindaExiste && idPersistido != null) {
+
+                // 1️⃣ Remove do banco
+                deletar.accept(idPersistido);
+
+                // 2️⃣ Limpa referência em memória (ESSENCIAL)
+                if (limparReferencia != null) {
+                    limparReferencia.accept(itemPersistido);
                 }
             }
         }

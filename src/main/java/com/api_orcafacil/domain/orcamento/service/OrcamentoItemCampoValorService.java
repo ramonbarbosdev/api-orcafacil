@@ -23,42 +23,56 @@ import com.api_orcafacil.domain.servico.repository.ServicoRepository;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
 import com.api_orcafacil.util.MestreDetalheUtils;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
 public class OrcamentoItemCampoValorService {
 
     @Autowired
     private OrcamentoItemCampoValorRepository repository;
 
-  
-    public void salvar(List<OrcamentoItemCampoValor>  objeto, OrcamentoItem itemSalvo) throws Exception {
+    @PersistenceContext
+    private EntityManager entityManager;
 
-        Function<OrcamentoItemCampoValor, Long> getIdFunction = OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor;
+    @Transactional
+    public void salvar(List<OrcamentoItemCampoValor> campos,
+            OrcamentoItem itemSalvo) {
 
-        if (objeto != null) {
+        if (campos == null || campos.isEmpty())
+            return;
 
-            MestreDetalheUtils.removerItensGenerico(
-                    itemSalvo.getIdOrcamentoItem(),
-                    objeto,
-                    repository::findbyIdMestre,
-                    repository::deleteById,
-                    getIdFunction);
+        OrcamentoItem itemManaged = entityManager.find(
+                OrcamentoItem.class,
+                itemSalvo.getIdOrcamentoItem());
 
-            for (OrcamentoItemCampoValor campo : objeto) {
+        MestreDetalheUtils.removerItensGenerico(
+                itemManaged.getIdOrcamentoItem(),
+                campos,
+                repository::findbyIdMestre,
+                repository::deleteById,
+                OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor);
 
-                campo.setIdOrcamentoItem(itemSalvo.getIdOrcamentoItem());
+        for (OrcamentoItemCampoValor campo : campos) {
 
-                if (campo.getIdOrcamentoItemCampoValor() == null
-                        || campo.getIdOrcamentoItemCampoValor() == 0) {
+            campo.setOrcamentoItem(itemManaged); // 🔴 chave
 
-                    campo.setIdOrcamentoItemCampoValor(null);
-                }
-
-                repository.save(campo);
+            if (campo.getIdOrcamentoItemCampoValor() == null
+                    || campo.getIdOrcamentoItemCampoValor() == 0) {
+                campo.setIdOrcamentoItemCampoValor(null);
             }
+
+            repository.save(campo); // merge
         }
     }
 
     public void validarObjeto(OrcamentoItemCampoValor objeto) throws Exception {
+
+    }
+
+    public void excluirPorMestre(Long idMestre) throws Exception {
+
+        repository.deleteByIdMestre(idMestre);
 
     }
 

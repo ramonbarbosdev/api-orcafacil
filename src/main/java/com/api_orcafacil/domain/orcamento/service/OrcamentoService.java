@@ -33,9 +33,7 @@ public class OrcamentoService {
     @Autowired
     private OrcamentoRepository repository;
 
-    @Autowired
-    private OrcamentoItemRepository orcamentoItemRepository;
-
+   
     @Autowired
     private ValidacaoService validacaoService;
 
@@ -46,7 +44,7 @@ public class OrcamentoService {
     private ConfiguracaoOrcamentoService configuracaoOrcamentoService;
 
     @Autowired
-    private OrcamentoItemCampoValorService orcamentoItemCampoValorService ;
+    private OrcamentoItemService orcamentoItemService ;
 
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
@@ -56,7 +54,7 @@ public class OrcamentoService {
     public Orcamento salvar(Orcamento objeto) throws Exception {
 
         List<OrcamentoItem> itensOrcamentoItem = objeto.getOrcamentoItem();
-        objeto.setOrcamentoItem(null);
+        // objeto.setOrcamentoItem(null);
 
         validarObjeto(objeto);
         Cliente clientePersistido = clienteService.registrarClienteAPartirDoOrcamento(objeto);
@@ -64,46 +62,9 @@ public class OrcamentoService {
         objeto.setCliente(clientePersistido); // redundante, mas seguro
 
         objeto = repository.save(objeto);
-        salvarOrcamentoItemDetalhe(objeto, itensOrcamentoItem);
+        orcamentoItemService.salvar(objeto, itensOrcamentoItem);
 
         return repository.save(objeto);
-    }
-
-    public void salvarOrcamentoItemDetalhe(Orcamento objeto,
-            List<OrcamentoItem> itens) throws Exception {
-
-        Function<Orcamento, Long> getIdFunctionMestre = Orcamento::getIdOrcamento;
-        Function<OrcamentoItem, Long> getIdFunction = OrcamentoItem::getIdOrcamentoItem;
-
-        Long idMestre = getIdFunctionMestre.apply(objeto);
-
-        MestreDetalheUtils.removerItensGenerico(
-                idMestre,
-                itens,
-                orcamentoItemRepository::findbyIdMestre,
-                orcamentoItemRepository::deleteById,
-                getIdFunction);
-
-        if (itens != null && itens.size() > 0) {
-            for (OrcamentoItem item : itens) {
-                item.setIdOrcamento(idMestre);
-
-                Long idExistente = getIdFunction.apply(item);
-
-                if (idExistente == null || idExistente == 0) {
-                    item.setIdOrcamentoItem(null);
-                }
-
-                OrcamentoItem itemSalvo = orcamentoItemRepository.save(item);
-
-                List<OrcamentoItemCampoValor> campos = item.getOrcamentoItemCampoValor();
-
-                orcamentoItemCampoValorService.salvar(campos, itemSalvo);
-
-            }
-
-            objeto.setOrcamentoItem(itens);
-        }
     }
 
     public void validarObjeto(Orcamento objeto) throws Exception {
@@ -127,5 +88,14 @@ public class OrcamentoService {
         String sequenciaFinal = config.getPrefixoNumero() + "-" + sq_sequencia;
 
         return sequenciaFinal;
+    }
+
+    
+    @Transactional(rollbackFor = Exception.class)
+    public void excluir(Long id) throws Exception {
+
+        orcamentoItemService.excluirPorMestre(id);
+
+        repository.deleteById(id);
     }
 }

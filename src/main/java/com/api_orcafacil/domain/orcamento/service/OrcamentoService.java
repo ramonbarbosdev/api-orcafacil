@@ -24,6 +24,9 @@ import com.api_orcafacil.domain.orcamento.repository.CondicaoPagamentoRepository
 import com.api_orcafacil.domain.orcamento.repository.ConfiguracaoOrcamentoRepository;
 import com.api_orcafacil.domain.orcamento.repository.OrcamentoItemRepository;
 import com.api_orcafacil.domain.orcamento.repository.OrcamentoRepository;
+import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
+import com.api_orcafacil.domain.precificacao.service.EmpresaMetodoPrecificacaoService;
+import com.api_orcafacil.domain.precificacao.service.PrecificacaoService;
 import com.api_orcafacil.domain.servico.model.Servico;
 import com.api_orcafacil.domain.servico.repository.ServicoRepository;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
@@ -50,6 +53,12 @@ public class OrcamentoService {
     @Autowired
     private OrcamentoItemCampoValorService orcamentoItemCampoValorService;
 
+    @Autowired
+    private PrecificacaoService precificacaoService;
+
+    @Autowired
+    private EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService;
+
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
     public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
@@ -66,6 +75,7 @@ public class OrcamentoService {
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
             item.setOrcamento(objeto);
             orcamentoItemService.validarObjeto(item);
+            aplicarMetodoPrecificacao(item, objeto.getIdTenant());
 
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
@@ -79,6 +89,16 @@ public class OrcamentoService {
         }
 
         return repository.save(objeto);
+    }
+
+    public void aplicarMetodoPrecificacao(OrcamentoItem item, String idTenant) {
+
+        EmpresaMetodoPrecificacao empresaMetodo = empresaMetodoPrecificacaoService.obterOuCriarPadrao(idTenant);
+
+        BigDecimal precoItem = precificacaoService.precificarItem(item, empresaMetodo);
+
+        item.setVlPrecoTotal(precoItem);
+
     }
 
     public void validarObjeto(Orcamento objeto) throws Exception {
@@ -109,30 +129,18 @@ public class OrcamentoService {
 
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
 
-            // custo = custo unitário × quantidade
             BigDecimal custoItem = item.getVlCustoUnitario()
                     .multiply(item.getQtItem());
 
             custoCalculado = custoCalculado.add(custoItem);
 
-            // preço = total do item (já validado anteriormente)
             precoCalculado = precoCalculado.add(item.getVlPrecoTotal());
         }
 
         custoCalculado = custoCalculado.setScale(2, RoundingMode.HALF_UP);
         precoCalculado = precoCalculado.setScale(2, RoundingMode.HALF_UP);
 
-        // BigDecimal custoBaseInformado = objeto.getVlCustoBase().setScale(2, RoundingMode.HALF_UP);
         BigDecimal precoBaseInformado = objeto.getVlPrecoBase().setScale(2, RoundingMode.HALF_UP);
-        // BigDecimal precoFinalInformado = objeto.getVlPrecoFinal().setScale(2, RoundingMode.HALF_UP);
-
-        // if (custoCalculado.compareTo(custoBaseInformado) != 0) {
-        //     throw new IllegalArgumentException(
-        //             String.format(
-        //                     "Custo base inválido. Esperado: %s, Informado: %s",
-        //                     custoCalculado,
-        //                     custoBaseInformado));
-        // }
 
         if (precoCalculado.compareTo(precoBaseInformado) != 0) {
             throw new IllegalArgumentException(
@@ -142,13 +150,6 @@ public class OrcamentoService {
                             precoBaseInformado));
         }
 
-        // if (precoBaseInformado.compareTo(precoFinalInformado) != 0) {
-        //     throw new IllegalArgumentException(
-        //             String.format(
-        //                     "Preço final inválido. Esperado: %s, Informado: %s",
-        //                     precoBaseInformado,
-        //                     precoFinalInformado));
-        // }
     }
 
     public String sequencia(String idTenant) throws Exception {

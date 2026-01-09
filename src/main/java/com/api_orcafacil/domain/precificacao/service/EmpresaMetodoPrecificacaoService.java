@@ -38,7 +38,7 @@ public class EmpresaMetodoPrecificacaoService {
 
     public EmpresaMetodoPrecificacao obterOuCriarPadrao(String idTenant) {
 
-        return repository.findByIdTenant(idTenant)
+        EmpresaMetodoPrecificacao objeto = repository.findByIdTenant(idTenant)
                 .orElseGet(() -> {
 
                     MetodoPrecificacao metodo = metodoPrecificacaoRepository.findByCdMetodoPrecificacao("SIMPLES")
@@ -52,6 +52,8 @@ public class EmpresaMetodoPrecificacaoService {
 
                     return repository.save(cfg);
                 });
+
+        return objeto;
     }
 
 }

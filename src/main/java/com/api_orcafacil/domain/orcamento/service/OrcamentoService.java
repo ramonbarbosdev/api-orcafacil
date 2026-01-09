@@ -59,8 +59,6 @@ public class OrcamentoService {
         objeto.setCliente(clientePersistido);
 
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
-
-            // 🔴 SOMENTE ISSO
             item.setOrcamento(objeto);
 
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {

@@ -35,36 +35,36 @@ public class OrcamentoItemCampoValorService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
-    public void salvar(List<OrcamentoItemCampoValor> campos,
-            OrcamentoItem itemSalvo) {
+    // @Transactional
+    // public void salvar(List<OrcamentoItemCampoValor> campos,
+    //         OrcamentoItem itemSalvo) {
 
-        if (campos == null || campos.isEmpty())
-            return;
+    //     if (campos == null || campos.isEmpty())
+    //         return;
 
-        OrcamentoItem itemManaged = entityManager.find(
-                OrcamentoItem.class,
-                itemSalvo.getIdOrcamentoItem());
+    //     OrcamentoItem itemManaged = entityManager.find(
+    //             OrcamentoItem.class,
+    //             itemSalvo.getIdOrcamentoItem());
 
-        MestreDetalheUtils.removerItensGenerico(
-                itemManaged.getIdOrcamentoItem(),
-                campos,
-                repository::findbyIdMestre,
-                repository::deleteById,
-                OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor);
+    //     MestreDetalheUtils.removerItensGenerico(
+    //             itemManaged.getIdOrcamentoItem(),
+    //             campos,
+    //             repository::findbyIdMestre,
+    //             repository::deleteById,
+    //             OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor);
 
-        for (OrcamentoItemCampoValor campo : campos) {
+    //     for (OrcamentoItemCampoValor campo : campos) {
 
-            campo.setOrcamentoItem(itemManaged); // 🔴 chave
+    //         campo.setOrcamentoItem(itemManaged); // 🔴 chave
 
-            if (campo.getIdOrcamentoItemCampoValor() == null
-                    || campo.getIdOrcamentoItemCampoValor() == 0) {
-                campo.setIdOrcamentoItemCampoValor(null);
-            }
+    //         if (campo.getIdOrcamentoItemCampoValor() == null
+    //                 || campo.getIdOrcamentoItemCampoValor() == 0) {
+    //             campo.setIdOrcamentoItemCampoValor(null);
+    //         }
 
-            repository.save(campo); // merge
-        }
-    }
+    //         repository.save(campo); // merge
+    //     }
+    // }
 
     public void validarObjeto(OrcamentoItemCampoValor objeto) throws Exception {
 

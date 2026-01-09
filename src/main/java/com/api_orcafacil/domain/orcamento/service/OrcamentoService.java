@@ -1,5 +1,7 @@
 package com.api_orcafacil.domain.orcamento.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -60,6 +62,7 @@ public class OrcamentoService {
 
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
             item.setOrcamento(objeto);
+            orcamentoItemService.validarObjeto(item);
 
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
@@ -84,6 +87,64 @@ public class OrcamentoService {
             String tenant = TenantContext.getTenantId();
             objeto.setIdTenant(tenant);
         }
+
+        if (objeto.getOrcamentoItem() == null || objeto.getOrcamentoItem().isEmpty()) {
+            throw new IllegalArgumentException("O orçamento deve possuir ao menos um item.");
+        }
+
+        if (objeto.getDtValido().isBefore(objeto.getDtEmissao())) {
+            throw new IllegalArgumentException("A data de validade não pode ser anterior à emissão.");
+        }
+
+        if (objeto.getDtPrazoEntrega().isBefore(objeto.getDtEmissao())) {
+            throw new IllegalArgumentException("O prazo de entrega não pode ser anterior à emissão.");
+        }
+
+        BigDecimal custoCalculado = BigDecimal.ZERO;
+        BigDecimal precoCalculado = BigDecimal.ZERO;
+
+        for (OrcamentoItem item : objeto.getOrcamentoItem()) {
+
+            // custo = custo unitário × quantidade
+            BigDecimal custoItem = item.getVlCustoUnitario()
+                    .multiply(item.getQtItem());
+
+            custoCalculado = custoCalculado.add(custoItem);
+
+            // preço = total do item (já validado anteriormente)
+            precoCalculado = precoCalculado.add(item.getVlPrecoTotal());
+        }
+
+        custoCalculado = custoCalculado.setScale(2, RoundingMode.HALF_UP);
+        precoCalculado = precoCalculado.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal custoBaseInformado = objeto.getVlCustoBase().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal precoBaseInformado = objeto.getVlPrecoBase().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal precoFinalInformado = objeto.getVlPrecoFinal().setScale(2, RoundingMode.HALF_UP);
+
+        if (custoCalculado.compareTo(custoBaseInformado) != 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Custo base inválido. Esperado: %s, Informado: %s",
+                            custoCalculado,
+                            custoBaseInformado));
+        }
+
+        if (precoCalculado.compareTo(precoBaseInformado) != 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Preço base inválido. Esperado: %s, Informado: %s",
+                            precoCalculado,
+                            precoBaseInformado));
+        }
+
+        if (precoBaseInformado.compareTo(precoFinalInformado) != 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Preço final inválido. Esperado: %s, Informado: %s",
+                            precoBaseInformado,
+                            precoFinalInformado));
+        }
     }
 
     public String sequencia(String idTenant) throws Exception {
@@ -100,7 +161,7 @@ public class OrcamentoService {
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) throws Exception {
 
-        orcamentoItemService.excluirPorMestre(id);
+        // orcamentoItemService.excluirPorMestre(id);
 
         repository.deleteById(id);
     }

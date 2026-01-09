@@ -1,5 +1,7 @@
 package com.api_orcafacil.domain.orcamento.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,65 +40,69 @@ public class OrcamentoItemService {
     @Autowired
     private OrcamentoItemCampoValorService orcamentoItemCampoValorService;
 
-    // public void salvar(Orcamento objeto,
-    //         List<OrcamentoItem> itens) throws Exception {
+    @Autowired
+    private ValidacaoService validacaoService;
 
-    //     Function<Orcamento, Long> getIdFunctionMestre = Orcamento::getIdOrcamento;
-    //     Function<OrcamentoItem, Long> getIdFunction = OrcamentoItem::getIdOrcamentoItem;
+    public static final Function<OrcamentoItem, Long> ID_FUNCTION = OrcamentoItem::getIdOrcamentoItem;
 
-    //     Long idMestre = getIdFunctionMestre.apply(objeto);
+    public void validarObjeto(OrcamentoItem objeto) throws Exception {
 
-    //     if (itens == null || itens.isEmpty()) {
+        validacaoService.validarCodigoExistente(
+                ID_FUNCTION.apply(objeto),
+                repository.verificarCodigoExistente(objeto.getIdCatalogo()),
+                ID_FUNCTION,
+                "Não foi possivel salvar, existe itens repetidos. Verifique a listagem ou utilize um novo item.");
 
-    //         excluirPorMestre(idMestre);
+        validarValoresItem(objeto);
+    }
 
-    //         if (objeto.getOrcamentoItem() != null) {
-    //             for (OrcamentoItem antigo : objeto.getOrcamentoItem()) {
-    //                 antigo.setOrcamento(null);
-    //                 antigo.setIdOrcamento(null);
-    //             }
-    //         }
+    public void validarValoresItem(OrcamentoItem item) {
 
-    //         objeto.setOrcamentoItem(new ArrayList<>());
-    //         return;
-    //     }
+        if (item.getQtItem() == null)
+            throw new IllegalArgumentException("Quantidade do item não informada.");
 
-    //     MestreDetalheUtils.removerItensGenerico(
-    //             idMestre,
-    //             itens,
-    //             repository::findbyIdMestre,
-    //             repository::deleteById,
-    //             getIdFunction,
-    //             itemRemovido -> {
-    //                 itemRemovido.setOrcamento(null);
-    //                 itemRemovido.setIdOrcamento(null);
-    //             });
+        if (item.getVlCustoUnitario() == null)
+            throw new IllegalArgumentException("Custo unitário não informado.");
 
+        BigDecimal quantidade = item.getQtItem();
+        BigDecimal custoUnitario = item.getVlCustoUnitario();
 
-    //     if (itens != null && itens.size() > 0) {
-    //         for (OrcamentoItem item : itens) {
-    //             item.setIdOrcamento(idMestre);
+        BigDecimal somaMateriais = BigDecimal.ZERO;
 
-    //             Long idExistente = getIdFunction.apply(item);
+        if (item.getOrcamentoItemCampoValor() != null) {
+            for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
+                if (campo.getVlInformado() != null && !campo.getVlInformado().isBlank()) {
+                    try {
+                        somaMateriais = somaMateriais.add(
+                                new BigDecimal(campo.getVlInformado()));
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException(
+                                "Valor inválido no material: " + campo.getVlInformado());
+                    }
+                }
+            }
+        }
 
-    //             if (idExistente == null || idExistente == 0) {
-    //                 item.setIdOrcamentoItem(null);
-    //             }
+        //  TOTAL = (custo unitário + materiais) × quantidade
+        BigDecimal totalCalculado = custoUnitario
+                .add(somaMateriais)
+                .multiply(quantidade)
+                .setScale(2, RoundingMode.HALF_UP);
 
-    //             OrcamentoItem itemSalvo = repository.save(item);
+        BigDecimal totalInformado = item.getVlPrecoTotal();
 
-    //             List<OrcamentoItemCampoValor> campos = item.getOrcamentoItemCampoValor();
+        if (totalInformado == null)
+            throw new IllegalArgumentException("Total do item não informado.");
 
-    //             orcamentoItemCampoValorService.salvar(campos, itemSalvo);
+        totalInformado = totalInformado.setScale(2, RoundingMode.HALF_UP);
 
-    //         }
-
-    //         objeto.setOrcamentoItem(itens);
-    //     }
-    // }
-
-    public void validarObjeto(OrcamentoItemCampoValor objeto) throws Exception {
-
+        if (totalCalculado.compareTo(totalInformado) != 0) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Total do item inválido. Esperado: %s, Informado: %s",
+                            totalCalculado,
+                            totalInformado));
+        }
     }
 
     @PersistenceContext

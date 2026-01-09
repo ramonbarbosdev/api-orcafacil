@@ -17,6 +17,9 @@ import jakarta.transaction.Transactional;
 
 public interface OrcamentoItemRepository extends JpaRepository<OrcamentoItem, Long> {
 
+    @Query(value = "SELECT *  FROM orcamento_item b WHERE b.id_catalogo = ?1 limit 1  ", nativeQuery = true)
+    Optional<OrcamentoItem> verificarCodigoExistente(Long codigo);
+
     @Query(value = "SELECT * FROM orcamento_item WHERE id_orcamento = ?1", nativeQuery = true)
     List<OrcamentoItem> findbyIdMestre(Long id);
 

@@ -55,7 +55,7 @@ public class Catalogo {
     @Column(name = "nm_catalogo")
     private String nmCatalogo;
 
-    @Column(name = "ds_catalogo")
+    @Column(name = "ds_catalogo", columnDefinition = "TEXT")
     private String dsCatalogo;
 
     @Column(name = "vl_custobase", precision = 18, scale = 4)

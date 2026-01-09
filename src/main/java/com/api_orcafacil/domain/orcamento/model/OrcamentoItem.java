@@ -2,6 +2,7 @@ package com.api_orcafacil.domain.orcamento.model;
 
 import java.math.BigDecimal;
 
+import com.api_orcafacil.domain.catalogo.model.Catalogo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -30,9 +31,14 @@ public class OrcamentoItem {
     @Column(name = "id_orcamento", nullable = false)
     private Long idOrcamento;
 
-    @Column(name = "ds_item", nullable = false, length = 255)
-    @NotBlank(message = "A descrição é obrigatorio!")
-    private String dsItem;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_catalogo", insertable = false, updatable = false)
+    @JsonIgnore
+    private Catalogo catalogo;
+
+    @Column(name = "id_catalogo", nullable = false)
+    @NotNull(message = "A catalogo é obrigatorio!")
+    private Long idCatalogo;
 
     @Column(name = "qt_item", nullable = false, precision = 18, scale = 4)
     @NotNull(message = "A quantidade é obrigatorio!")

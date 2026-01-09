@@ -45,6 +45,7 @@ public class CatalogoController extends BaseControllerJpaTenant<Catalogo, Long> 
     @Operation(summary = "Gerar sequencia")
     public ResponseEntity<?> obterSequencia() throws Exception {
 
+        
         String resposta = service.sequencia();
 
         return new ResponseEntity<>(Map.of("sequencia", resposta), HttpStatus.OK);

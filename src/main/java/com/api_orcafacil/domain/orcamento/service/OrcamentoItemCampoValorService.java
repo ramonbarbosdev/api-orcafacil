@@ -32,42 +32,16 @@ public class OrcamentoItemCampoValorService {
     @Autowired
     private OrcamentoItemCampoValorRepository repository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private ValidacaoService validacaoService;
 
-    // @Transactional
-    // public void salvar(List<OrcamentoItemCampoValor> campos,
-    //         OrcamentoItem itemSalvo) {
-
-    //     if (campos == null || campos.isEmpty())
-    //         return;
-
-    //     OrcamentoItem itemManaged = entityManager.find(
-    //             OrcamentoItem.class,
-    //             itemSalvo.getIdOrcamentoItem());
-
-    //     MestreDetalheUtils.removerItensGenerico(
-    //             itemManaged.getIdOrcamentoItem(),
-    //             campos,
-    //             repository::findbyIdMestre,
-    //             repository::deleteById,
-    //             OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor);
-
-    //     for (OrcamentoItemCampoValor campo : campos) {
-
-    //         campo.setOrcamentoItem(itemManaged); // 🔴 chave
-
-    //         if (campo.getIdOrcamentoItemCampoValor() == null
-    //                 || campo.getIdOrcamentoItemCampoValor() == 0) {
-    //             campo.setIdOrcamentoItemCampoValor(null);
-    //         }
-
-    //         repository.save(campo); // merge
-    //     }
-    // }
+    public static final Function<OrcamentoItemCampoValor, Long> ID_FUNCTION = OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor;
 
     public void validarObjeto(OrcamentoItemCampoValor objeto) throws Exception {
-
+        validacaoService.validarCodigoExistente(
+                ID_FUNCTION.apply(objeto),
+                repository.verificarCodigoExistente(objeto.getIdCampoPersonalizado()),
+                ID_FUNCTION);
     }
 
     public void excluirPorMestre(Long idMestre) throws Exception {

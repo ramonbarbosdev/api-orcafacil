@@ -18,6 +18,9 @@ import jakarta.transaction.Transactional;
 
 public interface OrcamentoItemCampoValorRepository extends JpaRepository<OrcamentoItemCampoValor, Long> {
 
+    @Query(value = "SELECT *  FROM orcamento_item_campo_valor b WHERE b.id_campopersonalizado = ?1 limit 1  ", nativeQuery = true)
+    Optional<OrcamentoItemCampoValor> verificarCodigoExistente(Long codigo);
+
     @Query(value = "SELECT * FROM orcamento_item_campo_valor WHERE id_orcamentoitem = ?1", nativeQuery = true)
     List<OrcamentoItemCampoValor> findbyIdMestre(Long id);
 

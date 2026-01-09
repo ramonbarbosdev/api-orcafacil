@@ -47,6 +47,9 @@ public class OrcamentoService {
     @Autowired
     private OrcamentoItemService orcamentoItemService;
 
+    @Autowired
+    private OrcamentoItemCampoValorService orcamentoItemCampoValorService;
+
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
     public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
@@ -66,7 +69,8 @@ public class OrcamentoService {
 
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
-
+                orcamentoItemCampoValorService.validarObjeto(campo);
+                
                 if (campo.getIdOrcamentoItemCampoValor() != null
                         && campo.getIdOrcamentoItemCampoValor() == 0) {
                     campo.setIdOrcamentoItemCampoValor(null);

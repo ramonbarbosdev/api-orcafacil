@@ -95,8 +95,8 @@ public class Orcamento {
     @NotNull(message = "O Preço Final é obrigatorio!")
     private BigDecimal vlPrecoFinal;
 
-    @OneToMany(mappedBy = "idOrcamento", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = false)
-    public List<OrcamentoItem> orcamentoItem = new ArrayList<OrcamentoItem>();
+    @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrcamentoItem> orcamentoItem = new ArrayList<>();
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;

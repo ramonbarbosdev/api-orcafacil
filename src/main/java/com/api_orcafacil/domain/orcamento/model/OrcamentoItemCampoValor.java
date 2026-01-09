@@ -38,12 +38,9 @@ public class OrcamentoItemCampoValor {
     private Long idOrcamentoItemCampoValor;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_orcamentoitem", insertable = false, updatable = false)
+    @JoinColumn(name = "id_orcamentoitem", nullable = false)
     @JsonIgnore
     private OrcamentoItem orcamentoItem;
-
-    @Column(name = "id_orcamentoitem", nullable = false)
-    private Long idOrcamentoItem;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_campopersonalizado", insertable = false, updatable = false)

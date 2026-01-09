@@ -27,12 +27,9 @@ public class OrcamentoItem {
     private Long idOrcamentoItem;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_orcamento", insertable = false, updatable = false)
+    @JoinColumn(name = "id_orcamento", nullable = false)
     @JsonIgnore
     private Orcamento orcamento;
-
-    @Column(name = "id_orcamento", nullable = false)
-    private Long idOrcamento;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_catalogo", insertable = false, updatable = false)
@@ -59,9 +56,9 @@ public class OrcamentoItem {
     @NotNull(message = "O preco total unitario é obrigatorio!")
     private BigDecimal vlPrecoTotal;
 
-    @OneToMany(mappedBy = "idOrcamentoItem", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = false)
-    public List<OrcamentoItemCampoValor> orcamentoItemCampoValor = new ArrayList<OrcamentoItemCampoValor>();
-
+    @OneToMany(mappedBy = "orcamentoItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrcamentoItemCampoValor> orcamentoItemCampoValor = new ArrayList<>();
+    
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
 

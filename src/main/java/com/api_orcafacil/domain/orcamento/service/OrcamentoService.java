@@ -33,7 +33,6 @@ public class OrcamentoService {
     @Autowired
     private OrcamentoRepository repository;
 
-   
     @Autowired
     private ValidacaoService validacaoService;
 
@@ -44,25 +43,35 @@ public class OrcamentoService {
     private ConfiguracaoOrcamentoService configuracaoOrcamentoService;
 
     @Autowired
-    private OrcamentoItemService orcamentoItemService ;
+    private OrcamentoItemService orcamentoItemService;
 
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
     public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
 
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public Orcamento salvar(Orcamento objeto) throws Exception {
 
-        List<OrcamentoItem> itensOrcamentoItem = objeto.getOrcamentoItem();
-        // objeto.setOrcamentoItem(null);
-
         validarObjeto(objeto);
+
         Cliente clientePersistido = clienteService.registrarClienteAPartirDoOrcamento(objeto);
 
-        objeto.setCliente(clientePersistido); // redundante, mas seguro
+        objeto.setCliente(clientePersistido);
 
-        objeto = repository.save(objeto);
-        orcamentoItemService.salvar(objeto, itensOrcamentoItem);
+        for (OrcamentoItem item : objeto.getOrcamentoItem()) {
+
+            // 🔴 SOMENTE ISSO
+            item.setOrcamento(objeto);
+
+            for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
+                campo.setOrcamentoItem(item);
+
+                if (campo.getIdOrcamentoItemCampoValor() != null
+                        && campo.getIdOrcamentoItemCampoValor() == 0) {
+                    campo.setIdOrcamentoItemCampoValor(null);
+                }
+            }
+        }
 
         return repository.save(objeto);
     }
@@ -90,7 +99,6 @@ public class OrcamentoService {
         return sequenciaFinal;
     }
 
-    
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) throws Exception {
 

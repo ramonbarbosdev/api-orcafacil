@@ -38,62 +38,62 @@ public class OrcamentoItemService {
     @Autowired
     private OrcamentoItemCampoValorService orcamentoItemCampoValorService;
 
-    public void salvar(Orcamento objeto,
-            List<OrcamentoItem> itens) throws Exception {
+    // public void salvar(Orcamento objeto,
+    //         List<OrcamentoItem> itens) throws Exception {
 
-        Function<Orcamento, Long> getIdFunctionMestre = Orcamento::getIdOrcamento;
-        Function<OrcamentoItem, Long> getIdFunction = OrcamentoItem::getIdOrcamentoItem;
+    //     Function<Orcamento, Long> getIdFunctionMestre = Orcamento::getIdOrcamento;
+    //     Function<OrcamentoItem, Long> getIdFunction = OrcamentoItem::getIdOrcamentoItem;
 
-        Long idMestre = getIdFunctionMestre.apply(objeto);
+    //     Long idMestre = getIdFunctionMestre.apply(objeto);
 
-        if (itens == null || itens.isEmpty()) {
+    //     if (itens == null || itens.isEmpty()) {
 
-            excluirPorMestre(idMestre);
+    //         excluirPorMestre(idMestre);
 
-            if (objeto.getOrcamentoItem() != null) {
-                for (OrcamentoItem antigo : objeto.getOrcamentoItem()) {
-                    antigo.setOrcamento(null);
-                    antigo.setIdOrcamento(null);
-                }
-            }
+    //         if (objeto.getOrcamentoItem() != null) {
+    //             for (OrcamentoItem antigo : objeto.getOrcamentoItem()) {
+    //                 antigo.setOrcamento(null);
+    //                 antigo.setIdOrcamento(null);
+    //             }
+    //         }
 
-            objeto.setOrcamentoItem(new ArrayList<>());
-            return;
-        }
+    //         objeto.setOrcamentoItem(new ArrayList<>());
+    //         return;
+    //     }
 
-        MestreDetalheUtils.removerItensGenerico(
-                idMestre,
-                itens,
-                repository::findbyIdMestre,
-                repository::deleteById,
-                getIdFunction,
-                itemRemovido -> {
-                    itemRemovido.setOrcamento(null);
-                    itemRemovido.setIdOrcamento(null);
-                });
+    //     MestreDetalheUtils.removerItensGenerico(
+    //             idMestre,
+    //             itens,
+    //             repository::findbyIdMestre,
+    //             repository::deleteById,
+    //             getIdFunction,
+    //             itemRemovido -> {
+    //                 itemRemovido.setOrcamento(null);
+    //                 itemRemovido.setIdOrcamento(null);
+    //             });
 
 
-        if (itens != null && itens.size() > 0) {
-            for (OrcamentoItem item : itens) {
-                item.setIdOrcamento(idMestre);
+    //     if (itens != null && itens.size() > 0) {
+    //         for (OrcamentoItem item : itens) {
+    //             item.setIdOrcamento(idMestre);
 
-                Long idExistente = getIdFunction.apply(item);
+    //             Long idExistente = getIdFunction.apply(item);
 
-                if (idExistente == null || idExistente == 0) {
-                    item.setIdOrcamentoItem(null);
-                }
+    //             if (idExistente == null || idExistente == 0) {
+    //                 item.setIdOrcamentoItem(null);
+    //             }
 
-                OrcamentoItem itemSalvo = repository.save(item);
+    //             OrcamentoItem itemSalvo = repository.save(item);
 
-                List<OrcamentoItemCampoValor> campos = item.getOrcamentoItemCampoValor();
+    //             List<OrcamentoItemCampoValor> campos = item.getOrcamentoItemCampoValor();
 
-                orcamentoItemCampoValorService.salvar(campos, itemSalvo);
+    //             orcamentoItemCampoValorService.salvar(campos, itemSalvo);
 
-            }
+    //         }
 
-            objeto.setOrcamentoItem(itens);
-        }
-    }
+    //         objeto.setOrcamentoItem(itens);
+    //     }
+    // }
 
     public void validarObjeto(OrcamentoItemCampoValor objeto) throws Exception {
 

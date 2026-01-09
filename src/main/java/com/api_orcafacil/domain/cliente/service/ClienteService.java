@@ -60,28 +60,25 @@ public class ClienteService {
         return objeto.isPresent() ? objeto.get() : null;
     }
 
-    public void registrarClienteAPartirDoOrcamento(Orcamento obj) throws Exception {
+    public Cliente registrarClienteAPartirDoOrcamento(Orcamento obj) throws Exception {
 
+        Cliente entrada = obj.getCliente();
 
-        Cliente objeto = obj.getCliente();
-
-
-        if (objeto == null) {
-            throw new Exception(
-                    "Objeto cliente está null.");
-        }
-        if (objeto.getNuCpfcnpj() == null || objeto.getNuCpfcnpj().isEmpty()) {
-            throw new Exception(
-                    "O CPF/CNPJ é obrigatorio para continuar!");
+        if (entrada == null) {
+            throw new Exception("Objeto cliente está null.");
         }
 
-        if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
-            String tenant = TenantContext.getTenantId();
-            objeto.setIdTenant(tenant);
+        if (entrada.getNuCpfcnpj() == null || entrada.getNuCpfcnpj().isEmpty()) {
+            throw new Exception("O CPF/CNPJ é obrigatório para continuar!");
         }
 
-        Optional<Cliente> clienteExistente = repository.verificarCodigoExistente(objeto.getNuCpfcnpj(),
-                objeto.getIdTenant());
+        if (entrada.getIdTenant() == null || entrada.getIdTenant().isEmpty()) {
+            entrada.setIdTenant(TenantContext.getTenantId());
+        }
+
+        Optional<Cliente> clienteExistente = repository.verificarCodigoExistente(
+                entrada.getNuCpfcnpj(),
+                entrada.getIdTenant());
 
         Cliente cliente;
 
@@ -91,14 +88,23 @@ public class ClienteService {
             cliente = new Cliente();
         }
 
-        cliente.setTpCliente(objeto.getNuCpfcnpj().length() > 11 ? TipoCliente.Juridico : TipoCliente.Fisico);
-        cliente.setNuCpfcnpj(objeto.getNuCpfcnpj());
-        cliente.setNmCliente(objeto.getNmCliente());
-        cliente.setNuTelefone(objeto.getNuTelefone());
-        cliente.setDsEmail(objeto.getDsEmail());
-        cliente.setDsObservacoes(objeto.getDsObservacoes());
+        cliente.setTpCliente(
+                entrada.getNuCpfcnpj().length() > 11
+                        ? TipoCliente.Juridico
+                        : TipoCliente.Fisico);
+        cliente.setNuCpfcnpj(entrada.getNuCpfcnpj());
+        cliente.setNmCliente(entrada.getNmCliente());
+        cliente.setNuTelefone(entrada.getNuTelefone());
+        cliente.setDsEmail(entrada.getDsEmail());
+        cliente.setDsObservacoes(entrada.getDsObservacoes());
+        cliente.setIdTenant(entrada.getIdTenant());
+
         cliente = salvar(cliente);
+
+        obj.setCliente(cliente);
         obj.setIdCliente(cliente.getIdCliente());
+
+        return cliente;
     }
 
 }

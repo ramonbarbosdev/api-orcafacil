@@ -1,6 +1,9 @@
 package com.api_orcafacil.domain.orcamento.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.api_orcafacil.domain.catalogo.model.Catalogo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -55,4 +58,15 @@ public class OrcamentoItem {
     @Column(name = "vl_precototal", nullable = false, precision = 18, scale = 4)
     @NotNull(message = "O preco total unitario é obrigatorio!")
     private BigDecimal vlPrecoTotal;
+
+    @OneToMany(mappedBy = "idOrcamentoItem", cascade = CascadeType.MERGE, fetch = FetchType.EAGER, orphanRemoval = false)
+    public List<OrcamentoItemCampoValor> orcamentoItemCampoValor = new ArrayList<OrcamentoItemCampoValor>();
+
+    @Column(name = "dt_cadastro", nullable = false, updatable = false)
+    private LocalDateTime dtCadastro;
+
+    @PrePersist
+    protected void onCreate() {
+        this.dtCadastro = LocalDateTime.now();
+    }
 }

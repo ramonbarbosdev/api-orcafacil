@@ -17,6 +17,7 @@ import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
 import com.api_orcafacil.domain.orcamento.model.ConfiguracaoOrcamento;
 import com.api_orcafacil.domain.orcamento.model.Orcamento;
 import com.api_orcafacil.domain.orcamento.model.OrcamentoItem;
+import com.api_orcafacil.domain.orcamento.model.OrcamentoItemCampoValor;
 import com.api_orcafacil.domain.orcamento.repository.CondicaoPagamentoRepository;
 import com.api_orcafacil.domain.orcamento.repository.ConfiguracaoOrcamentoRepository;
 import com.api_orcafacil.domain.orcamento.repository.OrcamentoItemRepository;
@@ -55,7 +56,9 @@ public class OrcamentoService {
         objeto.setOrcamentoItem(null);
 
         validarObjeto(objeto);
-        clienteService.registrarClienteAPartirDoOrcamento(objeto);
+        Cliente clientePersistido = clienteService.registrarClienteAPartirDoOrcamento(objeto);
+
+        objeto.setCliente(clientePersistido); // redundante, mas seguro
 
         objeto = repository.save(objeto);
         salvarOrcamentoItemDetalhe(objeto, itensOrcamentoItem);
@@ -89,6 +92,20 @@ public class OrcamentoService {
                 }
 
                 item = orcamentoItemRepository.save(item);
+
+                //ajuste nescessario
+                if (item.getOrcamentoItemCampoValor() != null) {
+                    for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
+
+                        campo.setIdOrcamentoItem(item.getIdOrcamentoItem());
+
+                        if (campo.getIdOrcamentoItemCampoValor() == null
+                                || campo.getIdOrcamentoItemCampoValor() == 0) {
+
+                            campo.setIdOrcamentoItemCampoValor(null);
+                        }
+                    }
+                }
             }
 
             objeto.setOrcamentoItem(itens);

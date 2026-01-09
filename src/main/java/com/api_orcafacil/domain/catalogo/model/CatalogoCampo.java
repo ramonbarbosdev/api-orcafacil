@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -71,6 +72,15 @@ public class CatalogoCampo {
     @PrePersist
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
+    }
+
+    @JsonProperty("nmCampoPersonalizado")
+    public String getNmCampoPersonalizado() {
+
+        if (campoPersonalizado != null) {
+            return campoPersonalizado.getNmCampoPersonalizado();
+        }
+        return null;
     }
 
 }

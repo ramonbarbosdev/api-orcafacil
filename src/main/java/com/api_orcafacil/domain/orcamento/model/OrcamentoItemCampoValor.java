@@ -1,5 +1,7 @@
 package com.api_orcafacil.domain.orcamento.model;
 
+import java.time.LocalDateTime;
+
 import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -11,9 +13,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,12 +37,8 @@ public class OrcamentoItemCampoValor {
     @Column(name = "id_orcamentoitemcampovalor")
     private Long idOrcamentoItemCampoValor;
 
-    @Column(name = "id_tenant", nullable = false)
-    @NotBlank(message = "O Tenant é obrigatorio!")
-    private String idTenant;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_orcamento_item", insertable = false, updatable = false)
+    @JoinColumn(name = "id_orcamentoitem", insertable = false, updatable = false)
     @JsonIgnore
     private OrcamentoItem orcamentoItem;
 
@@ -51,10 +51,18 @@ public class OrcamentoItemCampoValor {
     private CampoPersonalizado campoPersonalizado;
 
     @Column(name = "id_campopersonalizado", nullable = false)
-    @NotBlank(message = "O Campo Personalizado é obrigatorio!")
+    @NotNull(message = "O Campo Personalizado é obrigatorio!")
     private Long idCampoPersonalizado;
 
     @Column(name = "vl_informado", nullable = false, length = 255)
-    @NotBlank(message = "O valor é obrigatorio!")
+    @NotNull(message = "O valor é obrigatorio!")
     private String vlInformado;
+
+    @Column(name = "dt_cadastro", nullable = false, updatable = false)
+    private LocalDateTime dtCadastro;
+
+    @PrePersist
+    protected void onCreate() {
+        this.dtCadastro = LocalDateTime.now();
+    }
 }

@@ -76,13 +76,12 @@ public class Orcamento {
     @NotNull(message = "A condição de  pagamento é obrigatorio!")
     private Long idCondicaoPagamento;
 
-    @Column(name = "dt_prazoentrega", nullable = false)
+    @Column(name = "nu_prazoentrega", nullable = false)
     @NotNull(message = "O Prazo de entrega é obrigatorio!")
-    private LocalDate dtPrazoEntrega;
+    private Integer nuPrazoEntrega;
 
     @Column(name = "ds_observacoes", columnDefinition = "TEXT")
     private String dsObservacoes;
-
 
     @Column(name = "vl_precobase", nullable = false, precision = 18, scale = 4)
     @NotNull(message = "O Preço base é obrigatorio!")

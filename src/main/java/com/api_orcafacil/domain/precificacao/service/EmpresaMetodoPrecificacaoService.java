@@ -14,6 +14,7 @@ import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.model.MetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.repository.EmpresaMetodoPrecificacaoRepository;
 import com.api_orcafacil.domain.precificacao.repository.MetodoPrecificacaoRepository;
+import com.api_orcafacil.enums.TipoPrecificacao;
 
 @Service
 public class EmpresaMetodoPrecificacaoService {
@@ -41,7 +42,7 @@ public class EmpresaMetodoPrecificacaoService {
         EmpresaMetodoPrecificacao objeto = repository.findByIdTenant(idTenant)
                 .orElseGet(() -> {
 
-                    MetodoPrecificacao metodo = metodoPrecificacaoRepository.findByCdMetodoPrecificacao("SIMPLES")
+                    MetodoPrecificacao metodo = metodoPrecificacaoRepository.findByCdMetodoPrecificacao(TipoPrecificacao.SIMPLES)
                             .orElseThrow(() -> new IllegalStateException(
                                     "Método de precificação padrão não cadastrado"));
 

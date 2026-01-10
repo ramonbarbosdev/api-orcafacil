@@ -120,10 +120,6 @@ public class OrcamentoService {
             throw new IllegalArgumentException("A data de validade não pode ser anterior à emissão.");
         }
 
-        if (objeto.getDtPrazoEntrega().isBefore(objeto.getDtEmissao())) {
-            throw new IllegalArgumentException("O prazo de entrega não pode ser anterior à emissão.");
-        }
-
         BigDecimal custoCalculado = BigDecimal.ZERO;
         BigDecimal precoCalculado = BigDecimal.ZERO;
 

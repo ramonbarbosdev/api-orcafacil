@@ -13,18 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.api_orcafacil.domain.empresa.model.Empresa;
-import com.api_orcafacil.domain.empresa.model.PlanoAssinatura;
-import com.api_orcafacil.domain.empresa.service.PlanoAssinaturaService;
 import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
-import com.api_orcafacil.domain.precificacao.model.MetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.repository.EmpresaMetodoPrecificacaoRepository;
 import com.api_orcafacil.domain.precificacao.service.EmpresaMetodoPrecificacaoService;
-import com.api_orcafacil.domain.precificacao.service.MetodoPrecificacaoService;
-import com.api_orcafacil.domain.sistema.controller.BaseController;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpa;
-import com.api_orcafacil.domain.usuario.dto.UsuarioDTO;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -35,9 +27,6 @@ public class EmpresaMetodoPrecificacaoController extends BaseControllerJpa<Empre
 
     @Autowired
     private EmpresaMetodoPrecificacaoService service;
-
-     @Autowired
-    private EmpresaMetodoPrecificacaoRepository repository;
 
     public EmpresaMetodoPrecificacaoController(JpaRepository<EmpresaMetodoPrecificacao, Long> repository) {
         super(repository);

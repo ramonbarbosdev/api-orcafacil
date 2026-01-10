@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
+import com.api_orcafacil.enums.TipoCampoValor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -79,6 +80,23 @@ public class CatalogoCampo {
 
         if (campoPersonalizado != null) {
             return campoPersonalizado.getNmCampoPersonalizado();
+        }
+        return null;
+    }
+    @JsonProperty("tpCampoValor")
+    public TipoCampoValor getTpCampoValor() {
+
+        if (campoPersonalizado != null) {
+            return campoPersonalizado.getTpCampoValor();
+        }
+        return null;
+    }
+    
+    @JsonProperty("dsCampoPersonalizado")
+    public String getDsCampoPersonalizado() {
+
+        if (campoPersonalizado != null) {
+            return campoPersonalizado.getDsCampoPersonalizado();
         }
         return null;
     }

@@ -59,6 +59,9 @@ public class CampoPersonalizado {
     @NotBlank(message = "O tipo é obrigatorio!")
     private String tpCampoPersonalizado;
 
+    // MATERIAL = CUSTO_UNITARIO
+    // SERVIÇO / MÃO DE OBRA = PRECO_FIXO
+    // MÉTODO DE PRECIFICAÇÃO = AJUSTE_METODO
     @Enumerated(EnumType.STRING)
     @Column(name = "tp_campovalor")
     private TipoCampoValor tpCampoValor = TipoCampoValor.PRECO_FIXO;

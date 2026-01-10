@@ -3,10 +3,13 @@ package com.api_orcafacil.domain.orcamento.model;
 import java.time.LocalDateTime;
 
 import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
+import com.api_orcafacil.enums.TipoCampoValor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -50,6 +53,10 @@ public class OrcamentoItemCampoValor {
     @Column(name = "id_campopersonalizado", nullable = false)
     @NotNull(message = "O Campo Personalizado é obrigatorio!")
     private Long idCampoPersonalizado;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tp_valor")
+    private TipoCampoValor tpValor = TipoCampoValor.PRECO_FIXO;
 
     @Column(name = "vl_informado", nullable = false, length = 255)
     @NotNull(message = "O valor é obrigatorio!")

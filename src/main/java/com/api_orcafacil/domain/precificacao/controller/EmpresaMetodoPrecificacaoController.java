@@ -17,18 +17,21 @@ import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.repository.EmpresaMetodoPrecificacaoRepository;
 import com.api_orcafacil.domain.precificacao.service.EmpresaMetodoPrecificacaoService;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpa;
+import com.api_orcafacil.domain.sistema.controller.BaseControllerJpaTenant;
+import com.api_orcafacil.domain.sistema.repository.BaseRepository;
+import com.vladmihalcea.spring.repository.BaseJpaRepository;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping(value = "empresametodoprecificacao", produces = "application/json")
 @Tag(name = "Empresa Metodo Precificacao")
-public class EmpresaMetodoPrecificacaoController extends BaseControllerJpa<EmpresaMetodoPrecificacao, Long> {
+public class EmpresaMetodoPrecificacaoController extends BaseControllerJpaTenant<EmpresaMetodoPrecificacao, Long> {
 
     @Autowired
     private EmpresaMetodoPrecificacaoService service;
 
-    public EmpresaMetodoPrecificacaoController(JpaRepository<EmpresaMetodoPrecificacao, Long> repository) {
+    public EmpresaMetodoPrecificacaoController(BaseRepository<EmpresaMetodoPrecificacao, Long> repository) {
         super(repository);
     }
 

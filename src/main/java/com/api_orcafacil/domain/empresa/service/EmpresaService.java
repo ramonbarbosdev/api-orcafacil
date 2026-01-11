@@ -38,6 +38,7 @@ public class EmpresaService {
     }
 
     public void validarObjeto(Empresa objeto) throws Exception {
+        
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
                 repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto)),

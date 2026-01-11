@@ -1,11 +1,13 @@
 package com.api_orcafacil.domain.precificacao.service;
 
 import java.util.HashMap;
+import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.api_orcafacil.context.TenantContext;
 import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.domain.empresa.model.PlanoAssinatura;
 import com.api_orcafacil.domain.empresa.repository.PlanoAssinaturaRepository;
@@ -14,7 +16,10 @@ import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.model.MetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.repository.EmpresaMetodoPrecificacaoRepository;
 import com.api_orcafacil.domain.precificacao.repository.MetodoPrecificacaoRepository;
+import com.api_orcafacil.domain.servico.model.CategoriaServico;
+import com.api_orcafacil.domain.sistema.service.ValidacaoService;
 import com.api_orcafacil.enums.TipoPrecificacao;
+import com.api_orcafacil.util.TenantUtil;
 
 @Service
 public class EmpresaMetodoPrecificacaoService {
@@ -25,16 +30,34 @@ public class EmpresaMetodoPrecificacaoService {
     @Autowired
     private MetodoPrecificacaoRepository metodoPrecificacaoRepository;
 
+    @Autowired
+    private ValidacaoService validacaoService;
+
+    public static final Function<EmpresaMetodoPrecificacao, Long> ID_FUNCTION = EmpresaMetodoPrecificacao::getIdEmpresaMetodoPrecificacao;
+
     @Transactional(rollbackFor = Exception.class)
     public EmpresaMetodoPrecificacao salvar(
             String idTenant,
-            EmpresaMetodoPrecificacao dados) {
+            EmpresaMetodoPrecificacao objeto) throws Exception {
 
-        EmpresaMetodoPrecificacao atual = obterOuCriarPadrao(idTenant);
+        validarObjeto(objeto);
+        
+        return repository.save(objeto);
+    }
 
-        atual.setIdMetodoPrecificacao(dados.getIdMetodoPrecificacao());
+    public void validarObjeto(EmpresaMetodoPrecificacao objeto) throws Exception {
 
-        return repository.save(atual);
+        if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
+            String tenant = TenantContext.getTenantId();
+            objeto.setIdTenant(tenant);
+        }
+        validacaoService.validarCodigoExistente(
+                ID_FUNCTION.apply(objeto),
+                repository.verificarCodigoExistente(objeto.getIdMetodoPrecificacao(), objeto.getIdTenant()),
+                ID_FUNCTION,
+                "Método de precificação já cadastrado para esta empresa"
+            );
+
     }
 
     public EmpresaMetodoPrecificacao obterOuCriarPadrao(String idTenant) {
@@ -42,7 +65,8 @@ public class EmpresaMetodoPrecificacaoService {
         EmpresaMetodoPrecificacao objeto = repository.findByIdTenant(idTenant)
                 .orElseGet(() -> {
 
-                    MetodoPrecificacao metodo = metodoPrecificacaoRepository.findByCdMetodoPrecificacao(TipoPrecificacao.SIMPLES)
+                    MetodoPrecificacao metodo = metodoPrecificacaoRepository
+                            .findByCdMetodoPrecificacao(TipoPrecificacao.SIMPLES)
                             .orElseThrow(() -> new IllegalStateException(
                                     "Método de precificação padrão não cadastrado"));
 

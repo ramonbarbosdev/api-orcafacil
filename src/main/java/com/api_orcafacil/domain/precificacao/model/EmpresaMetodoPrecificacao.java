@@ -6,7 +6,9 @@ import java.util.Map;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.api_orcafacil.enums.TipoPrecificacao;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 
@@ -21,11 +23,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 
 @Getter
 @Setter
@@ -50,6 +52,7 @@ public class EmpresaMetodoPrecificacao {
     private Long idMetodoPrecificacao;
 
     @Column(name = "id_tenant", nullable = false)
+    @NotNull(message = "O Tenant é obrigatorio!")
     private String idTenant;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -64,5 +67,31 @@ public class EmpresaMetodoPrecificacao {
         this.dtCadastro = LocalDateTime.now();
     }
 
- 
+    @JsonProperty("nmMetodoPrecificacao")
+    public String getNmMetodoPrecificacao() {
+
+        if (metodoprecificacao != null) {
+            return metodoprecificacao.getNmMetodoPrecificacao();
+        }
+        return null;
+    }
+
+    @JsonProperty("dsMetodoPrecificacao")
+    public String getDsMetodoPrecificacao() {
+
+        if (metodoprecificacao != null) {
+            return metodoprecificacao.getDsMetodoPrecificacao();
+        }
+        return null;
+    }
+
+    @JsonProperty("cdMetodoPrecificacao")
+    public TipoPrecificacao getCdMetodoPrecificacao() {
+
+        if (metodoprecificacao != null) {
+            return metodoprecificacao.getCdMetodoPrecificacao();
+        }
+        return null;
+    }
+
 }

@@ -66,7 +66,7 @@ public class OrcamentoService {
     @Transactional
     public Orcamento salvar(Orcamento objeto) throws Exception {
 
-        // TO:DO - Colocar o empresa metodo de previficacao por orcamento
+        // TO:DO - rever calculo com metodo de precificacao
 
         validarObjeto(objeto);
 

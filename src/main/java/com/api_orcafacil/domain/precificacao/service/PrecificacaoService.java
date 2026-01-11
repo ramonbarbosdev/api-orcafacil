@@ -29,30 +29,49 @@ public class PrecificacaoService {
         BigDecimal quantidade = item.getQtItem();
         BigDecimal custoUnitario = item.getVlCustoUnitario();
 
-        // 1️⃣ custo base
-        BigDecimal custoBase = custoUnitario.multiply(quantidade);
+        BigDecimal baseCalculo = custoUnitario.multiply(quantidade);
+        
+        baseCalculo = regraTipoCalculo(item, baseCalculo, quantidade);
 
-        // 2️⃣ materiais / campos personalizados
-        BigDecimal materiais = BigDecimal.ZERO;
-
-        if (item.getOrcamentoItemCampoValor() != null) {
-            for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
-                if (campo.getVlInformado() != null && !campo.getVlInformado().isBlank()) {
-                    materiais = materiais.add(
-                            new BigDecimal(campo.getVlInformado()));
-                }
-            }
-        }
-
-        BigDecimal baseCalculo = custoBase.add(materiais);
-
-        // 3️⃣ aplica método conforme ENUM
         BigDecimal precoFinal = aplicarMetodo(
                 baseCalculo,
                 metodo.getCdMetodoPrecificacao(),
                 empresaMetodo.getConfiguracao());
 
         return precoFinal.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal regraTipoCalculo(OrcamentoItem item, BigDecimal baseCalculo, BigDecimal quantidade) {
+
+        if (item.getOrcamentoItemCampoValor() != null) {
+
+            for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
+
+                if (campo.getVlInformado() == null || campo.getVlInformado().isBlank()) {
+                    continue;
+                }
+
+                BigDecimal valor = new BigDecimal(campo.getVlInformado());
+
+                switch (campo.getTpValor()) {
+
+                    case PRECO_FIXO:
+                        baseCalculo = baseCalculo.add(valor);
+                        break;
+
+                    case CUSTO_UNITARIO:
+                        baseCalculo = baseCalculo.add(
+                                valor.multiply(quantidade));
+                        break;
+
+                    case AJUSTE_METODO:
+                        // não entra na base
+                        break;
+                }
+            }
+        }
+
+        return baseCalculo;
     }
 
     private BigDecimal aplicarMetodo(
@@ -80,6 +99,9 @@ public class PrecificacaoService {
                 BigDecimal valorFixo = obterDecimal(config, "valor");
 
                 return base.add(valorFixo);
+            case SIMPLES:
+
+                return base;
 
             default:
                 throw new IllegalArgumentException(

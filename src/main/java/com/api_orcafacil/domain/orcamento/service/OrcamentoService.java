@@ -72,10 +72,12 @@ public class OrcamentoService {
 
         objeto.setCliente(clientePersistido);
 
+        BigDecimal totalOrcamento = BigDecimal.ZERO;
+
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
             item.setOrcamento(objeto);
             orcamentoItemService.validarObjeto(item);
-            aplicarMetodoPrecificacao(item, objeto.getIdTenant());
+            totalOrcamento = aplicarMetodoPrecificacao(item, objeto.getIdTenant());
 
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
@@ -88,16 +90,21 @@ public class OrcamentoService {
             }
         }
 
+        objeto.setVlPrecoBase(totalOrcamento);
+
         return repository.save(objeto);
     }
 
-    public void aplicarMetodoPrecificacao(OrcamentoItem item, String idTenant) {
+    public BigDecimal aplicarMetodoPrecificacao(OrcamentoItem item, String idTenant) {
 
         EmpresaMetodoPrecificacao empresaMetodo = empresaMetodoPrecificacaoService.obterOuCriarPadrao(idTenant);
 
         BigDecimal precoItem = precificacaoService.precificarItem(item, empresaMetodo);
 
         item.setVlPrecoTotal(precoItem);
+        orcamentoItemService.validarTotal(item, precoItem);
+
+        return precoItem;
 
     }
 

@@ -53,55 +53,49 @@ public class OrcamentoItemService {
                 ID_FUNCTION,
                 "Não foi possivel salvar, existe itens repetidos. Verifique a listagem ou utilize um novo item.");
 
-        validarValoresItem(objeto);
+        validarEstrutura(objeto);
     }
 
-    public void validarValoresItem(OrcamentoItem item) {
+    public void validarEstrutura(OrcamentoItem item) {
 
-        if (item.getQtItem() == null)
-            throw new IllegalArgumentException("Quantidade do item não informada.");
+        if (item.getQtItem() == null || item.getQtItem().signum() <= 0)
+            throw new IllegalArgumentException("Quantidade inválida.");
 
         if (item.getVlCustoUnitario() == null)
             throw new IllegalArgumentException("Custo unitário não informado.");
 
-        BigDecimal quantidade = item.getQtItem();
-        BigDecimal custoUnitario = item.getVlCustoUnitario();
-
-        BigDecimal somaMateriais = BigDecimal.ZERO;
-
         if (item.getOrcamentoItemCampoValor() != null) {
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
-                if (campo.getVlInformado() != null && !campo.getVlInformado().isBlank()) {
+                if (campo.getVlInformado() != null) {
                     try {
-                        somaMateriais = somaMateriais.add(
-                                new BigDecimal(campo.getVlInformado()));
+                        new BigDecimal(campo.getVlInformado());
                     } catch (NumberFormatException e) {
                         throw new IllegalArgumentException(
-                                "Valor inválido no material: " + campo.getVlInformado());
+                                "Valor inválido no campo: " + campo.getVlInformado());
                     }
                 }
             }
         }
+    }
 
-        //  TOTAL = (custo unitário + materiais) × quantidade
-        BigDecimal totalCalculado = custoUnitario
-                .add(somaMateriais)
-                .multiply(quantidade)
-                .setScale(2, RoundingMode.HALF_UP);
+    public void validarTotal(
+            OrcamentoItem item,
+            BigDecimal totalCalculado) {
 
-        BigDecimal totalInformado = item.getVlPrecoTotal();
-
-        if (totalInformado == null)
+        if (item.getVlPrecoTotal() == null) {
             throw new IllegalArgumentException("Total do item não informado.");
+        }
 
-        totalInformado = totalInformado.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal esperado = totalCalculado.setScale(2, RoundingMode.HALF_UP);
 
-        if (totalCalculado.compareTo(totalInformado) != 0) {
+        BigDecimal informado = item.getVlPrecoTotal().setScale(2, RoundingMode.HALF_UP);
+
+        if (esperado.compareTo(informado) != 0) {
             throw new IllegalArgumentException(
                     String.format(
                             "Total do item inválido. Esperado: %s, Informado: %s",
-                            totalCalculado,
-                            totalInformado));
+                            esperado,
+                            informado));
         }
     }
 

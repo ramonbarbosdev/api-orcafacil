@@ -66,6 +66,9 @@ public class OrcamentoService {
     @Transactional
     public Orcamento salvar(Orcamento objeto) throws Exception {
 
+        //TO:DO - Colocar o empresa metodo de previficacao por orcamento
+
+
         validarObjeto(objeto);
 
         Cliente clientePersistido = clienteService.registrarClienteAPartirDoOrcamento(objeto);
@@ -77,8 +80,8 @@ public class OrcamentoService {
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
             item.setOrcamento(objeto);
             orcamentoItemService.validarObjeto(item);
-            totalOrcamento = aplicarMetodoPrecificacao(item, objeto.getIdTenant());
-
+            BigDecimal totalItem = aplicarMetodoPrecificacao(item, objeto.getIdTenant());
+            totalOrcamento = totalOrcamento.add(totalItem);
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
                 orcamentoItemCampoValorService.validarObjeto(campo);
@@ -101,8 +104,8 @@ public class OrcamentoService {
 
         BigDecimal precoItem = precificacaoService.precificarItem(item, empresaMetodo);
 
-        item.setVlPrecoTotal(precoItem);
         orcamentoItemService.validarTotal(item, precoItem);
+        item.setVlPrecoTotal(precoItem);
 
         return precoItem;
 

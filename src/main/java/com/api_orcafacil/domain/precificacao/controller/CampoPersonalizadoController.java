@@ -30,6 +30,8 @@ import com.api_orcafacil.domain.precificacao.service.MetodoPrecificacaoService;
 import com.api_orcafacil.domain.sistema.controller.BaseController;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpa;
 import com.api_orcafacil.domain.usuario.dto.UsuarioDTO;
+import com.api_orcafacil.enums.TipoAjuste;
+import com.api_orcafacil.enums.TipoCampo;
 import com.api_orcafacil.enums.TipoCampoValor;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -70,6 +72,10 @@ public class CampoPersonalizadoController extends BaseControllerJpa<CampoPersona
     @GetMapping("/tipo-valor/")
     public ResponseEntity<TipoCampoValor[]> obterTipoCampoValor() {
         return ResponseEntity.ok(TipoCampoValor.values());
+    }
+    @GetMapping("/tipo-campo/")
+    public ResponseEntity<TipoCampo[]> obterTipoCampo() {
+        return ResponseEntity.ok(TipoCampo.values());
     }
 
 }

@@ -60,6 +60,13 @@ public class EmpresaMetodoPrecificacaoService {
 
     }
 
+
+     public EmpresaMetodoPrecificacao buscarPorId(Long id) {
+
+        EmpresaMetodoPrecificacao objeto = repository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Empresa Método de Precificação não encontrado"));
+         return objeto;
+     }
     public EmpresaMetodoPrecificacao obterOuCriarPadrao(String idTenant) {
 
         EmpresaMetodoPrecificacao objeto = repository.findByIdTenant(idTenant)

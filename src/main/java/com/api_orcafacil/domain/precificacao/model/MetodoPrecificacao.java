@@ -53,7 +53,7 @@ public class MetodoPrecificacao {
     @Column(name = "nm_metodoprecificacao")
     private String nmMetodoPrecificacao;
 
-    @Column(name = "ds_metodoprecificacao")
+    @Column(name = "ds_metodoprecificacao", columnDefinition = "TEXT")
     private String dsMetodoPrecificacao;
 
     @jakarta.persistence.Transient

@@ -1,6 +1,7 @@
 package com.api_orcafacil.domain.orcamento.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -37,12 +38,20 @@ public class OrcamentoItemCampoValorService {
 
     public static final Function<OrcamentoItemCampoValor, Long> ID_FUNCTION = OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor;
 
-    public void validarObjeto(OrcamentoItemCampoValor objeto) throws Exception {
-        validacaoService.validarCodigoExistente(
-                ID_FUNCTION.apply(objeto),
-                repository.verificarCodigoExistente(objeto.getIdCampoPersonalizado()),
-                ID_FUNCTION,
-            "Não foi possivel salvar, existe materiais repetidos nos ajustes. Verifique a listagem ou utilize um novo material.");
+    public void validarObjeto(OrcamentoItemCampoValor objeto, List<OrcamentoItemCampoValor> itens) throws Exception {
+        Function<OrcamentoItemCampoValor, Long> getIdFunction = OrcamentoItemCampoValor::getIdOrcamentoItemCampoValor;
+
+        Long idExistente = getIdFunction.apply(objeto);
+
+        boolean isCodigoExiste = itens.stream()
+                .filter(i -> !Objects.equals(i.getIdOrcamentoItemCampoValor(), idExistente))
+                .anyMatch(i -> i.getIdCampoPersonalizado().equals(objeto.getIdCampoPersonalizado()));
+
+        if (isCodigoExiste) {
+            throw new Exception(
+                    "Não foi possivel salvar, existe materiais repetidos nos ajustes. Verifique a listagem ou utilize um novo material.");
+        }
+
     }
 
     public void excluirPorMestre(Long idMestre) throws Exception {

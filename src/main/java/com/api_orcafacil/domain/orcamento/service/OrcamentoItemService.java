@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -45,14 +46,20 @@ public class OrcamentoItemService {
 
     public static final Function<OrcamentoItem, Long> ID_FUNCTION = OrcamentoItem::getIdOrcamentoItem;
 
-    public void validarObjeto(OrcamentoItem objeto) throws Exception {
+    public void validarObjeto(OrcamentoItem objeto, List<OrcamentoItem> itens) throws Exception {
 
-        validacaoService.validarCodigoExistente(
-                ID_FUNCTION.apply(objeto),
-                repository.verificarCodigoExistente(objeto.getIdCatalogo()),
-                ID_FUNCTION,
-                "Não foi possivel salvar, existe itens repetidos. Verifique a listagem ou utilize um novo item.");
+        Function<OrcamentoItem, Long> getIdFunction = OrcamentoItem::getIdOrcamentoItem;
 
+        Long idExistente = getIdFunction.apply(objeto);
+
+        boolean isCodigoExiste = itens.stream()
+                .filter(i -> !Objects.equals(i.getIdOrcamentoItem(), idExistente))
+                .anyMatch(i -> i.getIdCatalogo().equals(objeto.getIdCatalogo()));
+
+        if (isCodigoExiste) {
+            throw new Exception("Não foi possivel salvar, existe itens repetidos. Verifique a listagem ou utilize um novo item.");
+        }
+        
         validarEstrutura(objeto);
     }
 

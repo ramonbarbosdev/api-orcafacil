@@ -78,12 +78,14 @@ public class OrcamentoService {
 
         for (OrcamentoItem item : objeto.getOrcamentoItem()) {
             item.setOrcamento(objeto);
-            orcamentoItemService.validarObjeto(item);
+            orcamentoItemService.validarObjeto(item, objeto.getOrcamentoItem());
+
             BigDecimal totalItem = aplicarMetodoPrecificacao(item, objeto.getIdEmpresaMetodoPrecificacao());
             totalOrcamento = totalOrcamento.add(totalItem);
+
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 campo.setOrcamentoItem(item);
-                orcamentoItemCampoValorService.validarObjeto(campo);
+                orcamentoItemCampoValorService.validarObjeto(campo, item.getOrcamentoItemCampoValor());
 
                 if (campo.getIdOrcamentoItemCampoValor() != null
                         && campo.getIdOrcamentoItemCampoValor() == 0) {
@@ -92,7 +94,10 @@ public class OrcamentoService {
             }
         }
 
+        // obs: ira ser igual pois ainda nao existe regra comercial. Ex: desconto,
+        // acrescimo, etc
         objeto.setVlPrecoBase(totalOrcamento);
+        objeto.setVlPrecoFinal(totalOrcamento);
 
         return repository.save(objeto);
     }
@@ -104,17 +109,59 @@ public class OrcamentoService {
 
         BigDecimal precoItem = precificacaoService.precificarItem(item, empresaMetodo);
 
-        orcamentoItemService.validarTotal(item, precoItem);
-        item.setVlPrecoTotal(precoItem);
+        // orcamentoItemService.validarTotal(item, precoItem);
+        // item.setVlPrecoTotal(precoItem);
 
         return precoItem;
 
     }
 
+    public BigDecimal calcularPrecoItem(
+            OrcamentoItem item,
+            Long idEmpresaMetodoPrecificacao) {
+
+        EmpresaMetodoPrecificacao empresaMetodo = empresaMetodoPrecificacaoService
+                .buscarPorId(idEmpresaMetodoPrecificacao);
+
+        return precificacaoService.precificarItem(item, empresaMetodo);
+    }
+
+    public BigDecimal previewPrecificacao(Orcamento objeto) {
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
+            String tenant = TenantContext.getTenantId();
+            objeto.setIdTenant(tenant);
+        }
+
+        if (objeto.getIdEmpresaMetodoPrecificacao() == null) {
+
+            EmpresaMetodoPrecificacao empresaMetodoPrecificacao = empresaMetodoPrecificacaoService
+                    .obterEmpresaMetodoPrecificacaoSimples(objeto.getIdTenant());
+            objeto.setIdEmpresaMetodoPrecificacao(empresaMetodoPrecificacao.getIdEmpresaMetodoPrecificacao());
+        }
+
+        for (OrcamentoItem item : objeto.getOrcamentoItem()) {
+
+            if (item.getIdCatalogo() == null) {
+                return total;
+            }
+
+            BigDecimal valorItem = calcularPrecoItem(
+                    item,
+                    objeto.getIdEmpresaMetodoPrecificacao());
+
+            total = total.add(valorItem);
+        }
+
+        return total;
+    }
+
     public void validarObjeto(Orcamento objeto) throws Exception {
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
-                repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto)),
+                repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto), objeto.getIdTenant()),
                 ID_FUNCTION);
 
         if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
@@ -148,13 +195,13 @@ public class OrcamentoService {
 
         BigDecimal precoBaseInformado = objeto.getVlPrecoBase().setScale(2, RoundingMode.HALF_UP);
 
-        if (precoCalculado.compareTo(precoBaseInformado) != 0) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Preço base inválido. Esperado: %s, Informado: %s",
-                            precoCalculado,
-                            precoBaseInformado));
-        }
+        // if (precoCalculado.compareTo(precoBaseInformado) != 0) {
+        //     throw new IllegalArgumentException(
+        //             String.format(
+        //                     "Preço base inválido. Esperado: %s, Informado: %s",
+        //                     precoCalculado,
+        //                     precoBaseInformado));
+        // }
 
     }
 

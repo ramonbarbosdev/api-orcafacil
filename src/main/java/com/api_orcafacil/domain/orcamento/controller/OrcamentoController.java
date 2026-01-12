@@ -1,5 +1,6 @@
 package com.api_orcafacil.domain.orcamento.controller;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,15 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
 
         service.salvar(objeto);
         return new ResponseEntity<>(Map.of("message", "Registro salvo com sucesso"), HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/preview-precificacao", produces = "application/json", consumes = "application/json")
+    public ResponseEntity<?> previewPrecificacao(
+            @RequestBody Orcamento request) {
+
+        BigDecimal resposta = service.previewPrecificacao(request);
+
+        return ResponseEntity.ok(Map.of("valorTotal", resposta));
     }
 
     @GetMapping(value = "/sequencia", produces = "application/json")

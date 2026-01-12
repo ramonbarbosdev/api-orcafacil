@@ -1,6 +1,7 @@
 package com.api_orcafacil.domain.precificacao.service;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class EmpresaMetodoPrecificacaoService {
             EmpresaMetodoPrecificacao objeto) throws Exception {
 
         validarObjeto(objeto);
-        
+
         return repository.save(objeto);
     }
 
@@ -55,37 +56,64 @@ public class EmpresaMetodoPrecificacaoService {
                 ID_FUNCTION.apply(objeto),
                 repository.verificarCodigoExistente(objeto.getIdMetodoPrecificacao(), objeto.getIdTenant()),
                 ID_FUNCTION,
-                "Método de precificação já cadastrado para esta empresa"
-            );
+                "Método de precificação já cadastrado para esta empresa");
 
     }
 
-
-     public EmpresaMetodoPrecificacao buscarPorId(Long id) {
+    public EmpresaMetodoPrecificacao buscarPorId(Long id) {
 
         EmpresaMetodoPrecificacao objeto = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Empresa Método de Precificação não encontrado"));
-         return objeto;
-     }
+        return objeto;
+    }
+
     public EmpresaMetodoPrecificacao obterOuCriarPadrao(String idTenant) {
 
         EmpresaMetodoPrecificacao objeto = repository.findByIdTenant(idTenant)
                 .orElseGet(() -> {
 
-                    MetodoPrecificacao metodo = metodoPrecificacaoRepository
-                            .findByCdMetodoPrecificacao(TipoPrecificacao.SIMPLES)
-                            .orElseThrow(() -> new IllegalStateException(
-                                    "Método de precificação padrão não cadastrado"));
-
-                    EmpresaMetodoPrecificacao cfg = new EmpresaMetodoPrecificacao();
-                    cfg.setIdTenant(idTenant);
-                    cfg.setIdMetodoPrecificacao(metodo.getIdMetodoPrecificacao());
-                    cfg.setConfiguracao(new HashMap<>());
+                    EmpresaMetodoPrecificacao cfg = criarMetodoPrecificacaoPadrao(idTenant);
 
                     return repository.save(cfg);
                 });
 
         return objeto;
+    }
+
+    @Transactional
+    public EmpresaMetodoPrecificacao obterEmpresaMetodoPrecificacaoSimples(
+            String idTenant) {
+
+        MetodoPrecificacao metodoSimples = metodoPrecificacaoRepository
+                .findByCdMetodoPrecificacao(TipoPrecificacao.SIMPLES)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Método de precificação SIMPLES não cadastrado"));
+
+        return repository
+                .findByIdTenantAndIdMetodoPrecificacao(
+                        idTenant,
+                        metodoSimples.getIdMetodoPrecificacao())
+                .orElseGet(() -> {
+                    EmpresaMetodoPrecificacao cfg = criarMetodoPrecificacaoPadrao(idTenant);
+
+                    return repository.save(cfg);
+                });
+    }
+
+    private EmpresaMetodoPrecificacao criarMetodoPrecificacaoPadrao(String idTenant) {
+
+        MetodoPrecificacao metodo = metodoPrecificacaoRepository
+                .findByCdMetodoPrecificacao(TipoPrecificacao.SIMPLES)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Método de precificação padrão (SIMPLES) não cadastrado"));
+
+        EmpresaMetodoPrecificacao cfg = new EmpresaMetodoPrecificacao();
+        cfg.setIdTenant(idTenant);
+        cfg.setIdMetodoPrecificacao(metodo.getIdMetodoPrecificacao()); // se tiver relacionamento
+        cfg.setConfiguracao(Map.of()); // configuração neutra
+
+        return repository.save(cfg);
+
     }
 
 }

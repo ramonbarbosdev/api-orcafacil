@@ -26,11 +26,19 @@ public class PrecificacaoService {
             throw new IllegalArgumentException("Método de precificação não definido.");
         }
 
+        if (item.getQtItem() == null) {
+            throw new IllegalArgumentException("Quantidade do item não informada.");
+        }
+
+        if (item.getVlCustoUnitario() == null) {
+            throw new IllegalArgumentException("Custo unitário do item não informado.");
+        }
+
         BigDecimal quantidade = item.getQtItem();
         BigDecimal custoUnitario = item.getVlCustoUnitario();
 
         BigDecimal baseCalculo = custoUnitario.multiply(quantidade);
-        
+
         baseCalculo = regraTipoCalculo(item, baseCalculo, quantidade);
 
         BigDecimal precoFinal = aplicarMetodo(

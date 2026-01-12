@@ -93,9 +93,9 @@ public class CatalogoService {
 
     }
 
-    public String sequencia() throws Exception {
+    public String sequencia(String idTenant) throws Exception {
 
-        String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial());
+        String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial(idTenant));
 
         return sq_sequencia;
     }

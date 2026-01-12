@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,10 +44,9 @@ public class CatalogoController extends BaseControllerJpaTenant<Catalogo, Long> 
 
     @GetMapping(value = "/sequencia", produces = "application/json")
     @Operation(summary = "Gerar sequencia")
-    public ResponseEntity<?> obterSequencia() throws Exception {
-
+    public ResponseEntity<?> obterSequencia(@RequestHeader("X-Tenant-ID") String tenantId) throws Exception {
         
-        String resposta = service.sequencia();
+        String resposta = service.sequencia(tenantId);
 
         return new ResponseEntity<>(Map.of("sequencia", resposta), HttpStatus.OK);
     }

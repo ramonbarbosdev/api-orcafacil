@@ -209,7 +209,7 @@ public class OrcamentoService {
 
         ConfiguracaoOrcamento config = configuracaoOrcamentoService.obterPrimeiroObjeto(idTenant);
 
-        String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial());
+        String sq_sequencia = validacaoService.gerarSequencia(repository.obterSequencial(idTenant));
 
         String sequenciaFinal = config.getPrefixoNumero() + "-" + sq_sequencia;
 

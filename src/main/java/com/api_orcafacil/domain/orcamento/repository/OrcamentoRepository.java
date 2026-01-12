@@ -20,8 +20,9 @@ public interface OrcamentoRepository extends BaseRepository<Orcamento, Long> {
               0
             )
             FROM orcamento c
+            where c.id_tenant = ?1
             """, nativeQuery = true)
-    Long obterSequencial();
+    Long obterSequencial(String idTenant);
 
     @Query(value = "SELECT *  FROM orcamento b WHERE b.nu_orcamento = ?1 and b.id_tenant = ?2 limit 1  ", nativeQuery = true)
     Optional<Orcamento> verificarCodigoExistente(String codigo, String idTenant);

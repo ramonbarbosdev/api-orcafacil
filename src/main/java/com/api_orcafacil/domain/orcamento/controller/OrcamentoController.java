@@ -22,6 +22,8 @@ import com.api_orcafacil.domain.orcamento.service.CondicaoPagamentoService;
 import com.api_orcafacil.domain.orcamento.service.OrcamentoService;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpaTenant;
 import com.api_orcafacil.domain.sistema.repository.BaseRepository;
+import com.api_orcafacil.enums.StatusOrcamento;
+import com.api_orcafacil.enums.TipoCliente;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,5 +69,10 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
     public ResponseEntity<?> delete(@PathVariable Long id) throws Exception {
         service.excluir(id);
         return new ResponseEntity<>(Map.of("message", "Registro deletado com sucesso"), HttpStatus.OK);
+    }
+
+    @GetMapping("/status-orcamento")
+    public ResponseEntity<StatusOrcamento[]> obterCliente() {
+        return ResponseEntity.ok(StatusOrcamento.values());
     }
 }

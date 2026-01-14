@@ -30,6 +30,7 @@ import com.api_orcafacil.domain.precificacao.service.PrecificacaoService;
 import com.api_orcafacil.domain.servico.model.Servico;
 import com.api_orcafacil.domain.servico.repository.ServicoRepository;
 import com.api_orcafacil.domain.sistema.service.ValidacaoService;
+import com.api_orcafacil.enums.StatusOrcamento;
 import com.api_orcafacil.util.MestreDetalheUtils;
 
 @Service
@@ -196,13 +197,37 @@ public class OrcamentoService {
         BigDecimal precoBaseInformado = objeto.getVlPrecoBase().setScale(2, RoundingMode.HALF_UP);
 
         // if (precoCalculado.compareTo(precoBaseInformado) != 0) {
-        //     throw new IllegalArgumentException(
-        //             String.format(
-        //                     "Preço base inválido. Esperado: %s, Informado: %s",
-        //                     precoCalculado,
-        //                     precoBaseInformado));
+        // throw new IllegalArgumentException(
+        // String.format(
+        // "Preço base inválido. Esperado: %s, Informado: %s",
+        // precoCalculado,
+        // precoBaseInformado));
         // }
 
+        // Validacao Status
+        if (objeto.getTpStatus() != StatusOrcamento.RASCUNHO) {
+            throw new IllegalStateException(
+                    "Orçamento não pode ser alterado após ser gerado.");
+        }
+
+        // validarTransicao(null, null);
+
+    }
+
+    private void validarTransicao(
+            StatusOrcamento atual,
+            StatusOrcamento novo) {
+
+        if (atual == StatusOrcamento.RASCUNHO && novo == StatusOrcamento.GERADO)
+            return;
+        if (atual == StatusOrcamento.GERADO && novo == StatusOrcamento.ENVIADO)
+            return;
+        if (atual == StatusOrcamento.ENVIADO &&
+                (novo == StatusOrcamento.APROVADO || novo == StatusOrcamento.REJEITADO))
+            return;
+
+        throw new IllegalStateException(
+                "Transição de status inválida: " + atual + " → " + novo);
     }
 
     public String sequencia(String idTenant) throws Exception {

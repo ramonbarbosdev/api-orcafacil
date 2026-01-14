@@ -9,6 +9,7 @@ import java.util.List;
 import com.api_orcafacil.domain.cliente.model.Cliente;
 import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
+import com.api_orcafacil.enums.StatusOrcamento;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -78,7 +79,7 @@ public class Orcamento {
 
     @Column(name = "nu_prazoentrega", nullable = false)
     @NotNull(message = "O Prazo de entrega é obrigatorio!")
-    private Integer nuPrazoEntrega;
+    private Integer nuPrazoEntrega = 20;
 
     @Column(name = "ds_observacoes", columnDefinition = "TEXT")
     private String dsObservacoes;
@@ -92,6 +93,10 @@ public class Orcamento {
 
     @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrcamentoItem> orcamentoItem = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tp_status", nullable = false)
+    private StatusOrcamento tpStatus = StatusOrcamento.RASCUNHO;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;

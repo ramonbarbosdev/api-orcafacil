@@ -225,7 +225,7 @@ public class AuthService {
         if (auth != null && auth.isAuthenticated()) {
             new SecurityContextLogoutHandler().logout(request, response, auth);
             onlineService.removerUsuario(auth.getName());
-            messagingTemplate.convertAndSend("/topic/online", "update");
+            // messagingTemplate.convertAndSend("/topic/online", "update");
             return true;
         }
 

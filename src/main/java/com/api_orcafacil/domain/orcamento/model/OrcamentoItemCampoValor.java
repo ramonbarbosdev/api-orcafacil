@@ -56,6 +56,7 @@ public class OrcamentoItemCampoValor {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tp_valor")
+    @NotNull(message = "O Tipo de Campo é obrigatorio!")
     private TipoCampoValor tpValor = TipoCampoValor.PRECO_FIXO;
 
     @Column(name = "vl_informado", nullable = false, length = 255)

@@ -61,6 +61,11 @@ public class PrecificacaoService {
 
                 BigDecimal valor = new BigDecimal(campo.getVlInformado());
 
+                if (campo.getTpValor() == null) {
+                    throw new IllegalArgumentException(
+                            "Tipo de valor do campo de precificação não informado.");
+                }
+
                 switch (campo.getTpValor()) {
 
                     case PRECO_FIXO:

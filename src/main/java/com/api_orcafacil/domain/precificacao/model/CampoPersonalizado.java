@@ -64,6 +64,7 @@ public class CampoPersonalizado {
     // MÉTODO DE PRECIFICAÇÃO = AJUSTE_METODO
     @Enumerated(EnumType.STRING)
     @Column(name = "tp_campovalor")
+    @NotNull(message = "O Campo  é obrigatorio!")
     private TipoCampoValor tpCampoValor = TipoCampoValor.PRECO_FIXO;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)

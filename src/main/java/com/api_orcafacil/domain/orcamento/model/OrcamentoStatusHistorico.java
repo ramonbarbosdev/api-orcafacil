@@ -44,9 +44,17 @@ public class OrcamentoStatusHistorico {
     @JsonIgnore
     private Orcamento orcamento;
 
+    @Column(name = "id_tenant", nullable = false)
+    @NotBlank(message = "O tenant é obrigatorio!")
+    private String idTenant;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "tp_status", nullable = false)
-    private StatusOrcamento tpStatus;
+    @Column(name = "tp_statusanterior", nullable = false)
+    private StatusOrcamento tpStatusAnterior;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tp_statusatual", nullable = false)
+    private StatusOrcamento tpStatusAtual;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)

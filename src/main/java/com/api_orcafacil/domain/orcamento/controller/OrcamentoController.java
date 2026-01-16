@@ -47,6 +47,50 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
         return new ResponseEntity<>(Map.of("message", "Registro salvo com sucesso"), HttpStatus.CREATED);
     }
 
+    @PostMapping(value = "/rascunho", produces = "application/json")
+    public ResponseEntity<?> rascunho(@RequestBody Orcamento objeto) throws Exception {
+
+        objeto.setTpStatus(StatusOrcamento.RASCUNHO);
+        objeto = service.salvar(objeto);
+
+        return new ResponseEntity<>(Map.of("message", "Registro Enviado com sucesso"), HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/gerar", produces = "application/json")
+    public ResponseEntity<?> gerar(@RequestBody Orcamento objeto) throws Exception {
+        objeto.setTpStatus(StatusOrcamento.GERADO);
+        objeto = service.salvar(objeto);
+
+        return new ResponseEntity<>(Map.of("message", "Registro Enviado com sucesso"), HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/enviar", produces = "application/json")
+    public ResponseEntity<?> enviar(@RequestBody Orcamento objeto) throws Exception {
+
+        service.alterarStatus(
+                objeto.getIdOrcamento(),
+                StatusOrcamento.ENVIADO);
+        return new ResponseEntity<>(Map.of("message", "Registro Enviado com sucesso"), HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/aprovar", produces = "application/json")
+    public ResponseEntity<?> aprovar(@RequestBody Orcamento objeto) throws Exception {
+
+        service.alterarStatus(
+                objeto.getIdOrcamento(),
+                StatusOrcamento.APROVADO);
+        return new ResponseEntity<>(Map.of("message", "Registro aprovado com sucesso"), HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/rejeitar", produces = "application/json")
+    public ResponseEntity<?> rejeitar(@RequestBody Orcamento objeto) throws Exception {
+
+        service.alterarStatus(
+                objeto.getIdOrcamento(),
+                StatusOrcamento.REJEITADO);
+        return new ResponseEntity<>(Map.of("message", "Registro rejeitado com sucesso"), HttpStatus.CREATED);
+    }
+
     @PostMapping(value = "/preview-precificacao", produces = "application/json", consumes = "application/json")
     public ResponseEntity<?> previewPrecificacao(
             @RequestBody Orcamento request) {

@@ -60,6 +60,9 @@ public class OrcamentoService {
     @Autowired
     private EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService;
 
+    @Autowired
+    private OrcamentoStatusHistoricoService statusHistoricoService;
+
     public static final Function<Orcamento, Long> ID_FUNCTION = Orcamento::getIdOrcamento;
 
     public static final Function<Orcamento, String> SEQUENCIA_FUNCTION = Orcamento::getNuOrcamento;
@@ -160,15 +163,16 @@ public class OrcamentoService {
     }
 
     public void validarObjeto(Orcamento objeto) throws Exception {
-        validacaoService.validarCodigoExistente(
-                ID_FUNCTION.apply(objeto),
-                repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto), objeto.getIdTenant()),
-                ID_FUNCTION);
 
         if (objeto.getIdTenant() == null || objeto.getIdTenant().isEmpty()) {
             String tenant = TenantContext.getTenantId();
             objeto.setIdTenant(tenant);
         }
+
+        validacaoService.validarCodigoExistente(
+                ID_FUNCTION.apply(objeto),
+                repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto), objeto.getIdTenant()),
+                ID_FUNCTION);
 
         if (objeto.getOrcamentoItem() == null || objeto.getOrcamentoItem().isEmpty()) {
             throw new IllegalArgumentException("O orçamento deve possuir ao menos um item.");
@@ -196,22 +200,26 @@ public class OrcamentoService {
 
         BigDecimal precoBaseInformado = objeto.getVlPrecoBase().setScale(2, RoundingMode.HALF_UP);
 
-        // if (precoCalculado.compareTo(precoBaseInformado) != 0) {
-        // throw new IllegalArgumentException(
-        // String.format(
-        // "Preço base inválido. Esperado: %s, Informado: %s",
-        // precoCalculado,
-        // precoBaseInformado));
-        // }
+    }
 
-        // Validacao Status
-        if (objeto.getTpStatus() != StatusOrcamento.RASCUNHO) {
-            throw new IllegalStateException(
-                    "Orçamento não pode ser alterado após ser gerado.");
-        }
+    public void alterarStatus(
+            Long idOrcamento,
+            StatusOrcamento novoStatus) throws Exception {
 
-        // validarTransicao(null, null);
+        Orcamento orcamento = repository.findById(idOrcamento)
+                .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado."));
 
+        StatusOrcamento statusAtual = orcamento.getTpStatus();
+
+        validarTransicao(statusAtual, novoStatus);
+
+        orcamento.setTpStatus(novoStatus);
+        repository.save(orcamento);
+
+        statusHistoricoService.registrar(
+                orcamento,
+                statusAtual,
+                novoStatus);
     }
 
     private void validarTransicao(

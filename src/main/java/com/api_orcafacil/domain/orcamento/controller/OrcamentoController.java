@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.api_orcafacil.domain.orcamento.dto.OrcamentoVisualizacaoDTO;
 import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
 import com.api_orcafacil.domain.orcamento.model.Orcamento;
 import com.api_orcafacil.domain.orcamento.service.CondicaoPagamentoService;
 import com.api_orcafacil.domain.orcamento.service.OrcamentoService;
+import com.api_orcafacil.domain.orcamento.service.VisualizacaoOrcamentoService;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpaTenant;
 import com.api_orcafacil.domain.sistema.repository.BaseRepository;
 import com.api_orcafacil.enums.StatusOrcamento;
@@ -35,6 +37,9 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
 
     @Autowired
     private OrcamentoService service;
+
+    @Autowired
+    private VisualizacaoOrcamentoService visualizacaoOrcamento;
 
     public OrcamentoController(BaseRepository<Orcamento, Long> repository) {
         super(repository);
@@ -118,5 +123,15 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
     @GetMapping("/status-orcamento")
     public ResponseEntity<StatusOrcamento[]> obterCliente() {
         return ResponseEntity.ok(StatusOrcamento.values());
+    }
+
+    @GetMapping(value = "/visualizacao/{id}", produces = "application/json")
+    public ResponseEntity<OrcamentoVisualizacaoDTO> visualizacao(
+            @PathVariable("id") Long id,
+            @RequestHeader("X-Tenant-ID") String tenantId) {
+
+        OrcamentoVisualizacaoDTO dto = visualizacaoOrcamento.visualizar(id, tenantId);
+
+        return ResponseEntity.ok(dto);
     }
 }

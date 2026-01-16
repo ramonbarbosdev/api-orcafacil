@@ -15,6 +15,7 @@ import com.api_orcafacil.domain.cliente.model.Cliente;
 import com.api_orcafacil.domain.cliente.service.ClienteService;
 import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.domain.empresa.repository.EmpresaRepository;
+import com.api_orcafacil.domain.orcamento.dto.OrcamentoVisualizacaoDTO;
 import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
 import com.api_orcafacil.domain.orcamento.model.ConfiguracaoOrcamento;
 import com.api_orcafacil.domain.orcamento.model.Orcamento;
@@ -248,6 +249,7 @@ public class OrcamentoService {
 
         return sequenciaFinal;
     }
+
 
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) throws Exception {

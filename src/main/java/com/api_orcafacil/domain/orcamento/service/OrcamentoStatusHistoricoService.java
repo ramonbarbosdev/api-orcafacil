@@ -24,11 +24,11 @@ public class OrcamentoStatusHistoricoService {
     @Autowired
     private ValidacaoService validacaoService;
 
+    @Transactional()
     public void registrar(
             Orcamento orcamento,
             StatusOrcamento statusAnterior,
-            StatusOrcamento statusNovo
-            ) throws Exception {
+            StatusOrcamento statusNovo) throws Exception {
 
         Usuario usuario = validacaoService.obterUsuarioLogado();
 

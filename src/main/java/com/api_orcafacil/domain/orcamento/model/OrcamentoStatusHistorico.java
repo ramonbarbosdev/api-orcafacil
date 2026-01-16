@@ -49,7 +49,7 @@ public class OrcamentoStatusHistorico {
     private String idTenant;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tp_statusanterior", nullable = false)
+    @Column(name = "tp_statusanterior")
     private StatusOrcamento tpStatusAnterior;
 
     @Enumerated(EnumType.STRING)

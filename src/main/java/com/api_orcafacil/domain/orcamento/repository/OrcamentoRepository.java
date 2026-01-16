@@ -13,7 +13,7 @@ import com.api_orcafacil.domain.sistema.repository.BaseRepository;
 public interface OrcamentoRepository extends BaseRepository<Orcamento, Long> {
 
     Optional<Orcamento> findByIdTenant(String idTenant);
-    Optional<Orcamento> findByIdAndIdTenant(Long id , String idTenant);
+    Optional<Orcamento> findByIdOrcamentoAndIdTenant(Long id , String idTenant);
 
     @Query(value = """
             SELECT COALESCE(

@@ -46,7 +46,7 @@ public class VisualizacaoOrcamentoService {
             String tenantId) {
 
         Orcamento orcamento = repository
-                .findByIdAndIdTenant(idOrcamento, tenantId)
+                .findByIdOrcamentoAndIdTenant(idOrcamento, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Orçamento não encontrado."));
 
@@ -97,7 +97,7 @@ public class VisualizacaoOrcamentoService {
 
             ItemVisualizacaoDTO itemDto = new ItemVisualizacaoDTO();
             itemDto.setIdItem(item.getIdOrcamentoItem());
-            itemDto.setDescricao(item.getCatalogo().getNmCatalogo());
+            itemDto.setDescricao(item.getNmCatalogo());
             itemDto.setQuantidade(item.getQtItem());
             itemDto.setPrecoUnitario(item.getVlPrecoUnitario());
             itemDto.setSubtotal(item.getVlPrecoTotal());
@@ -123,7 +123,7 @@ public class VisualizacaoOrcamentoService {
         for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
 
             MaterialVisualizacaoDTO material = new MaterialVisualizacaoDTO();
-            material.setDescricao(campo.getCampoPersonalizado().getDsCampoPersonalizado());
+            material.setDescricao(campo.getNmCampoPersonalizado());
             // material.setQuantidade(campo.getQtInformada());
             material.setValor(campo.getVlInformado());
             material.setTipo(campo.getTpValor());

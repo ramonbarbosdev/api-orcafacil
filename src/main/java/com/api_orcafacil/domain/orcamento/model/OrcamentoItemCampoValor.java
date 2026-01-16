@@ -70,4 +70,13 @@ public class OrcamentoItemCampoValor {
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
     }
+
+    
+    public String getNmCampoPersonalizado()
+    {
+         if (campoPersonalizado != null) {
+            return campoPersonalizado.getNmCampoPersonalizado();
+        }
+        return null;
+    }
 }

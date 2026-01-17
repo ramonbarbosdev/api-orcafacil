@@ -99,6 +99,7 @@ public class VisualizacaoOrcamentoService {
             itemDto.setIdItem(item.getIdOrcamentoItem());
             itemDto.setDescricao(item.getNmCatalogo());
             itemDto.setQuantidade(item.getQtItem());
+            itemDto.setPrecoCusto(item.getVlCustoUnitario());
             itemDto.setPrecoUnitario(item.getVlPrecoUnitario());
             itemDto.setSubtotal(item.getVlPrecoTotal());
 
@@ -156,6 +157,8 @@ public class VisualizacaoOrcamentoService {
         List<StatusHistoricoVisualizacaoDTO> historicoDto = historicos.stream().map(h -> {
 
             StatusHistoricoVisualizacaoDTO s = new StatusHistoricoVisualizacaoDTO();
+
+            
 
             s.setStatusAnterior(h.getTpStatusAnterior());
             s.setStatusAtual(h.getTpStatusAtual());

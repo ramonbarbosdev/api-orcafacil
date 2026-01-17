@@ -95,7 +95,7 @@ public class Orcamento {
     private List<OrcamentoItem> orcamentoItem = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tp_status", nullable = false)
+    @Column(name = "tp_status")
     private StatusOrcamento tpStatus = StatusOrcamento.RASCUNHO;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)

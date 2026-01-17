@@ -71,7 +71,7 @@ public class OrcamentoService {
     @Transactional
     public Orcamento salvar(Orcamento objeto) throws Exception {
 
-        // TO:DO - rever calculo com metodo de precificacao
+        boolean novo = objeto.getIdOrcamento() == null;
 
         validarObjeto(objeto);
 
@@ -99,12 +99,20 @@ public class OrcamentoService {
             }
         }
 
-        // obs: ira ser igual pois ainda nao existe regra comercial. Ex: desconto,
-        // acrescimo, etc
         objeto.setVlPrecoBase(totalOrcamento);
         objeto.setVlPrecoFinal(totalOrcamento);
 
-        return repository.save(objeto);
+        Orcamento orcamentoSalvo = repository.save(objeto);
+
+        if (novo) {
+            statusHistoricoService.registrar(
+                    orcamentoSalvo,
+                    null,
+                    objeto.getTpStatus(),
+                    objeto.getIdTenant());
+        }
+
+        return orcamentoSalvo;
     }
 
     public BigDecimal aplicarMetodoPrecificacao(OrcamentoItem item, Long idEmpresaMetodoPrecificacao) {
@@ -220,7 +228,8 @@ public class OrcamentoService {
         statusHistoricoService.registrar(
                 orcamento,
                 statusAtual,
-                novoStatus);
+                novoStatus,
+                orcamento.getIdTenant());
     }
 
     private void validarTransicao(
@@ -249,7 +258,6 @@ public class OrcamentoService {
 
         return sequenciaFinal;
     }
-
 
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) throws Exception {

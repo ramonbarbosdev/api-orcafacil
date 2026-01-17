@@ -28,13 +28,16 @@ public class OrcamentoStatusHistoricoService {
     public void registrar(
             Orcamento orcamento,
             StatusOrcamento statusAnterior,
-            StatusOrcamento statusNovo) throws Exception {
+            StatusOrcamento statusNovo,
+            String idTenant
+        ) throws Exception {
 
         Usuario usuario = validacaoService.obterUsuarioLogado();
 
         OrcamentoStatusHistorico historico = new OrcamentoStatusHistorico();
 
         historico.setOrcamento(orcamento);
+        historico.setIdTenant(idTenant);
         historico.setTpStatusAnterior(statusAnterior);
         historico.setTpStatusAtual(statusNovo);
         historico.setUsuario(usuario);

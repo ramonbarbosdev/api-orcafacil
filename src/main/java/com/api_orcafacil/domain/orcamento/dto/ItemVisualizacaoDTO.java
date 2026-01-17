@@ -20,6 +20,7 @@ public class ItemVisualizacaoDTO {
 
     private BigDecimal quantidade;
 
+    private BigDecimal precoCusto;
     private BigDecimal precoUnitario;
 
     private BigDecimal subtotal;

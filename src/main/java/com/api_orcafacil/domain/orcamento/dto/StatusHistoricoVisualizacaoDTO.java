@@ -3,6 +3,7 @@ package com.api_orcafacil.domain.orcamento.dto;
 import java.time.LocalDateTime;
 
 import com.api_orcafacil.enums.StatusOrcamento;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,6 +19,8 @@ public class StatusHistoricoVisualizacaoDTO {
 
     private StatusOrcamento statusAtual;
 
+    
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime dataHora;
 
     private String usuario;

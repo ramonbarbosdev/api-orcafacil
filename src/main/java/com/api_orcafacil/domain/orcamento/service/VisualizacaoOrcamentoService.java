@@ -41,7 +41,7 @@ public class VisualizacaoOrcamentoService {
     @Autowired
     private OrcamentoStatusHistoricoRepository historicoRepository;
 
-    public OrcamentoVisualizacaoDTO visualizar(
+    public OrcamentoVisualizacaoDTO visualizarPublico(
             Long idOrcamento,
             String tenantId) {
 

@@ -51,4 +51,9 @@ public class OrcamentoStatusHistoricoService {
 
         return repository.findByOrcamento_IdOrcamentoOrderByDtCadastroAsc(idOrcamento);
     }
+
+    public void excluirPorIdOrcamento(Long id)
+    {
+        repository.deleteByIdMestre(id);
+    }
 }

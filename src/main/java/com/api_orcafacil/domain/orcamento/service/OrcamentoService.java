@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +99,11 @@ public class OrcamentoService {
                 }
             }
         }
+
+         if (novo) {
+            objeto.setCdPublico(UUID.randomUUID().toString());
+
+         }
 
         objeto.setVlPrecoBase(totalOrcamento);
         objeto.setVlPrecoFinal(totalOrcamento);
@@ -262,8 +268,7 @@ public class OrcamentoService {
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) throws Exception {
 
-        // orcamentoItemService.excluirPorMestre(id);
-
+        statusHistoricoService.excluirPorIdOrcamento(id);
         repository.deleteById(id);
     }
 }

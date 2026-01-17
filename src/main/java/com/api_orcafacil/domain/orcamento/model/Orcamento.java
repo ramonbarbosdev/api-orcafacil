@@ -98,6 +98,9 @@ public class Orcamento {
     @Column(name = "tp_status")
     private StatusOrcamento tpStatus = StatusOrcamento.RASCUNHO;
 
+    @Column(name = "cd_publico", unique = true, updatable = false)
+    private String cdPublico;
+
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
 

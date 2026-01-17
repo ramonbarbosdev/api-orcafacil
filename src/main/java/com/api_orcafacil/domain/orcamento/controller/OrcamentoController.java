@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.api_orcafacil.domain.orcamento.dto.OrcamentoVisualizacaoDTO;
 import com.api_orcafacil.domain.orcamento.model.CodicaoPagamento;
 import com.api_orcafacil.domain.orcamento.model.Orcamento;
+import com.api_orcafacil.domain.orcamento.repository.OrcamentoRepository;
 import com.api_orcafacil.domain.orcamento.service.CondicaoPagamentoService;
 import com.api_orcafacil.domain.orcamento.service.OrcamentoService;
 import com.api_orcafacil.domain.orcamento.service.VisualizacaoOrcamentoService;
@@ -37,6 +39,9 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
 
     @Autowired
     private OrcamentoService service;
+
+    @Autowired
+    private OrcamentoRepository repository;
 
     @Autowired
     private VisualizacaoOrcamentoService visualizacaoOrcamento;
@@ -66,7 +71,9 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
         objeto.setTpStatus(StatusOrcamento.GERADO);
         objeto = service.salvar(objeto);
 
-        return new ResponseEntity<>(Map.of("message", "Registro Enviado com sucesso"), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                Map.of("message", "Registro Gerado com sucesso", "cdPublico", objeto.getCdPublico()),
+                HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/enviar", produces = "application/json")
@@ -125,12 +132,22 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
         return ResponseEntity.ok(StatusOrcamento.values());
     }
 
-    @GetMapping(value = "/visualizacao/{id}", produces = "application/json")
+    @GetMapping(value = "/visualizacao/{cdPublico}", produces = "application/json")
     public ResponseEntity<OrcamentoVisualizacaoDTO> visualizacao(
-            @PathVariable("id") Long id,
-            @RequestHeader("X-Tenant-ID") String tenantId) {
+            @PathVariable("cdPublico") String cdPublico) {
 
-        OrcamentoVisualizacaoDTO dto = visualizacaoOrcamento.visualizar(id, tenantId);
+        Orcamento orcamento = repository
+                .findByCdPublico(cdPublico)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Orçamento não encontrado"));
+
+        if (orcamento.getTpStatus() == StatusOrcamento.RASCUNHO) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        OrcamentoVisualizacaoDTO dto = visualizacaoOrcamento.visualizarPublico(orcamento.getIdOrcamento(),
+                orcamento.getIdTenant());
 
         return ResponseEntity.ok(dto);
     }

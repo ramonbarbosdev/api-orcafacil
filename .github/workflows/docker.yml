@@ -50,13 +50,14 @@ jobs:
             docker stop ${{ secrets.APP_NAME }} || true
             docker rm ${{ secrets.APP_NAME }} || true
 
-             docker run -d \
-              --name ${{ secrets.APP_NAME }} \
-              --restart always \
-              --memory=512m \
-              -p ${{ secrets.APP_PORT }}:8080 \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USER=${{ secrets.DB_USER }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              ghcr.io/${{ github.repository }}:latest
+            docker run -d \
+            --name api-orcafacil \
+            --restart always \
+            --memory=512m \
+            -p 8081:8080 \
+            -e DB_HOST=10.0.0.10 \
+            -e DB_PORT=5432 \
+            -e DB_DATABASE=orcafacil \
+            -e DB_USERNAME=orcafacil_user \
+            -e DB_PASSWORD=senha_forte \
+            ghcr.io/ramonbarbosdev/api-orcafacil:latest

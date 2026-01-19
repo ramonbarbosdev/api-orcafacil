@@ -9,7 +9,8 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
-COPY --from=build /app/target/api-orcafacil-0.0.1-SNAPSHOT app.jar
+COPY --from=build /app/target/api-orcafacil-0.0.1-SNAPSHOT.jar app.jar
+
 COPY .env .env
 
 EXPOSE 8080

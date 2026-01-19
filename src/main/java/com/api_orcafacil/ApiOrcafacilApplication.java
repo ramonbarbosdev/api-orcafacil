@@ -17,16 +17,10 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import com.api_orcafacil.config.DotenvLoader;
 
 @SpringBootApplication
-@ComponentScan(basePackages = { "com.*" })
-@EntityScan(basePackages = { "com.api_orcafacil.*" })
-@EnableJpaRepositories(basePackages = { "com.api_orcafacil.*" })
-@EnableTransactionManagement
-@EnableWebMvc
-@RestController
-@EnableAutoConfiguration
 @EnableCaching
 @EnableScheduling
 @EnableMethodSecurity
+@EnableTransactionManagement
 public class ApiOrcafacilApplication {
 
 	public static void main(String[] args) {

@@ -195,7 +195,7 @@ public class AuthService {
             empresa = new Empresa();
             empresa.setNmEmpresa(nomeBase);
             empresa.setFlAtivo(true);
-            empresa.setCdEmpresa(empresaService.sequencia());
+            empresa.setCdEmpresa("00000000000");
             empresa = empresaService.salvar(empresa);
 
         }

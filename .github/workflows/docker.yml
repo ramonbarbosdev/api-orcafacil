@@ -51,13 +51,13 @@ jobs:
             docker rm ${{ secrets.APP_NAME }} || true
 
             docker run -d \
-            --name api-orcafacil \
+            --name ${{ secrets.APP_NAME }} \
             --restart always \
             --memory=512m \
-            -p 8081:8080 \
-            -e DB_HOST=10.0.0.10 \
-            -e DB_PORT=5432 \
-            -e DB_DATABASE=orcafacil \
-            -e DB_USERNAME=orcafacil_user \
-            -e DB_PASSWORD=senha_forte \
-            ghcr.io/ramonbarbosdev/api-orcafacil:latest
+            -p ${{ secrets.APP_PORT }}:8080 \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
+            -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            ghcr.io/${{ github.repository }}:latest

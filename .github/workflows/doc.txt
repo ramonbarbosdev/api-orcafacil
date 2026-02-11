@@ -1,0 +1,28 @@
+Documentação básica — deploy.yml
+
+Arquivo:
+    .github/workflows/deploy.yml
+
+Fluxo geral:
+    Git Push → GitHub Actions → Build Docker Image → Push GHCR → SSH Server → Pull Image → Restart Container
+
+Seção 1 — Trigger: Define quando o workflow será executado.    
+    on:
+        push:
+            branches: ["main"]
+        
+Seção 2 — Variáveis globais
+    env:
+        REGISTRY: Registry Docker utilizado
+        IMAGE_NAME: Nome da imagem no GHCR
+        HOST_PORT: Porta externa do servidor
+        CONTAINER_PORT: Porta interna do container
+        CONTAINER_NAME: Nome do container no Docker
+
+Secrets obrigatórios no GitHub:
+    Repository → Settings → Secrets and variables → Actions -> New repository secret
+        Criar os seguintes secrets:
+            SERVER_HOST: IP do servidor
+            SERVER_USER: Usuário SSH do servidor
+            SERVER_SSH_KEY: ex: -----BEGIN OPENSSH PRIVATE KEY-----
+            OUTRAS_VARIAVEIS: Cração de outras variaveis se nescessario

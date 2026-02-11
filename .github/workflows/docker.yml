@@ -7,6 +7,9 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  CONTAINER_NAME: api-orcafacil
+  HOST_PORT: 8080
+  CONTAINER_PORT: 8080
 
 jobs:
   build-and-push:
@@ -47,14 +50,14 @@ jobs:
 
             docker pull ghcr.io/${{ github.repository }}:latest
 
-            docker stop ${{ secrets.APP_NAME }} || true
-            docker rm ${{ secrets.APP_NAME }} || true
+            docker stop ${{ env.CONTAINER_NAME }} || true
+            docker rm ${{ env.CONTAINER_NAME }} || true
 
             docker run -d \
-            --name ${{ secrets.APP_NAME }} \
+            --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
             --memory=512m \
-            -p ${{ secrets.APP_PORT }}:8080 \
+            -p ${{ env.HOST_PORT }}:${{ env.CONTAINER_PORT }} \
             -e DB_HOST=${{ secrets.DB_HOST }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e DB_DATABASE=${{ secrets.DB_DATABASE }} \

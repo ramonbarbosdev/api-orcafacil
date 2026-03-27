@@ -19,6 +19,8 @@ import com.api_orcafacil.domain.catalogo.model.Catalogo;
 import com.api_orcafacil.domain.catalogo.service.CatalogoService;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpaTenant;
 import com.api_orcafacil.domain.sistema.repository.BaseRepository;
+import com.api_orcafacil.enums.TipoCliente;
+import com.api_orcafacil.enums.TipoItem;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,7 +47,7 @@ public class CatalogoController extends BaseControllerJpaTenant<Catalogo, Long> 
     @GetMapping(value = "/sequencia", produces = "application/json")
     @Operation(summary = "Gerar sequencia")
     public ResponseEntity<?> obterSequencia(@RequestHeader("X-Tenant-ID") String tenantId) throws Exception {
-        
+
         String resposta = service.sequencia(tenantId);
 
         return new ResponseEntity<>(Map.of("sequencia", resposta), HttpStatus.OK);
@@ -55,6 +57,11 @@ public class CatalogoController extends BaseControllerJpaTenant<Catalogo, Long> 
     public ResponseEntity<?> delete(@PathVariable Long id) throws Exception {
         service.excluir(id);
         return new ResponseEntity<>(Map.of("message", "Registro deletado com sucesso"), HttpStatus.OK);
+    }
+
+    @GetMapping("/tipo-item/")
+    public ResponseEntity<TipoItem[]> obterTipoItem() {
+        return ResponseEntity.ok(TipoItem.values());
     }
 
 }

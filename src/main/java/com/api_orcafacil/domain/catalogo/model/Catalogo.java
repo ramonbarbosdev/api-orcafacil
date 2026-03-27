@@ -5,25 +5,23 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.api_orcafacil.domain.orcamento.model.OrcamentoItem;
-import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.api_orcafacil.enums.TipoCliente;
+import com.api_orcafacil.enums.TipoItem;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,6 +44,10 @@ public class Catalogo {
     @Column(name = "id_tenant", nullable = false)
     @NotBlank(message = "O tenant é obrigatorio!")
     private String idTenant;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tp_item", nullable = true)
+    private TipoItem tpItem;
 
     @NotBlank(message = "O código é obrigatorio!")
     @Column(name = "cd_catalogo")
@@ -73,6 +75,10 @@ public class Catalogo {
     @PrePersist
     protected void onCreate() {
         this.dtCadastro = LocalDateTime.now();
+
+        if (this.tpItem == null) {
+            this.tpItem = TipoItem.Produto;
+        }
     }
 
 }

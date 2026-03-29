@@ -139,4 +139,13 @@ public class Orcamento {
         }
         return null;
     }
+
+    @JsonProperty("getNmCondicaoPagamento")
+    public String getNmCondicaoPagamento() {
+
+        if (empresa != null) {
+            return condicaopagamento.getNmCondicaoPagamento();
+        }
+        return null;
+    }
 }

@@ -59,13 +59,6 @@ public class VisualizacaoOrcamentoService {
         mapearResumo(orcamento, dto);
         mapearHistorico(idOrcamento, dto);
 
-        dto.setTotalBruto(new BigDecimal("1500.00"));
-        dto.setTotalDesconto(new BigDecimal("100.00"));
-        dto.setValorFrete(new BigDecimal("50.00"));
-        dto.setTotalOrcamento(new BigDecimal("1450.00"));
-
-        dto.setObservacoes("Prazo de entrega: 7 dias úteis.\nGarantia de 90 dias.");
-
         return dto;
     }
 
@@ -79,6 +72,11 @@ public class VisualizacaoOrcamentoService {
         dto.setDtValido(orcamento.getDtValido());
         dto.setStatus(orcamento.getTpStatus());
         dto.setNmEmpresa(orcamento.getNmEmpresa());
+        dto.setCondicaoPagamento(orcamento.getNmCondicaoPagamento());
+        dto.setNuPrazoEntrega(orcamento.getNuPrazoEntrega());    
+        dto.setTotalDesconto(new BigDecimal("0.00"));
+        dto.setObservacoes(orcamento.getDsObservacoes());
+
     }
 
     private void mapearCliente(

@@ -34,10 +34,9 @@ public class OrcamentoVisualizacaoDTO {
     private List<ItemVisualizacaoDTO> itens;
     private List<StatusHistoricoVisualizacaoDTO> historicoStatus;
 
-    private BigDecimal totalBruto;
     private BigDecimal totalDesconto;
-    private BigDecimal valorFrete;
-    private BigDecimal totalOrcamento;
+    private String condicaoPagamento;
+    private Integer nuPrazoEntrega;
     private String observacoes;
 
     public List<ItemVisualizacaoDTO> getProdutos() {

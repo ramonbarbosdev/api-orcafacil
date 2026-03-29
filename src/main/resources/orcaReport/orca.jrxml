@@ -27,14 +27,15 @@
 	<field name="dtEmissao" class="java.time.LocalDate"/>
 	<field name="dtValido" class="java.time.LocalDate"/>
 	<field name="cliente" class="com.api_orcafacil.domain.orcamento.dto.ClienteVisualizacaoDTO"/>
-	<field name="totalBruto" class="java.math.BigDecimal"/>
+	<field name="vlPrecoBase" class="java.math.BigDecimal"/>
 	<field name="totalDesconto" class="java.math.BigDecimal"/>
-	<field name="valorFrete" class="java.math.BigDecimal"/>
-	<field name="totalOrcamento" class="java.math.BigDecimal"/>
+	<field name="vlPrecoFinal" class="java.math.BigDecimal"/>
 	<field name="observacoes" class="java.lang.String"/>
 	<field name="produtos" class="java.util.List"/>
 	<field name="servicos" class="java.util.List"/>
 	<field name="nmEmpresa" class="java.lang.String"/>
+	<field name="condicaoPagamento" class="java.lang.String"/>
+	<field name="nuPrazoEntrega" class="java.lang.Integer"/>
 	<title>
 		<band height="128" splitType="Stretch">
 			<rectangle>
@@ -410,7 +411,7 @@ AQUI]]></text>
 		</band>
 	</detail>
 	<summary>
-		<band height="195" splitType="Stretch">
+		<band height="316" splitType="Stretch">
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="5" width="555" height="44" forecolor="#CCCCCC" backcolor="#F5F5F5" uuid="0522097d-bbfd-4ae2-80fd-969b14858797"/>
 				<graphicElement>
@@ -441,7 +442,7 @@ AQUI]]></text>
 				<textElement verticalAlignment="Middle">
 					<font size="11" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{totalBruto}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{vlPrecoBase}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="193" y="10" width="170" height="12" forecolor="#666666" uuid="457736f2-b987-45de-a4e3-df5314875993"/>
@@ -475,7 +476,7 @@ AQUI]]></text>
 				<textElement verticalAlignment="Middle">
 					<font size="12" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{totalOrcamento}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{vlPrecoFinal}]]></textFieldExpression>
 			</textField>
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="60" width="555" height="20" forecolor="#E0E0E0" backcolor="#EFEFEF" uuid="0254a439-3bae-469c-9944-2ae6cde217a5"/>
@@ -488,20 +489,57 @@ AQUI]]></text>
 				<textElement verticalAlignment="Middle">
 					<font size="9" isBold="true"/>
 				</textElement>
-				<text><![CDATA[OBSERVAÇÕES]]></text>
+				<text><![CDATA[INFORMAÇÕES COMPLEMENTARES]]></text>
 			</staticText>
 			<rectangle>
-				<reportElement mode="Opaque" x="0" y="80" width="555" height="106" forecolor="#CCCCCC" backcolor="#FFFFFF" uuid="cabadccd-fd52-4d76-9b8b-229483096a30"/>
+				<reportElement mode="Opaque" x="0" y="80" width="555" height="60" forecolor="#CCCCCC" backcolor="#FFFFFF" uuid="cabadccd-fd52-4d76-9b8b-229483096a30"/>
 				<graphicElement>
 					<pen lineWidth="0.5" lineColor="#CCCCCC"/>
 				</graphicElement>
 			</rectangle>
 			<textField textAdjust="StretchHeight">
-				<reportElement x="10" y="88" width="535" height="90" forecolor="#2C2C2C" uuid="5e085adf-829c-4575-a7b8-0aa4b6b72b0b"/>
+				<reportElement x="10" y="88" width="535" height="12" forecolor="#2C2C2C" uuid="5e085adf-829c-4575-a7b8-0aa4b6b72b0b"/>
+				<textElement verticalAlignment="Top">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{condicaoPagamento} != null 
+? "Condição de pagamento: " + $F{condicaoPagamento}
+: ""]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="150" width="555" height="20" forecolor="#E0E0E0" backcolor="#EFEFEF" uuid="6a76e963-dcb1-4b7e-82b6-a3a5c4d0aa5f"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#CCCCCC"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="8" y="150" width="200" height="20" forecolor="#1A1A1A" uuid="8f9cf6c6-26df-482d-956b-9e71cd28b0f0"/>
+				<textElement verticalAlignment="Middle">
+					<font size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DESCRIÇÃO]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement mode="Opaque" x="0" y="170" width="555" height="106" forecolor="#CCCCCC" backcolor="#FFFFFF" uuid="bf5bd6d2-b7d4-414b-9860-0b7f2d1b71dc"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#CCCCCC"/>
+				</graphicElement>
+			</rectangle>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="10" y="178" width="535" height="90" forecolor="#2C2C2C" uuid="7cc5e5b2-dc49-4763-ac8e-50a56b245744"/>
 				<textElement verticalAlignment="Top">
 					<font size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{observacoes} != null ? $F{observacoes} : ""]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight">
+				<reportElement x="10" y="104" width="535" height="12" forecolor="#2C2C2C" uuid="927ccae0-9e65-46e6-ab32-9c74fb220234"/>
+				<textElement verticalAlignment="Top">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nuPrazoEntrega} != null 
+? "Previsão de entrega: " + $F{nuPrazoEntrega} + " dias"
+: ""]]></textFieldExpression>
 			</textField>
 		</band>
 	</summary>

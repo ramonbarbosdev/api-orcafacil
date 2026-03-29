@@ -21,7 +21,7 @@
 	<subDataset name="dsMateriais" uuid="445fbffd-e377-4f34-aa29-1fae65cf8dfb">
 		<field name="descricao" class="java.lang.String"/>
 		<field name="quantidade" class="java.math.BigDecimal"/>
-		<field name="valor" class="java.math.BigDecimal"/>
+		<field name="valor" class="java.lang.String"/>
 	</subDataset>
 	<field name="nuOrcamento" class="java.lang.String"/>
 	<field name="dtEmissao" class="java.time.LocalDate"/>
@@ -56,14 +56,15 @@
 					<pen lineWidth="1.5" lineColor="#CCCCCC"/>
 				</graphicElement>
 			</ellipse>
-			<staticText>
-				<reportElement x="12" y="34" width="76" height="36" forecolor="#BBBBBB" uuid="340533b1-5da9-4f29-af79-38bcba76906f"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font size="7"/>
-				</textElement>
-				<text><![CDATA[SEU LOGO
-AQUI]]></text>
-			</staticText>
+			<frame>
+    <reportElement x="12" y="22" width="76" height="60"/>
+
+  
+
+   
+   
+
+</frame>
 			<line>
 				<reportElement x="102" y="1" width="1" height="103" forecolor="#E0E0E0" uuid="823c14b2-346c-42bb-8630-373668347436"/>
 				<graphicElement>
@@ -240,7 +241,7 @@ AQUI]]></text>
 					<datasetRun subDataset="dsProdutos" uuid="07f74092-2d17-4b27-bf95-e829e2ba80d3">
 						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{produtos})]]></dataSourceExpression>
 					</datasetRun>
-					<jr:listContents height="16" width="555">
+					<jr:listContents height="60" width="555">
 						<rectangle>
 							<reportElement mode="Opaque" x="0" y="0" width="555" height="16" forecolor="#FFFFFF" backcolor="#FFFFFF" uuid="dbe351cb-9024-4b1d-8aa1-58ddd1cf5fb0"/>
 							<graphicElement>
@@ -288,6 +289,37 @@ AQUI]]></text>
 							</textElement>
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
+						<componentElement>
+							<reportElement x="20" y="16" width="500" height="40" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
+							<jr:list printOrder="Vertical">
+								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c457">
+									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais})]]></dataSourceExpression>
+								</datasetRun>
+								<jr:listContents height="12">
+									<textField>
+										<reportElement x="0" y="0" width="250" height="12" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca2"/>
+										<textElement>
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA["• " + $F{descricao}]]></textFieldExpression>
+									</textField>
+									<textField>
+										<reportElement x="260" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{quantidade} !=  null ? $F{quantidade} : 1]]></textFieldExpression>
+									</textField>
+									<textField pattern="R$ #,##0.00">
+										<reportElement x="310" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
+									</textField>
+								</jr:listContents>
+							</jr:list>
+						</componentElement>
 					</jr:listContents>
 				</jr:list>
 			</componentElement>
@@ -322,7 +354,7 @@ AQUI]]></text>
 					<datasetRun subDataset="dsServicos" uuid="0e63bdd8-03d7-4708-a31f-3c3db455cb35">
 						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{servicos})]]></dataSourceExpression>
 					</datasetRun>
-					<jr:listContents height="16" width="555">
+					<jr:listContents height="60" width="555">
 						<rectangle>
 							<reportElement mode="Opaque" x="0" y="0" width="555" height="16" forecolor="#FFFFFF" backcolor="#FFFFFF" uuid="972a75ba-0a9d-4aa5-ba89-f88b936d4c16"/>
 							<graphicElement>
@@ -370,6 +402,37 @@ AQUI]]></text>
 							</textElement>
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
+                        <componentElement>
+							<reportElement x="20" y="16" width="500" height="40" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
+							<jr:list printOrder="Vertical">
+								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c457">
+									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais})]]></dataSourceExpression>
+								</datasetRun>
+								<jr:listContents height="12">
+									<textField>
+										<reportElement x="0" y="0" width="250" height="12" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca2"/>
+										<textElement>
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA["• " + $F{descricao}]]></textFieldExpression>
+									</textField>
+									<textField>
+										<reportElement x="260" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{quantidade} !=  null ? $F{quantidade} : 1]]></textFieldExpression>
+									</textField>
+									<textField pattern="R$ #,##0.00">
+										<reportElement x="310" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
+									</textField>
+								</jr:listContents>
+							</jr:list>
+						</componentElement>
 					</jr:listContents>
 				</jr:list>
 			</componentElement>

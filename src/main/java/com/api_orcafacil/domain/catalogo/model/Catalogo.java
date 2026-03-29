@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.api_orcafacil.domain.empresa.model.Empresa;
 import com.api_orcafacil.enums.TipoCliente;
 import com.api_orcafacil.enums.TipoItem;
 
@@ -17,6 +18,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
@@ -41,8 +44,11 @@ public class Catalogo {
     @Column(name = "id_catalogo")
     private Long idCatalogo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tenant", referencedColumnName = "id_tenant", insertable = false, updatable = false)
+    private Empresa empresa;
+
     @Column(name = "id_tenant", nullable = false)
-    @NotBlank(message = "O tenant é obrigatorio!")
     private String idTenant;
 
     @Enumerated(EnumType.STRING)

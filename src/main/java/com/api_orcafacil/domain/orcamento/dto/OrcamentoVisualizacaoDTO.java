@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.api_orcafacil.enums.StatusOrcamento;
+import com.api_orcafacil.enums.TipoItem;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,12 +17,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrcamentoVisualizacaoDTO {
- 
+
     private Long idOrcamento;
     private String nuOrcamento;
     private LocalDate dtEmissao;
     private LocalDate dtValido;
     private StatusOrcamento status;
+    private String nmEmpresa;
 
     private ClienteVisualizacaoDTO cliente;
 
@@ -31,4 +33,28 @@ public class OrcamentoVisualizacaoDTO {
 
     private List<ItemVisualizacaoDTO> itens;
     private List<StatusHistoricoVisualizacaoDTO> historicoStatus;
+
+    private BigDecimal totalBruto;
+    private BigDecimal totalDesconto;
+    private BigDecimal valorFrete;
+    private BigDecimal totalOrcamento;
+    private String observacoes;
+
+    public List<ItemVisualizacaoDTO> getProdutos() {
+        if (itens == null)
+            return List.of();
+
+        return itens.stream()
+                .filter(i -> i.getTipo() == TipoItem.Produto)
+                .toList();
+    }
+
+    public List<ItemVisualizacaoDTO> getServicos() {
+        if (itens == null)
+            return List.of();
+
+        return itens.stream()
+                .filter(i -> i.getTipo() == TipoItem.Servico)
+                .toList();
+    }
 }

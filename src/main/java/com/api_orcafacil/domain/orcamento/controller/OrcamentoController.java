@@ -4,8 +4,9 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import com.api_orcafacil.domain.orcamento.repository.OrcamentoRepository;
 import com.api_orcafacil.domain.orcamento.service.CondicaoPagamentoService;
 import com.api_orcafacil.domain.orcamento.service.OrcamentoService;
 import com.api_orcafacil.domain.orcamento.service.VisualizacaoOrcamentoService;
+import com.api_orcafacil.domain.relatorio.service.RelatorioOrcamentoService;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpaTenant;
 import com.api_orcafacil.domain.sistema.repository.BaseRepository;
 import com.api_orcafacil.enums.StatusOrcamento;
@@ -45,6 +47,9 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
 
     @Autowired
     private VisualizacaoOrcamentoService visualizacaoOrcamento;
+
+    @Autowired
+    private RelatorioOrcamentoService relatorioOrcamentoService;
 
     public OrcamentoController(BaseRepository<Orcamento, Long> repository) {
         super(repository);
@@ -150,5 +155,17 @@ public class OrcamentoController extends BaseControllerJpaTenant<Orcamento, Long
                 orcamento.getIdTenant());
 
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping(value = "/relatorio/{cdPublico}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> gerarRelatorio(
+            @PathVariable("cdPublico") String cdPublico) throws Exception {
+
+        byte[] pdf = relatorioOrcamentoService.gerarRelatorioOrcamento(cdPublico);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=orcamento.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

@@ -2,7 +2,6 @@ package com.api_orcafacil.domain.precificacao.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,22 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.api_orcafacil.domain.empresa.model.Empresa;
-import com.api_orcafacil.domain.empresa.model.PlanoAssinatura;
-import com.api_orcafacil.domain.empresa.service.PlanoAssinaturaService;
 import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
-import com.api_orcafacil.domain.precificacao.model.EmpresaMetodoPrecificacao;
-import com.api_orcafacil.domain.precificacao.model.MetodoPrecificacao;
 import com.api_orcafacil.domain.precificacao.repository.CampoPersonalizadoRepository;
-import com.api_orcafacil.domain.precificacao.repository.EmpresaMetodoPrecificacaoRepository;
 import com.api_orcafacil.domain.precificacao.service.CampoPersonalizadoService;
-import com.api_orcafacil.domain.precificacao.service.EmpresaMetodoPrecificacaoService;
-import com.api_orcafacil.domain.precificacao.service.MetodoPrecificacaoService;
-import com.api_orcafacil.domain.sistema.controller.BaseController;
 import com.api_orcafacil.domain.sistema.controller.BaseControllerJpa;
-import com.api_orcafacil.domain.usuario.dto.UsuarioDTO;
-import com.api_orcafacil.enums.TipoAjuste;
+import com.api_orcafacil.domain.sistema.controller.BaseControllerJpaTenant;
+import com.api_orcafacil.domain.sistema.repository.BaseRepository;
 import com.api_orcafacil.enums.TipoCampo;
 import com.api_orcafacil.enums.TipoCampoValor;
 
@@ -39,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping(value = "/campopersonalizado", produces = "application/json")
 @Tag(name = "Campos Personalizado")
-public class CampoPersonalizadoController extends BaseControllerJpa<CampoPersonalizado, Long> {
+public class CampoPersonalizadoController extends BaseControllerJpaTenant<CampoPersonalizado, Long> {
 
     @Autowired
     private CampoPersonalizadoService service;
@@ -47,7 +36,7 @@ public class CampoPersonalizadoController extends BaseControllerJpa<CampoPersona
     @Autowired
     private CampoPersonalizadoRepository repository;
 
-    public CampoPersonalizadoController(JpaRepository<CampoPersonalizado, Long> repository) {
+    public CampoPersonalizadoController(BaseRepository<CampoPersonalizado, Long> repository) {
         super(repository);
     }
 
@@ -56,7 +45,7 @@ public class CampoPersonalizadoController extends BaseControllerJpa<CampoPersona
             @RequestHeader("X-Tenant-ID") String tenantId) throws Exception {
 
         objeto.setIdTenant(tenantId);
-        CampoPersonalizado objetoSalvo = service.salvar(objeto);
+        service.salvar(objeto);
 
         return new ResponseEntity<>(Map.of("message", "Registro salvo com sucesso"), HttpStatus.CREATED);
     }

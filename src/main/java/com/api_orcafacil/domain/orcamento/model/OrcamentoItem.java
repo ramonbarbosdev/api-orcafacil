@@ -11,6 +11,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import com.api_orcafacil.enums.TipoItem;
 
 @Entity
 @Table(name = "orcamento_item")
@@ -58,7 +59,7 @@ public class OrcamentoItem {
 
     @OneToMany(mappedBy = "orcamentoItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrcamentoItemCampoValor> orcamentoItemCampoValor = new ArrayList<>();
-    
+
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
 
@@ -67,10 +68,16 @@ public class OrcamentoItem {
         this.dtCadastro = LocalDateTime.now();
     }
 
-    public String getNmCatalogo()
-    {
-         if (catalogo != null) {
+    public String getNmCatalogo() {
+        if (catalogo != null) {
             return catalogo.getNmCatalogo();
+        }
+        return null;
+    }
+	@Transient
+    public TipoItem getTpItem() {
+        if (catalogo != null) {
+            return catalogo.getTpItem();
         }
         return null;
     }

@@ -3,6 +3,8 @@ package com.api_orcafacil.domain.orcamento.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.api_orcafacil.enums.TipoItem;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,8 +15,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ItemVisualizacaoDTO {
-    
- private Long idItem;
+
+    private Long idItem;
 
     private String descricao;
 
@@ -25,6 +27,14 @@ public class ItemVisualizacaoDTO {
 
     private BigDecimal subtotal;
 
+    private TipoItem tipo;
+
     private List<MaterialVisualizacaoDTO> materiais;
+
+    public List<MaterialVisualizacaoDTO> getMateriais() {
+        return materiais != null ? materiais : List.of();
+    }
+
     
+
 }

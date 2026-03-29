@@ -40,7 +40,7 @@ public class Empresa {
     private Long idEmpresa;
 
     @NotBlank(message = "O tenant é obrigatorio!")
-    @Column(name = "id_tenant")
+    @Column(name = "id_tenant", unique = true, nullable = false)
     private String idTenant;
 
     @NotBlank(message = "O nome é obrigatorio!")

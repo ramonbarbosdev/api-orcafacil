@@ -35,6 +35,10 @@ public class Orcamento {
     @Column(name = "id_orcamento")
     private Long idOrcamento;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tenant", referencedColumnName = "id_tenant", insertable = false, updatable = false)
+    private Empresa empresa;
+
     @Column(name = "id_tenant", nullable = false)
     @NotBlank(message = "O tenant é obrigatorio!")
     private String idTenant;
@@ -123,6 +127,15 @@ public class Orcamento {
 
         if (empresaMetodoPrecificacao != null) {
             return empresaMetodoPrecificacao.getDsMetodoPrecificacao();
+        }
+        return null;
+    }
+
+    @JsonProperty("nmEmpresa")
+    public String getNmEmpresa() {
+
+        if (empresa != null) {
+            return empresa.getNmEmpresa();
         }
         return null;
     }

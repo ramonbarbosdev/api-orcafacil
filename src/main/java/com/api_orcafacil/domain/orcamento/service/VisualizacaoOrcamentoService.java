@@ -1,5 +1,6 @@
 package com.api_orcafacil.domain.orcamento.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,13 @@ public class VisualizacaoOrcamentoService {
         mapearResumo(orcamento, dto);
         mapearHistorico(idOrcamento, dto);
 
+        dto.setTotalBruto(new BigDecimal("1500.00"));
+        dto.setTotalDesconto(new BigDecimal("100.00"));
+        dto.setValorFrete(new BigDecimal("50.00"));
+        dto.setTotalOrcamento(new BigDecimal("1450.00"));
+
+        dto.setObservacoes("Prazo de entrega: 7 dias úteis.\nGarantia de 90 dias.");
+
         return dto;
     }
 
@@ -70,6 +78,7 @@ public class VisualizacaoOrcamentoService {
         dto.setDtEmissao(orcamento.getDtEmissao());
         dto.setDtValido(orcamento.getDtValido());
         dto.setStatus(orcamento.getTpStatus());
+        dto.setNmEmpresa(orcamento.getNmEmpresa());
     }
 
     private void mapearCliente(
@@ -81,6 +90,7 @@ public class VisualizacaoOrcamentoService {
         ClienteVisualizacaoDTO clienteDto = new ClienteVisualizacaoDTO();
         clienteDto.setIdCliente(cliente.getIdCliente());
         clienteDto.setNome(cliente.getNmCliente());
+        clienteDto.setCpfCnpj(cliente.getNuCpfcnpj());
         clienteDto.setEmail(cliente.getDsEmail());
         clienteDto.setTelefone(cliente.getNuTelefone());
 
@@ -102,6 +112,7 @@ public class VisualizacaoOrcamentoService {
             itemDto.setPrecoCusto(item.getVlCustoUnitario());
             itemDto.setPrecoUnitario(item.getVlPrecoUnitario());
             itemDto.setSubtotal(item.getVlPrecoTotal());
+            itemDto.setTipo(item.getTpItem());
 
             itemDto.setMateriais(
                     mapearMateriais(item));
@@ -141,7 +152,7 @@ public class VisualizacaoOrcamentoService {
 
         dto.setMetodoPrecificacao(
                 orcamento.getEmpresaMetodoPrecificacao()
-                        .getNmMetodoPrecificacao() );
+                        .getNmMetodoPrecificacao());
 
         dto.setVlPrecoBase(orcamento.getVlPrecoBase());
         dto.setVlPrecoFinal(orcamento.getVlPrecoFinal());
@@ -157,8 +168,6 @@ public class VisualizacaoOrcamentoService {
         List<StatusHistoricoVisualizacaoDTO> historicoDto = historicos.stream().map(h -> {
 
             StatusHistoricoVisualizacaoDTO s = new StatusHistoricoVisualizacaoDTO();
-
-            
 
             s.setStatusAnterior(h.getTpStatusAnterior());
             s.setStatusAtual(h.getTpStatusAtual());

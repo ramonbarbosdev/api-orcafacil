@@ -13,6 +13,7 @@ public class ClienteVisualizacaoDTO {
     
     private Long idCliente;
     private String nome;
+    private String cpfCnpj;
     private String email;
     private String telefone;
 }

@@ -107,6 +107,7 @@ public class VisualizacaoOrcamentoService {
 
             ItemVisualizacaoDTO itemDto = new ItemVisualizacaoDTO();
             itemDto.setIdItem(item.getIdOrcamentoItem());
+            itemDto.setCodigo(item.getCdCatalogo());
             itemDto.setDescricao(item.getNmCatalogo());
             itemDto.setQuantidade(item.getQtItem());
             itemDto.setPrecoCusto(item.getVlCustoUnitario());

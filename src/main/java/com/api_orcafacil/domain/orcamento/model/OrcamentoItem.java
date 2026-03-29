@@ -68,6 +68,12 @@ public class OrcamentoItem {
         this.dtCadastro = LocalDateTime.now();
     }
 
+    public String getCdCatalogo() {
+        if (catalogo != null) {
+            return catalogo.getCdCatalogo();
+        }
+        return null;
+    }
     public String getNmCatalogo() {
         if (catalogo != null) {
             return catalogo.getNmCatalogo();

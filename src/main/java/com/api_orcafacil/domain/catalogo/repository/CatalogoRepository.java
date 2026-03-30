@@ -11,11 +11,17 @@ import com.api_orcafacil.domain.sistema.repository.BaseRepository;
 
 public interface CatalogoRepository extends BaseRepository<Catalogo, Long> {
 
-
     @Query(value = "SELECT CASE WHEN MAX(c.cd_catalogo) IS NULL THEN '0' ELSE MAX(c.cd_catalogo) END FROM catalogo c WHERE c.id_tenant = ?1", nativeQuery = true)
     Long obterSequencial(String idTenant);
 
     @Query(value = "SELECT *  FROM catalogo b WHERE b.cd_catalogo = ?1 AND b.id_tenant = ?2 limit 1", nativeQuery = true)
     Optional<Catalogo> verificarCodigoExistente(String codigo, String idTenant);
+
+    @Query(value = """
+            select cast(1 as boolean) from orcamento_item oi
+            join catalogo c on oi.id_catalogo = c.id_catalogo
+            where c.id_catalogo =  ?1
+                        """, nativeQuery = true)
+    Boolean verificarCatalogoNoOrcamento(Long codigo );
 
 }

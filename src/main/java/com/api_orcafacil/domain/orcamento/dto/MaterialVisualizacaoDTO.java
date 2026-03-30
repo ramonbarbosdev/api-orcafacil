@@ -16,6 +16,7 @@ import lombok.Setter;
 public class MaterialVisualizacaoDTO {
     
     
+    private String nome;
     private String descricao;
     private String unidade;
     private BigDecimal quantidade;

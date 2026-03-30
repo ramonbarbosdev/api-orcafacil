@@ -86,10 +86,17 @@ public class CatalogoService {
             String tenant = TenantContext.getTenantId();
             objeto.setIdTenant(tenant);
         }
+
         validacaoService.validarCodigoExistente(
                 ID_FUNCTION.apply(objeto),
                 repository.verificarCodigoExistente(SEQUENCIA_FUNCTION.apply(objeto), objeto.getIdTenant()),
                 ID_FUNCTION);
+
+        // Boolean isCatalogoOrcamento = repository.verificarCatalogoNoOrcamento(ID_FUNCTION.apply(objeto));
+
+        // if(isCatalogoOrcamento != null && isCatalogoOrcamento) {
+        //     throw new Exception("Não é permitido excluir o catálogo, pois ele está vinculado a um orçamento.");
+        // }
 
     }
 

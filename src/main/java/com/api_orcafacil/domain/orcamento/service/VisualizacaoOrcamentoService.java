@@ -134,10 +134,11 @@ public class VisualizacaoOrcamentoService {
         for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
 
             MaterialVisualizacaoDTO material = new MaterialVisualizacaoDTO();
-            material.setDescricao(campo.getNmCampoPersonalizado());
-            // material.setQuantidade(campo.getQtInformada());
+            material.setNome(campo.getNmCampoPersonalizado());
+            material.setDescricao(campo.getDsDescricao());
             material.setValor(campo.getVlInformado());
             material.setTipo(campo.getTpValor());
+            // material.setQuantidade(campo.getQtInformada());
 
             materiais.add(material);
         }

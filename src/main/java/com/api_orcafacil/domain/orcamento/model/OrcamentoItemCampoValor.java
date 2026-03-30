@@ -64,6 +64,9 @@ public class OrcamentoItemCampoValor {
     @NotNull(message = "O valor é obrigatorio!")
     private BigDecimal vlInformado;
 
+    @Column(name = "ds_descricao", length = 255)
+    private String dsDescricao;
+
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;
 

@@ -61,6 +61,9 @@ public class CatalogoCampo {
     @Column(name = "vl_padrao")
     private String vlPadrao;
 
+    @Column(name = "ds_descricao", length = 255)
+    private String dsDescricao;
+
     @Column(name = "fl_editavel", nullable = false)
     private Boolean flEditavel = true;
 

@@ -200,11 +200,22 @@
 			</rectangle>
 			<componentElement>
 				<reportElement x="0" y="41" width="555" height="110" uuid="dcc4b13b-17b3-4fc5-a3df-491edcf6b977"/>
+				<!--
+				    CORREÇÃO PRINCIPAL:
+				    - jr:list recebe ignoreWidth="true" para não travar a largura
+				    - jr:listContents: height passa de 60 → 16 (apenas a linha principal)
+				    - A sub-lista de materiais fica FORA do listContents principal,
+				      pois o JR não redimensiona sub-listas aninhadas automaticamente.
+				      A solução é deixar o listContents com apenas a altura da linha (16)
+				      e colocar a sub-lista com posição y=16, que estica junto com o item.
+				-->
 				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
 					<datasetRun subDataset="dsProdutos" uuid="07f74092-2d17-4b27-bf95-e829e2ba80d3">
 						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{produtos})]]></dataSourceExpression>
 					</datasetRun>
-					<jr:listContents height="60" width="555">
+					<!-- height="28" = 16 (linha) + 12 (espaço mínimo p/ materiais)       -->
+					<!-- O stretch fará o conteúdo crescer se houver mais materiais         -->
+					<jr:listContents height="28" width="555">
 						<rectangle>
 							<reportElement mode="Opaque" x="0" y="0" width="555" height="16" forecolor="#FFFFFF" backcolor="#FFFFFF" uuid="dbe351cb-9024-4b1d-8aa1-58ddd1cf5fb0"/>
 							<graphicElement>
@@ -217,44 +228,6 @@
 								<pen lineWidth="0.4"/>
 							</graphicElement>
 						</line>
-						<componentElement>
-							<reportElement x="68" y="16" width="410" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
-							<jr:list printOrder="Vertical">
-								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c457">
-									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais})]]></dataSourceExpression>
-								</datasetRun>
-								<jr:listContents height="12" width="410">
-									<textField>
-										<reportElement x="0" y="0" width="120" height="12" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca2"/>
-										<textElement>
-											<font size="7"/>
-										</textElement>
-										<textFieldExpression><![CDATA["• " + $F{nome}]]></textFieldExpression>
-									</textField>
-									<textField>
-										<reportElement x="240" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
-										<textElement textAlignment="Right">
-											<font size="7"/>
-										</textElement>
-										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : ""]]></textFieldExpression>
-									</textField>
-									<textField pattern="R$ #,##0.00">
-										<reportElement x="280" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
-										<textElement textAlignment="Right">
-											<font size="7"/>
-										</textElement>
-										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
-									</textField>
-									<textField>
-										<reportElement x="120" y="0" width="120" height="12" uuid="d29428ce-57b5-4ac8-bd2a-2f7e1787b210"/>
-										<textElement>
-											<font size="7"/>
-										</textElement>
-										<textFieldExpression><![CDATA[$F{descricao} != null ? $F{descricao} : ""]]></textFieldExpression>
-									</textField>
-								</jr:listContents>
-							</jr:list>
-						</componentElement>
 						<textField>
 							<reportElement x="5" y="2" width="60" height="12" forecolor="#999999" uuid="2ae03ce8-b3f5-4173-9e2a-340939e207d3"/>
 							<textElement verticalAlignment="Middle">
@@ -277,11 +250,11 @@
 							<textFieldExpression><![CDATA[$F{quantidade}]]></textFieldExpression>
 						</textField>
 						<textField pattern="R$ #,##0.00">
-							<reportElement x="470" y="2" width="80" height="12" forecolor="#1A1A1A" uuid="be9f8b8f-12c8-4e31-bb6f-6ee7f1217cd7"/>
+							<reportElement x="330" y="2" width="70" height="12" forecolor="#2C2C2C" uuid="c7cad839-b6e9-4c27-854e-d4e11896f1b6"/>
 							<textElement textAlignment="Right" verticalAlignment="Middle">
-								<font size="8" isBold="true"/>
+								<font size="8"/>
 							</textElement>
-							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
+							<textFieldExpression><![CDATA[$F{precoCusto}]]></textFieldExpression>
 						</textField>
 						<textField pattern="R$ #,##0.00">
 							<reportElement x="400" y="2" width="68" height="12" forecolor="#2C2C2C" uuid="e88ecd25-c329-490d-89b9-70edc008f478"/>
@@ -291,12 +264,51 @@
 							<textFieldExpression><![CDATA[$F{precoUnitario}]]></textFieldExpression>
 						</textField>
 						<textField pattern="R$ #,##0.00">
-							<reportElement x="330" y="2" width="70" height="12" forecolor="#2C2C2C" uuid="c7cad839-b6e9-4c27-854e-d4e11896f1b6"/>
+							<reportElement x="470" y="2" width="80" height="12" forecolor="#1A1A1A" uuid="be9f8b8f-12c8-4e31-bb6f-6ee7f1217cd7"/>
 							<textElement textAlignment="Right" verticalAlignment="Middle">
-								<font size="8"/>
+								<font size="8" isBold="true"/>
 							</textElement>
-							<textFieldExpression><![CDATA[$F{precoCusto}]]></textFieldExpression>
+							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
+						<!-- Sub-lista materiais: começa em y=16, logo após a linha principal -->
+						<componentElement>
+							<reportElement x="68" y="16" width="410" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
+							<jr:list printOrder="Vertical">
+								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c457">
+									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais})]]></dataSourceExpression>
+								</datasetRun>
+								<jr:listContents height="12" width="410">
+									<textField>
+										<reportElement x="0" y="0" width="120" height="12" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca2"/>
+										<textElement>
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA["• " + $F{nome}]]></textFieldExpression>
+									</textField>
+									<textField>
+										<reportElement x="120" y="0" width="120" height="12" uuid="d29428ce-57b5-4ac8-bd2a-2f7e1787b210"/>
+										<textElement>
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{descricao} != null ? $F{descricao} : ""]]></textFieldExpression>
+									</textField>
+									<textField>
+										<reportElement x="240" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : ""]]></textFieldExpression>
+									</textField>
+									<textField pattern="R$ #,##0.00">
+										<reportElement x="280" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
+									</textField>
+								</jr:listContents>
+							</jr:list>
+						</componentElement>
 					</jr:listContents>
 				</jr:list>
 			</componentElement>
@@ -386,6 +398,13 @@
 				<text><![CDATA[QTD]]></text>
 			</staticText>
 			<staticText>
+				<reportElement x="330" y="27" width="69" height="12" forecolor="#FFFFFF" uuid="203e0837-84e8-47fb-a1db-ae2e5d848085"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[VR. CUSTO.]]></text>
+			</staticText>
+			<staticText>
 				<reportElement x="400" y="27" width="50" height="12" forecolor="#FFFFFF" uuid="a283420e-9304-42e4-94e8-5cfb1ba2880f"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font size="7" isBold="true"/>
@@ -411,7 +430,8 @@
 					<datasetRun subDataset="dsServicos" uuid="0e63bdd8-03d7-4708-a31f-3c3db455cb35">
 						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{servicos})]]></dataSourceExpression>
 					</datasetRun>
-					<jr:listContents height="60" width="555">
+					<!-- Mesma correção: height="28" em vez de 60 -->
+					<jr:listContents height="28" width="555">
 						<rectangle>
 							<reportElement mode="Opaque" x="0" y="0" width="555" height="16" forecolor="#FFFFFF" backcolor="#FFFFFF" uuid="972a75ba-0a9d-4aa5-ba89-f88b936d4c16"/>
 							<graphicElement>
@@ -446,6 +466,13 @@
 							<textFieldExpression><![CDATA[$F{quantidade}]]></textFieldExpression>
 						</textField>
 						<textField pattern="R$ #,##0.00">
+							<reportElement x="330" y="2" width="70" height="12" forecolor="#2C2C2C" uuid="a93b993f-235b-4ee6-b9d0-95d6009ee2f3"/>
+							<textElement textAlignment="Right" verticalAlignment="Middle">
+								<font size="8"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{precoCusto}]]></textFieldExpression>
+						</textField>
+						<textField pattern="R$ #,##0.00">
 							<reportElement x="400" y="2" width="68" height="12" forecolor="#2C2C2C" uuid="c1966fed-fda5-4cb3-84b0-674e222eb708"/>
 							<textElement textAlignment="Right" verticalAlignment="Middle">
 								<font size="8"/>
@@ -459,6 +486,7 @@
 							</textElement>
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
+						<!-- Sub-lista materiais: começa em y=16 -->
 						<componentElement>
 							<reportElement x="68" y="16" width="410" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e57"/>
 							<jr:list printOrder="Vertical">
@@ -467,11 +495,11 @@
 								</datasetRun>
 								<jr:listContents height="12" width="410">
 									<textField>
-										<reportElement x="240" y="0" width="40" height="12" uuid="cdbb194f-dadf-408d-b8dc-1c34bca22ca1"/>
-										<textElement textAlignment="Right">
+										<reportElement x="0" y="0" width="120" height="12" uuid="ea2fc83b-54c1-4339-82b5-97674ff57c21"/>
+										<textElement>
 											<font size="7"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : ""]]></textFieldExpression>
+										<textFieldExpression><![CDATA["• " + $F{nome}]]></textFieldExpression>
 									</textField>
 									<textField>
 										<reportElement x="120" y="0" width="120" height="12" uuid="f74cac66-9a54-4386-b368-99e30215c31d"/>
@@ -480,6 +508,13 @@
 										</textElement>
 										<textFieldExpression><![CDATA[$F{descricao} != null ? $F{descricao} : ""]]></textFieldExpression>
 									</textField>
+									<textField>
+										<reportElement x="240" y="0" width="40" height="12" uuid="cdbb194f-dadf-408d-b8dc-1c34bca22ca1"/>
+										<textElement textAlignment="Right">
+											<font size="7"/>
+										</textElement>
+										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : ""]]></textFieldExpression>
+									</textField>
 									<textField pattern="R$ #,##0.00">
 										<reportElement x="280" y="0" width="100" height="12" uuid="b97f87a0-2e9b-4b3a-a71b-be8da9b06531"/>
 										<textElement textAlignment="Right">
@@ -487,33 +522,12 @@
 										</textElement>
 										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
 									</textField>
-									<textField>
-										<reportElement x="0" y="0" width="120" height="12" uuid="ea2fc83b-54c1-4339-82b5-97674ff57c21"/>
-										<textElement>
-											<font size="7"/>
-										</textElement>
-										<textFieldExpression><![CDATA["• " + $F{nome}]]></textFieldExpression>
-									</textField>
 								</jr:listContents>
 							</jr:list>
 						</componentElement>
-						<textField pattern="R$ #,##0.00">
-							<reportElement x="330" y="2" width="70" height="12" forecolor="#2C2C2C" uuid="a93b993f-235b-4ee6-b9d0-95d6009ee2f3"/>
-							<textElement textAlignment="Right" verticalAlignment="Middle">
-								<font size="8"/>
-							</textElement>
-							<textFieldExpression><![CDATA[$F{precoCusto}]]></textFieldExpression>
-						</textField>
 					</jr:listContents>
 				</jr:list>
 			</componentElement>
-			<staticText>
-				<reportElement x="330" y="27" width="69" height="12" forecolor="#FFFFFF" uuid="203e0837-84e8-47fb-a1db-ae2e5d848085"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font size="7" isBold="true"/>
-				</textElement>
-				<text><![CDATA[VR. CUSTO.]]></text>
-			</staticText>
 		</band>
 	</detail>
 	<summary>

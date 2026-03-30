@@ -75,7 +75,7 @@ public class OrcamentoItemService {
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
                 if (campo.getVlInformado() != null) {
                     try {
-                        new BigDecimal(campo.getVlInformado());
+                        campo.getVlInformado().setScale(2, RoundingMode.HALF_UP);
                     } catch (NumberFormatException e) {
                         throw new IllegalArgumentException(
                                 "Valor inválido no campo: " + campo.getVlInformado());

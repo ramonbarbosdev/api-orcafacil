@@ -55,11 +55,11 @@ public class PrecificacaoService {
 
             for (OrcamentoItemCampoValor campo : item.getOrcamentoItemCampoValor()) {
 
-                if (campo.getVlInformado() == null || campo.getVlInformado().isBlank()) {
+                if (campo.getVlInformado() == null ) {
                     continue;
                 }
 
-                BigDecimal valor = new BigDecimal(campo.getVlInformado());
+                BigDecimal valor = campo.getVlInformado();
 
                 if (campo.getTpValor() == null) {
                     throw new IllegalArgumentException(

@@ -21,7 +21,7 @@
 	<subDataset name="dsMateriais" uuid="445fbffd-e377-4f34-aa29-1fae65cf8dfb">
 		<field name="descricao" class="java.lang.String"/>
 		<field name="quantidade" class="java.math.BigDecimal"/>
-		<field name="valor" class="java.math.BigDecimal"/>
+		<field name="valor" class="java.lang.String"/>
 	</subDataset>
 	<field name="nuOrcamento" class="java.lang.String"/>
 	<field name="dtEmissao" class="java.time.LocalDate"/>
@@ -36,6 +36,10 @@
 	<field name="nmEmpresa" class="java.lang.String"/>
 	<field name="condicaoPagamento" class="java.lang.String"/>
 	<field name="nuPrazoEntrega" class="java.lang.Integer"/>
+
+	<!-- ═══════════════════════════════════════════
+	     TITLE — cabeçalho (sem alteração)
+	═══════════════════════════════════════════ -->
 	<title>
 		<band height="128" splitType="Stretch">
 			<rectangle>
@@ -57,7 +61,7 @@
 				</graphicElement>
 			</ellipse>
 			<frame>
-				<reportElement x="12" y="22" width="76" height="60" uuid="70f6e6ae-0c90-4ce0-b8cc-8cb40437834b"/>
+				<reportElement x="12" y="22" width="76" height="60"/>
 			</frame>
 			<line>
 				<reportElement x="102" y="1" width="1" height="103" forecolor="#E0E0E0" uuid="823c14b2-346c-42bb-8630-373668347436"/>
@@ -159,7 +163,7 @@
 				<textFieldExpression><![CDATA[$F{cliente} != null ? $F{cliente}.getCpfCnpj() : ""]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="130" y="5" width="405" height="26" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afafe"/>
+				<reportElement x="277" y="5" width="100" height="26" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afafe"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font size="13" isBold="true"/>
 				</textElement>
@@ -167,9 +171,18 @@
 			</textField>
 		</band>
 	</title>
+
+	<!-- ═══════════════════════════════════════════
+	     DETAIL 1 — Somente PRODUTOS
+	     printWhenExpression na band inteira:
+	     quando lista vazia, a band não renderiza
+	     e o espaço some completamente
+	═══════════════════════════════════════════ -->
 	<detail>
 		<band height="155" splitType="Stretch">
 			<printWhenExpression><![CDATA[$F{produtos} != null && !$F{produtos}.isEmpty()]]></printWhenExpression>
+
+			<!-- Barra título PRODUTOS -->
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="4" width="555" height="20" forecolor="#E0E0E0" backcolor="#EFEFEF" uuid="f699373e-08d5-4c46-93f6-684301dab497"/>
 				<graphicElement>
@@ -183,6 +196,8 @@
 				</textElement>
 				<text><![CDATA[PRODUTOS]]></text>
 			</staticText>
+
+			<!-- Header colunas PRODUTOS -->
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="25" width="555" height="16" forecolor="#333333" backcolor="#333333" uuid="e2f91165-d671-4646-9bb6-1e7212fc882f"/>
 				<graphicElement>
@@ -224,12 +239,16 @@
 				</textElement>
 				<text><![CDATA[SUBTOTAL]]></text>
 			</staticText>
+
+			<!-- Fundo da tabela PRODUTOS -->
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="41" width="555" height="110" forecolor="#CCCCCC" backcolor="#FFFFFF" uuid="4be4dd34-a35a-404c-9adc-0fd11d913742"/>
 				<graphicElement>
 					<pen lineWidth="0.5" lineColor="#CCCCCC"/>
 				</graphicElement>
 			</rectangle>
+
+			<!-- Lista PRODUTOS -->
 			<componentElement>
 				<reportElement x="0" y="41" width="555" height="110" uuid="dcc4b13b-17b3-4fc5-a3df-491edcf6b977"/>
 				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
@@ -263,7 +282,7 @@
 							</textElement>
 							<textFieldExpression><![CDATA[$F{descricao}]]></textFieldExpression>
 						</textField>
-						<textField pattern="#,##0">
+						<textField>
 							<reportElement x="298" y="2" width="52" height="12" forecolor="#2C2C2C" uuid="c29994c8-f76a-4165-8545-19af21b26f79"/>
 							<textElement textAlignment="Right" verticalAlignment="Middle">
 								<font size="8"/>
@@ -285,12 +304,12 @@
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
 						<componentElement>
-							<reportElement x="68" y="16" width="410" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
+							<reportElement x="20" y="16" width="500" height="40" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
 							<jr:list printOrder="Vertical">
 								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c457">
 									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais})]]></dataSourceExpression>
 								</datasetRun>
-								<jr:listContents height="12" width="410">
+								<jr:listContents height="12">
 									<textField>
 										<reportElement x="0" y="0" width="250" height="12" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca2"/>
 										<textElement>
@@ -299,14 +318,14 @@
 										<textFieldExpression><![CDATA["• " + $F{descricao}]]></textFieldExpression>
 									</textField>
 									<textField>
-										<reportElement x="220" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
+										<reportElement x="260" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
 										<textElement textAlignment="Right">
 											<font size="7"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : ""]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : 1]]></textFieldExpression>
 									</textField>
 									<textField pattern="R$ #,##0.00">
-										<reportElement x="280" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
+										<reportElement x="310" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
 										<textElement textAlignment="Right">
 											<font size="7"/>
 										</textElement>
@@ -319,8 +338,16 @@
 				</jr:list>
 			</componentElement>
 		</band>
+
+		<!-- ═══════════════════════════════════════════
+		     DETAIL 2 — Somente SERVIÇOS
+		     band separada → some completamente
+		     quando lista estiver vazia
+		═══════════════════════════════════════════ -->
 		<band height="155" splitType="Stretch">
 			<printWhenExpression><![CDATA[$F{servicos} != null && !$F{servicos}.isEmpty()]]></printWhenExpression>
+
+			<!-- Barra título SERVIÇOS -->
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="4" width="555" height="20" forecolor="#E0E0E0" backcolor="#EFEFEF" uuid="958ef4bf-6096-4601-b704-49c0b003717e"/>
 				<graphicElement>
@@ -334,6 +361,8 @@
 				</textElement>
 				<text><![CDATA[SERVIÇOS]]></text>
 			</staticText>
+
+			<!-- Header colunas SERVIÇOS -->
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="25" width="555" height="16" forecolor="#333333" backcolor="#333333" uuid="fd726a2a-63cf-4a40-b2ca-531ffa2015fd"/>
 				<graphicElement>
@@ -375,12 +404,16 @@
 				</textElement>
 				<text><![CDATA[SUBTOTAL]]></text>
 			</staticText>
+
+			<!-- Fundo da tabela SERVIÇOS -->
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="41" width="555" height="110" forecolor="#CCCCCC" backcolor="#FFFFFF" uuid="875e3027-20e6-4a80-8979-45537a609e4c"/>
 				<graphicElement>
 					<pen lineWidth="0.5" lineColor="#CCCCCC"/>
 				</graphicElement>
 			</rectangle>
+
+			<!-- Lista SERVIÇOS -->
 			<componentElement>
 				<reportElement x="0" y="41" width="555" height="110" uuid="7f40bebe-f6b9-4ac2-a9ce-5a9a2e2341b2"/>
 				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Vertical">
@@ -414,7 +447,7 @@
 							</textElement>
 							<textFieldExpression><![CDATA[$F{descricao}]]></textFieldExpression>
 						</textField>
-						<textField pattern="#,##0">
+						<textField>
 							<reportElement x="298" y="2" width="52" height="12" forecolor="#2C2C2C" uuid="4e119e69-d4a5-44b2-9e0c-b81e7468a384"/>
 							<textElement textAlignment="Right" verticalAlignment="Middle">
 								<font size="8"/>
@@ -436,12 +469,12 @@
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
 						<componentElement>
-							<reportElement x="68" y="16" width="410" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e57"/>
+							<reportElement x="20" y="16" width="500" height="40" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e57"/>
 							<jr:list printOrder="Vertical">
 								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c458">
 									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais})]]></dataSourceExpression>
 								</datasetRun>
-								<jr:listContents height="12" width="410">
+								<jr:listContents height="12">
 									<textField>
 										<reportElement x="0" y="0" width="250" height="12" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca3"/>
 										<textElement>
@@ -450,14 +483,14 @@
 										<textFieldExpression><![CDATA["• " + $F{descricao}]]></textFieldExpression>
 									</textField>
 									<textField>
-										<reportElement x="220" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5c"/>
+										<reportElement x="260" y="0" width="40" height="12" uuid="a33b7510-0015-4689-88ae-a25248953c5c"/>
 										<textElement textAlignment="Right">
 											<font size="7"/>
 										</textElement>
-										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : ""]]></textFieldExpression>
+										<textFieldExpression><![CDATA[$F{quantidade} != null ? $F{quantidade} : 1]]></textFieldExpression>
 									</textField>
 									<textField pattern="R$ #,##0.00">
-										<reportElement x="280" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c037"/>
+										<reportElement x="310" y="0" width="100" height="12" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c037"/>
 										<textElement textAlignment="Right">
 											<font size="7"/>
 										</textElement>
@@ -471,6 +504,10 @@
 			</componentElement>
 		</band>
 	</detail>
+
+	<!-- ═══════════════════════════════════════════
+	     SUMMARY — sem alteração
+	═══════════════════════════════════════════ -->
 	<summary>
 		<band height="316" splitType="Stretch">
 			<rectangle>

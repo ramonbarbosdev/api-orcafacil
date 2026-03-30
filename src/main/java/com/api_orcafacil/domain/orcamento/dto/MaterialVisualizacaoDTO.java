@@ -19,6 +19,6 @@ public class MaterialVisualizacaoDTO {
     private String descricao;
     private String unidade;
     private BigDecimal quantidade;
-    private String valor;
+    private BigDecimal valor;
     private TipoCampoValor tipo;
 }

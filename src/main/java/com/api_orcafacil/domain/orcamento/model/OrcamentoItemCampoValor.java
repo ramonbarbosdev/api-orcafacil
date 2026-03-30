@@ -1,5 +1,6 @@
 package com.api_orcafacil.domain.orcamento.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.api_orcafacil.domain.precificacao.model.CampoPersonalizado;
@@ -61,7 +62,7 @@ public class OrcamentoItemCampoValor {
 
     @Column(name = "vl_informado", nullable = false, length = 255)
     @NotNull(message = "O valor é obrigatorio!")
-    private String vlInformado;
+    private BigDecimal vlInformado;
 
     @Column(name = "dt_cadastro", nullable = false, updatable = false)
     private LocalDateTime dtCadastro;

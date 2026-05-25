@@ -50,7 +50,7 @@ public class RelatorioOrcamentoService {
                 orcamento.getIdTenant());
 
         InputStream reportStream = getClass()
-                .getResourceAsStream("/orcaReport/orcamento_layout_danfe.jrxml");
+                .getResourceAsStream("/orcaReport/orca.jrxml");
 
         if (reportStream == null) {
             throw new RuntimeException("Arquivo JRXML não encontrado em /orcaReport/orca.jrxml");

@@ -64,7 +64,7 @@ jobs:
             --restart unless-stopped \
             --memory=512m \
             -p ${{ env.HOST_PORT }}:${{ env.CONTAINER_PORT }} \
-            --env-file ${{ env.ENV_FILE }} 
+            --env-file ${{ env.ENV_FILE }} \
             ghcr.io/${{ github.repository }}:latest
 
             docker image prune -a -f

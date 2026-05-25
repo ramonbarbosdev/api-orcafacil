@@ -24,6 +24,7 @@ import org.springframework.data.domain.Sort;
 
 public abstract class BaseControllerJpa<T, ID> {
 
+    
     protected final JpaRepository<T, ID> repository;
 
     public BaseControllerJpa(JpaRepository<T, ID> repository) {

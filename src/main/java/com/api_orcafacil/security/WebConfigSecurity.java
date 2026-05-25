@@ -77,7 +77,8 @@ public class WebConfigSecurity {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
-                "https://orcafacil.ramoncode.com.br"));
+                "https://orcafacil.ramoncode.com.br",
+            "https://api-orcafacil.ramoncode.com.br"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Content-Disposition"));

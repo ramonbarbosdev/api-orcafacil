@@ -205,9 +205,9 @@
 					<datasetRun subDataset="dsProdutos" uuid="07f74092-2d17-4b27-bf95-e829e2ba80d3">
 						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{produtos} == null ? java.util.Collections.emptyList() : $F{produtos})]]></dataSourceExpression>
 					</datasetRun>
-					<jr:listContents height="34" width="555">
+					<jr:listContents height="28" width="555">
 						<rectangle>
-							<reportElement mode="Opaque" x="0" y="0" width="555" height="33" forecolor="#E5EAF0" backcolor="#FFFFFF" uuid="dbe351cb-9024-4b1d-8aa1-58ddd1cf5fb0"/>
+							<reportElement stretchType="ContainerHeight" mode="Opaque" x="0" y="0" width="555" height="27" forecolor="#E5EAF0" backcolor="#FFFFFF" uuid="dbe351cb-9024-4b1d-8aa1-58ddd1cf5fb0"/>
 							<graphicElement>
 								<pen lineWidth="0.4" lineColor="#E5EAF0"/>
 							</graphicElement>
@@ -240,34 +240,21 @@
 							<textElement textAlignment="Right"/>
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
-						<componentElement>
-							<reportElement positionType="Float" x="70" y="18" width="400" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
-							<jr:list printOrder="Vertical">
-								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c457">
-									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais} == null ? java.util.Collections.emptyList() : $F{materiais})]]></dataSourceExpression>
-								</datasetRun>
-								<jr:listContents height="12" width="400">
-									<textField isBlankWhenNull="true" textAdjust="StretchHeight">
-										<reportElement style="Muted" x="0" y="0" width="160" height="10" uuid="e03c7303-fe51-47e7-9a17-5c0469ea9ca2"/>
-										<textFieldExpression><![CDATA["Material: " + ($F{nome} != null ? $F{nome} : "")]]></textFieldExpression>
-									</textField>
-									<textField isBlankWhenNull="true" textAdjust="StretchHeight">
-										<reportElement style="Muted" x="165" y="0" width="135" height="10" uuid="d29428ce-57b5-4ac8-bd2a-2f7e1787b210"/>
-										<textFieldExpression><![CDATA[$F{descricao}]]></textFieldExpression>
-									</textField>
-									<textField isBlankWhenNull="true" pattern="#,##0.##">
-										<reportElement style="Muted" x="305" y="0" width="35" height="10" uuid="a33b7510-0015-4689-88ae-a25248953c5b"/>
-										<textElement textAlignment="Right"/>
-										<textFieldExpression><![CDATA[$F{quantidade}]]></textFieldExpression>
-									</textField>
-									<textField isBlankWhenNull="true" pattern="R$ #,##0.00">
-										<reportElement style="Muted" x="345" y="0" width="55" height="10" uuid="a0a6293f-f587-438d-bc32-6e6e45b4c036"/>
-										<textElement textAlignment="Right"/>
-										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
-									</textField>
-								</jr:listContents>
-							</jr:list>
-						</componentElement>
+						<textField isBlankWhenNull="true" textAdjust="StretchHeight">
+							<reportElement positionType="Float" style="Muted" x="70" y="18" width="400" height="8" isRemoveLineWhenBlank="true" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e56"/>
+							<textElement verticalAlignment="Top">
+								<font size="7"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{materiais} != null && !$F{materiais}.isEmpty()
+? ((java.util.List<com.api_orcafacil.domain.orcamento.dto.MaterialVisualizacaoDTO>) $F{materiais}).stream()
+    .map(m -> "Material: "
+        + (m.getNome() != null ? m.getNome() : "")
+        + (m.getDescricao() != null && !m.getDescricao().trim().isEmpty() ? " - " + m.getDescricao() : "")
+        + (m.getQuantidade() != null ? " | Qtd: " + m.getQuantidade() : "")
+        + (m.getValor() != null && m.getValor().compareTo(java.math.BigDecimal.ZERO) != 0 ? " | R$ " + new java.text.DecimalFormat("#,##0.00").format(m.getValor()) : ""))
+    .collect(java.util.stream.Collectors.joining("\n"))
+: ""]]></textFieldExpression>
+						</textField>
 					</jr:listContents>
 				</jr:list>
 			</componentElement>
@@ -325,9 +312,9 @@
 					<datasetRun subDataset="dsServicos" uuid="0e63bdd8-03d7-4708-a31f-3c3db455cb35">
 						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{servicos} == null ? java.util.Collections.emptyList() : $F{servicos})]]></dataSourceExpression>
 					</datasetRun>
-					<jr:listContents height="34" width="555">
+					<jr:listContents height="28" width="555">
 						<rectangle>
-							<reportElement mode="Opaque" x="0" y="0" width="555" height="33" forecolor="#E5EAF0" backcolor="#FFFFFF" uuid="972a75ba-0a9d-4aa5-ba89-f88b936d4c16"/>
+							<reportElement stretchType="ContainerHeight" mode="Opaque" x="0" y="0" width="555" height="27" forecolor="#E5EAF0" backcolor="#FFFFFF" uuid="972a75ba-0a9d-4aa5-ba89-f88b936d4c16"/>
 							<graphicElement>
 								<pen lineWidth="0.4" lineColor="#E5EAF0"/>
 							</graphicElement>
@@ -360,34 +347,21 @@
 							<textElement textAlignment="Right"/>
 							<textFieldExpression><![CDATA[$F{subtotal}]]></textFieldExpression>
 						</textField>
-						<componentElement>
-							<reportElement positionType="Float" x="70" y="18" width="400" height="12" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e57"/>
-							<jr:list printOrder="Vertical">
-								<datasetRun subDataset="dsMateriais" uuid="3e07a10c-9eed-4139-949d-00d63862c458">
-									<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{materiais} == null ? java.util.Collections.emptyList() : $F{materiais})]]></dataSourceExpression>
-								</datasetRun>
-								<jr:listContents height="12" width="400">
-									<textField isBlankWhenNull="true" textAdjust="StretchHeight">
-										<reportElement style="Muted" x="0" y="0" width="160" height="10" uuid="ea2fc83b-54c1-4339-82b5-97674ff57c21"/>
-										<textFieldExpression><![CDATA["Material: " + ($F{nome} != null ? $F{nome} : "")]]></textFieldExpression>
-									</textField>
-									<textField isBlankWhenNull="true" textAdjust="StretchHeight">
-										<reportElement style="Muted" x="165" y="0" width="135" height="10" uuid="f74cac66-9a54-4386-b368-99e30215c31d"/>
-										<textFieldExpression><![CDATA[$F{descricao}]]></textFieldExpression>
-									</textField>
-									<textField isBlankWhenNull="true" pattern="#,##0.##">
-										<reportElement style="Muted" x="305" y="0" width="35" height="10" uuid="cdbb194f-dadf-408d-b8dc-1c34bca22ca1"/>
-										<textElement textAlignment="Right"/>
-										<textFieldExpression><![CDATA[$F{quantidade}]]></textFieldExpression>
-									</textField>
-									<textField isBlankWhenNull="true" pattern="R$ #,##0.00">
-										<reportElement style="Muted" x="345" y="0" width="55" height="10" uuid="b97f87a0-2e9b-4b3a-a71b-be8da9b06531"/>
-										<textElement textAlignment="Right"/>
-										<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
-									</textField>
-								</jr:listContents>
-							</jr:list>
-						</componentElement>
+						<textField isBlankWhenNull="true" textAdjust="StretchHeight">
+							<reportElement positionType="Float" style="Muted" x="70" y="18" width="400" height="8" isRemoveLineWhenBlank="true" uuid="01783006-96c1-49e6-ac51-f8bf4d6e3e57"/>
+							<textElement verticalAlignment="Top">
+								<font size="7"/>
+							</textElement>
+							<textFieldExpression><![CDATA[$F{materiais} != null && !$F{materiais}.isEmpty()
+? ((java.util.List<com.api_orcafacil.domain.orcamento.dto.MaterialVisualizacaoDTO>) $F{materiais}).stream()
+    .map(m -> "Material: "
+        + (m.getNome() != null ? m.getNome() : "")
+        + (m.getDescricao() != null && !m.getDescricao().trim().isEmpty() ? " - " + m.getDescricao() : "")
+        + (m.getQuantidade() != null ? " | Qtd: " + m.getQuantidade() : "")
+        + (m.getValor() != null && m.getValor().compareTo(java.math.BigDecimal.ZERO) != 0 ? " | R$ " + new java.text.DecimalFormat("#,##0.00").format(m.getValor()) : ""))
+    .collect(java.util.stream.Collectors.joining("\n"))
+: ""]]></textFieldExpression>
+						</textField>
 					</jr:listContents>
 				</jr:list>
 			</componentElement>

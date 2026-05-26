@@ -64,19 +64,19 @@ public class DefaultAdminInitializer implements CommandLineRunner {
             return;
         }
 
-        Role roleAdmin = obterOuCriarRoleAdmin();
+        Role roleAdmin = obterOuCriarRoleDev();
         Empresa empresaBase = obterOuCriarEmpresaBase();
         Usuario usuarioAdmin = obterOuCriarUsuarioAdmin(roleAdmin);
 
         vincularUsuarioEmpresa(usuarioAdmin, empresaBase);
     }
 
-    private Role obterOuCriarRoleAdmin() {
-        Role roleAdmin = roleRepository.findByNomeRole(TipoRole.ROLE_ADMIN.name());
+    private Role obterOuCriarRoleDev() {
+        Role roleAdmin = roleRepository.findByNomeRole(TipoRole.ROLE_DEV.name());
 
         if (roleAdmin == null) {
             roleAdmin = new Role();
-            roleAdmin.setNomeRole(TipoRole.ROLE_ADMIN.name());
+            roleAdmin.setNomeRole(TipoRole.ROLE_DEV.name());
             roleAdmin = roleRepository.save(roleAdmin);
         }
 
@@ -122,7 +122,7 @@ public class DefaultAdminInitializer implements CommandLineRunner {
             return;
         }
 
-        
+
         UsuarioEmpresa usuarioEmpresa = new UsuarioEmpresa();
         usuarioEmpresa.setIdUsuario(usuario.getId());
         usuarioEmpresa.setIdEmpresa(empresa.getIdEmpresa());

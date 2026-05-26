@@ -122,6 +122,7 @@ public class DefaultAdminInitializer implements CommandLineRunner {
             return;
         }
 
+        
         UsuarioEmpresa usuarioEmpresa = new UsuarioEmpresa();
         usuarioEmpresa.setIdUsuario(usuario.getId());
         usuarioEmpresa.setIdEmpresa(empresa.getIdEmpresa());

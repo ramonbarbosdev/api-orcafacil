@@ -57,9 +57,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             List<String> permissoes = extrairPermissoes(claims);
 
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            authorities.add(new SimpleGrantedAuthority("GLOBAL_" + tipoGlobal));
+            boolean superAdmin = "SUPER_ADMIN".equals(tipoGlobal);
 
-            if (idOrganizacao != null) {
+            if (superAdmin) {
+                idOrganizacao = null;
+                role = null;
+                permissoes = List.of();
+                authorities.clear();
+                authorities.add(new SimpleGrantedAuthority("GLOBAL_SUPER_ADMIN"));
+            } else {
+                authorities.add(new SimpleGrantedAuthority("GLOBAL_" + tipoGlobal));
+            }
+
+            if (!superAdmin && idOrganizacao != null) {
                 AuthOrganizationMembership vinculo = authDirectory
                         .buscarVinculoAtivo(idUsuario, idOrganizacao)
                         .orElse(null);
@@ -78,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(new JwtAuthentication(
                     idUsuario, tipoGlobal, idOrganizacao, role, permissoes, authorities));
 
-            if (idOrganizacao != null) {
+            if (idOrganizacao != null && !superAdmin) {
                 TenantDescriptor descriptor = organizationResolver.resolver(idOrganizacao);
                 TenantRuntimeContext.set(new TenantRuntimeContext.CurrentTenant(
                         idUsuario, idOrganizacao, role, permissoes, descriptor));

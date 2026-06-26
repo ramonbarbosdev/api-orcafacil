@@ -92,28 +92,74 @@ public class CentralAuthDirectory implements AuthDirectory {
 
     @Override
     public List<String> listarPermissoes(Long idUsuario, Long idOrganizacao, String role) {
+        LinkedHashSet<String> tetoPlano = new LinkedHashSet<>(permissoesPorPlano(idOrganizacao));
         LinkedHashSet<String> permissoes = new LinkedHashSet<>();
-        permissoes.addAll(permissoesPorPapel(idOrganizacao, role));
-        permissoes.addAll(permissoesPorUsuario(idUsuario, idOrganizacao));
+
+        for (String chave : permissoesPorPapelPadrao(role)) {
+            if (tetoPlano.contains(chave)) {
+                permissoes.add(chave);
+            }
+        }
+        for (String chave : permissoesPorUsuario(idUsuario, idOrganizacao)) {
+            if (tetoPlano.contains(chave)) {
+                permissoes.add(chave);
+            }
+        }
         return List.copyOf(permissoes);
     }
 
-    private List<String> permissoesPorPapel(Long idOrganizacao, String role) {
+    private List<String> permissoesPorPapelPadrao(String role) {
         if (role == null || role.isBlank()) {
             return List.of();
         }
         return jdbcTemplate.queryForList("""
                 select distinct pg.nm_chave
-                from papel_permissao pp
-                join papel p on p.id_papel = pp.id_papel
-                join permissao_global pg on pg.id_permissao = pp.id_permissao
-                where pp.id_organizacao = :idOrganizacao
-                  and p.nm_papel = :role
+                from papel_permissao_padrao ppp
+                join papel p on p.id_papel = ppp.id_papel
+                join permissao_global pg on pg.id_permissao = ppp.id_permissao
+                where p.nm_papel = :role
                   and p.fl_ativo = true
                   and pg.fl_ativo = true
                 order by pg.nm_chave
                 """,
-                Map.of("idOrganizacao", idOrganizacao, "role", role),
+                Map.of("role", role),
+                String.class);
+    }
+
+    private List<String> permissoesPorPlano(Long idOrganizacao) {
+        try {
+            Long idPlano = jdbcTemplate.queryForObject("""
+                    select id_planoassinatura from organizacao where id_organizacao = :idOrganizacao
+                    """,
+                    Map.of("idOrganizacao", idOrganizacao),
+                    Long.class);
+
+            if (idPlano == null) {
+                return listarTodasPermissoesAtivas();
+            }
+
+            List<String> chaves = jdbcTemplate.queryForList("""
+                    select distinct pg.nm_chave
+                    from plano_permissao pp
+                    join permissao_global pg on pg.id_permissao = pp.id_permissao
+                    where pp.id_planoassinatura = :idPlano
+                      and pg.fl_ativo = true
+                    order by pg.nm_chave
+                    """,
+                    Map.of("idPlano", idPlano),
+                    String.class);
+
+            return chaves.isEmpty() ? listarTodasPermissoesAtivas() : chaves;
+        } catch (EmptyResultDataAccessException ex) {
+            return listarTodasPermissoesAtivas();
+        }
+    }
+
+    private List<String> listarTodasPermissoesAtivas() {
+        return jdbcTemplate.queryForList("""
+                select nm_chave from permissao_global where fl_ativo = true order by nm_chave
+                """,
+                Map.of(),
                 String.class);
     }
 

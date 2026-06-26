@@ -101,30 +101,17 @@ public class DatabaseTenantProvisioningService implements TenantProvisioningServ
                         "idOrganizacao", plan.idOrganizacao(),
                         "databaseName", plan.databaseName()));
 
-        concederPermissoesPadrao(plan.idOrganizacao());
+        atribuirPlanoPadrao(plan.idOrganizacao());
     }
 
-    private void concederPermissoesPadrao(Long idOrganizacao) {
-        concederPermissoesPapel(idOrganizacao, 1, null);
-        concederPermissoesPapel(idOrganizacao, 2, """
-                pg.nm_chave like '%.ler'
-                or pg.nm_chave in ('orcamentos.criar', 'orcamentos.editar')
-                or pg.nm_chave like 'perfil.%'
-                """);
-    }
-
-    private void concederPermissoesPapel(Long idOrganizacao, int idPapel, String filtroPermissao) {
-        String wherePermissao = filtroPermissao == null
-                ? "pg.fl_ativo = true"
-                : "pg.fl_ativo = true and (" + filtroPermissao + ")";
+    private void atribuirPlanoPadrao(Long idOrganizacao) {
         centralJdbcTemplate.update("""
-                insert into papel_permissao (id_papel, id_organizacao, id_permissao)
-                select :idPapel, :idOrganizacao, pg.id_permissao
-                from permissao_global pg
-                where %s
-                on conflict do nothing
-                """.formatted(wherePermissao),
-                Map.of("idPapel", idPapel, "idOrganizacao", idOrganizacao));
+                update organizacao
+                set id_planoassinatura = coalesce(id_planoassinatura, 1),
+                    dt_atualizacao = now()
+                where id_organizacao = :idOrganizacao
+                """,
+                Map.of("idOrganizacao", idOrganizacao));
     }
 
     private void falharProvisionamento(Long idProvisionamento, TenantProvisioningPlan plan, RuntimeException ex) {

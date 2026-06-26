@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.api_orcafacil.dto.ApiResponseDTO;
+import com.api_orcafacil.dto.PermissoesUpdateDTO;
 import com.api_orcafacil.dto.precificacao.PlanoAssinaturaRequest;
 import com.api_orcafacil.dto.precificacao.PlanoAssinaturaResponse;
 import com.api_orcafacil.service.PlanoAssinaturaPlatformService;
@@ -49,5 +50,19 @@ public class PlanoAssinaturaAdminController {
     public ResponseEntity<ApiResponseDTO<Void>> excluir(@PathVariable Long id) {
         service.excluir(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Plano excluido", null));
+    }
+
+    @GetMapping("/{id}/permissoes")
+    public ResponseEntity<ApiResponseDTO<List<String>>> listarPermissoes(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", service.listarPermissoes(id)));
+    }
+
+    @PutMapping("/{id}/permissoes")
+    public ResponseEntity<ApiResponseDTO<List<String>>> atualizarPermissoes(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody PermissoesUpdateDTO request) {
+        return ResponseEntity.ok(new ApiResponseDTO<>(
+                "Permissoes do plano atualizadas",
+                service.atualizarPermissoes(id, request.chaves())));
     }
 }

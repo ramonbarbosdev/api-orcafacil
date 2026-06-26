@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
 
-    private static final Set<String> ROTAS_IGNORADAS = Set.of("auth", "admin", "error");
+    private static final Set<String> MODULOS_PLATAFORMA = Set.of("auth", "admin", "error");
 
     @Override
     protected void doFilterInternal(
@@ -24,15 +24,16 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        if (isRotaIgnorada(request)) {
+        String path = pathSemContexto(request);
+        if (isRotaPlataforma(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String acao = acaoPorMetodo(request.getMethod());
-        String modulo = moduloDaRota(request.getServletPath());
+        String modulo = moduloDaRota(path);
 
-        if (acao == null || modulo == null || ROTAS_IGNORADAS.contains(modulo)) {
+        if (acao == null || modulo == null || MODULOS_PLATAFORMA.contains(modulo)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -61,8 +62,7 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean isRotaIgnorada(HttpServletRequest request) {
-        String path = pathSemContexto(request);
+    private boolean isRotaPlataforma(String path) {
         return path.startsWith("/admin") || path.startsWith("/auth");
     }
 
@@ -85,13 +85,13 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
         };
     }
 
-    private String moduloDaRota(String servletPath) {
-        if (servletPath == null || servletPath.isBlank() || "/".equals(servletPath)) {
+    private String moduloDaRota(String path) {
+        if (path == null || path.isBlank() || "/".equals(path)) {
             return null;
         }
-        String path = servletPath.startsWith("/") ? servletPath.substring(1) : servletPath;
-        int slash = path.indexOf('/');
-        return slash < 0 ? path : path.substring(0, slash);
+        String normalizado = path.startsWith("/") ? path.substring(1) : path;
+        int slash = normalizado.indexOf('/');
+        return slash < 0 ? normalizado : normalizado.substring(0, slash);
     }
 
     private boolean temAuthority(Authentication authentication, String authority) {

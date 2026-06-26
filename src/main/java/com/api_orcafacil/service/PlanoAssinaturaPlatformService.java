@@ -19,10 +19,13 @@ import com.api_orcafacil.exception.ResourceNotFoundException;
 public class PlanoAssinaturaPlatformService {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final PermissaoPlatformService permissaoPlatformService;
 
     public PlanoAssinaturaPlatformService(
-            @Qualifier("centralNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate) {
+            @Qualifier("centralNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate,
+            PermissaoPlatformService permissaoPlatformService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.permissaoPlatformService = permissaoPlatformService;
     }
 
     public List<PlanoAssinaturaResponse> listar() {
@@ -46,7 +49,7 @@ public class PlanoAssinaturaPlatformService {
     }
 
     public PlanoAssinaturaResponse criar(PlanoAssinaturaRequest request) {
-        return jdbcTemplate.queryForObject("""
+        PlanoAssinaturaResponse response = jdbcTemplate.queryForObject("""
                 insert into plano_assinatura (nm_planoassinatura, vl_mensal, nu_limitemensagens, nu_limiteatendentes, fl_ativo)
                 values (:nome, :valor, :limiteMsg, :limiteAtend, coalesce(:ativo, true))
                 returning id_planoassinatura, nm_planoassinatura, vl_mensal, nu_limitemensagens,
@@ -59,6 +62,8 @@ public class PlanoAssinaturaPlatformService {
                         "limiteAtend", request.getNuLimiteAtendentes() != null ? request.getNuLimiteAtendentes() : 0,
                         "ativo", request.getFlAtivo()),
                 this::map);
+        permissaoPlatformService.concederTodasPermissoesPlano(response.getIdPlanoAssinatura());
+        return response;
     }
 
     public PlanoAssinaturaResponse atualizar(Long id, PlanoAssinaturaRequest request) {
@@ -87,7 +92,28 @@ public class PlanoAssinaturaPlatformService {
 
     public void excluir(Long id) {
         buscar(id);
+        jdbcTemplate.update("delete from plano_permissao where id_planoassinatura = :id", Map.of("id", id));
         jdbcTemplate.update("delete from plano_assinatura where id_planoassinatura = :id", Map.of("id", id));
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public List<String> listarPermissoes(Long id) {
+        buscar(id);
+        return jdbcTemplate.queryForList("""
+                select pg.nm_chave
+                from plano_permissao pp
+                join permissao_global pg on pg.id_permissao = pp.id_permissao
+                where pp.id_planoassinatura = :id and pg.fl_ativo = true
+                order by pg.nm_chave
+                """,
+                Map.of("id", id),
+                String.class);
+    }
+
+    public List<String> atualizarPermissoes(Long id, List<String> chaves) {
+        buscar(id);
+        permissaoPlatformService.substituirPermissoesPlano(id, chaves);
+        return listarPermissoes(id);
     }
 
     private PlanoAssinaturaResponse map(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {

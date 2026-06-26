@@ -82,11 +82,11 @@ public class OrganizacaoPlatformService {
         OrganizacaoResponseDTO response = jdbcTemplate.queryForObject("""
                 insert into organizacao (
                     id_organizacao, slug, nm_organizacao, ds_documento, status,
-                    database_name, storage_mode, fl_ativo, dt_criacao, dt_atualizacao
+                    database_name, storage_mode, id_planoassinatura, fl_ativo, dt_criacao, dt_atualizacao
                 )
                 values (
                     :id, :slug, :nome, :documento, 'EM_PROVISIONAMENTO',
-                    :databaseName, 'DATABASE_PER_ORG', true, now(), now()
+                    :databaseName, 'DATABASE_PER_ORG', 1, true, now(), now()
                 )
                 returning id_organizacao, nm_organizacao, ds_documento, slug, database_name, status, fl_ativo, dt_criacao
                 """,

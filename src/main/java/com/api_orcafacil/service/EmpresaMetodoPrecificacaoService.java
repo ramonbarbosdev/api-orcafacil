@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.common.TipoPrecificacao;
 import com.api_orcafacil.dto.precificacao.EmpresaMetodoPrecificacaoRequest;
+import com.api_orcafacil.dto.precificacao.EmpresaMetodoPrecificacaoResponse;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.EmpresaMetodoPrecificacao;
@@ -30,26 +31,43 @@ public class EmpresaMetodoPrecificacaoService {
         this.tenantContextService = tenantContextService;
     }
 
-    public List<EmpresaMetodoPrecificacao> listar() {
-        return repository.findByIdOrganizacao(tenantContextService.idOrganizacaoObrigatoria());
+    @Transactional(readOnly = true)
+    public List<EmpresaMetodoPrecificacaoResponse> listar() {
+        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        return repository.findByIdOrganizacaoWithMetodo(idOrganizacao).stream()
+                .map(this::montarResponse)
+                .toList();
     }
 
-    public EmpresaMetodoPrecificacao buscarPorId(Long id) {
-        return repository.findByIdEmpresaMetodoPrecificacaoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
+    @Transactional(readOnly = true)
+    public EmpresaMetodoPrecificacaoResponse buscarPorId(Long id) {
+        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        EmpresaMetodoPrecificacao objeto = repository.findByIdAndOrganizacaoWithMetodo(id, idOrganizacao)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa metodo nao encontrado"));
+        return montarResponse(objeto);
+    }
+
+    @Transactional(readOnly = true)
+    public EmpresaMetodoPrecificacao buscarEntidadePorId(Long id) {
+        return repository.findByIdEmpresaMetodoPrecificacaoAndIdOrganizacao(
+                        id, tenantContextService.idOrganizacaoObrigatoria())
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa metodo nao encontrado"));
     }
 
     @Transactional
-    public EmpresaMetodoPrecificacao salvar(EmpresaMetodoPrecificacaoRequest request) {
+    public EmpresaMetodoPrecificacaoResponse salvar(EmpresaMetodoPrecificacaoRequest request) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         EmpresaMetodoPrecificacao objeto = request.getIdEmpresaMetodoPrecificacao() != null
-                ? buscarPorId(request.getIdEmpresaMetodoPrecificacao())
+                ? buscarEntidadePorId(request.getIdEmpresaMetodoPrecificacao())
                 : new EmpresaMetodoPrecificacao();
         objeto.setIdOrganizacao(idOrganizacao);
         objeto.setIdMetodoPrecificacao(request.getIdMetodoPrecificacao());
         objeto.setConfiguracao(request.getConfiguracao());
         validarDuplicidade(objeto);
-        return repository.save(objeto);
+        EmpresaMetodoPrecificacao salvo = repository.save(objeto);
+        MetodoPrecificacao metodo = metodoPrecificacaoRepository.findById(salvo.getIdMetodoPrecificacao())
+                .orElseThrow(() -> new ResourceNotFoundException("Metodo de precificacao nao encontrado"));
+        return EmpresaMetodoPrecificacaoResponse.from(salvo, metodo);
     }
 
     public EmpresaMetodoPrecificacao obterEmpresaMetodoPrecificacaoSimples() {
@@ -75,5 +93,9 @@ public class EmpresaMetodoPrecificacaoService {
                         throw new ConflictException("Metodo de precificacao ja cadastrado para esta organizacao");
                     }
                 });
+    }
+
+    private EmpresaMetodoPrecificacaoResponse montarResponse(EmpresaMetodoPrecificacao empresa) {
+        return EmpresaMetodoPrecificacaoResponse.from(empresa, empresa.getMetodoPrecificacao());
     }
 }

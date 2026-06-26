@@ -205,7 +205,7 @@ public class OrcamentoService {
     }
 
     private BigDecimal aplicarMetodoPrecificacao(OrcamentoItem item, Long idEmpresaMetodoPrecificacao) {
-        EmpresaMetodoPrecificacao empresaMetodo = empresaMetodoPrecificacaoService.buscarPorId(idEmpresaMetodoPrecificacao);
+        EmpresaMetodoPrecificacao empresaMetodo = empresaMetodoPrecificacaoService.buscarEntidadePorId(idEmpresaMetodoPrecificacao);
         return precificacaoService.precificarItem(item, empresaMetodo);
     }
 

@@ -4,24 +4,31 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.dto.PermissaoItemDTO;
 import com.api_orcafacil.dto.PermissaoModuloDTO;
 import com.api_orcafacil.exception.BusinessException;
+import com.api_orcafacil.repository.central.CentralPapelPermissaoPadraoRepository;
+import com.api_orcafacil.repository.central.CentralPapelRepository;
+import com.api_orcafacil.repository.central.CentralPermissaoGlobalRepository;
+import com.api_orcafacil.repository.central.CentralPlanoPermissaoRepository;
+import com.api_orcafacil.tenant.central.model.CentralPapelPermissaoPadrao;
+import com.api_orcafacil.tenant.central.model.CentralPermissaoGlobal;
+import com.api_orcafacil.tenant.central.model.CentralPlanoPermissao;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @ConditionalOnProperty(name = "app.saas.central.enabled", havingValue = "true")
 @Transactional(transactionManager = "centralTransactionManager")
+@RequiredArgsConstructor
 public class PermissaoPlatformService {
 
     private static final Map<String, String> ROTULOS_MODULO = Map.ofEntries(
@@ -38,32 +45,16 @@ public class PermissaoPlatformService {
             Map.entry("empresa-metodos-precificacao", "Métodos da empresa"),
             Map.entry("perfil", "Perfil"));
 
-    private final NamedParameterJdbcTemplate jdbcTemplate;
-
-    public PermissaoPlatformService(
-            @Qualifier("centralNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    private final CentralPermissaoGlobalRepository permissaoRepository;
+    private final CentralPapelRepository papelRepository;
+    private final CentralPapelPermissaoPadraoRepository papelPermissaoPadraoRepository;
+    private final CentralPlanoPermissaoRepository planoPermissaoRepository;
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public List<PermissaoModuloDTO> listarCatalogo() {
-        List<PermissaoItemDTO> itens = jdbcTemplate.query("""
-                select id_permissao, nm_permissao, nm_chave
-                from permissao_global
-                where fl_ativo = true
-                order by nm_chave
-                """,
-                Map.of(),
-                (rs, rowNum) -> {
-                    String chave = rs.getString("nm_chave");
-                    int idx = chave.lastIndexOf('.');
-                    String acao = idx >= 0 ? chave.substring(idx + 1) : chave;
-                    return new PermissaoItemDTO(
-                            rs.getLong("id_permissao"),
-                            rs.getString("nm_permissao"),
-                            chave,
-                            acao);
-                });
+        List<PermissaoItemDTO> itens = permissaoRepository.findByFlAtivoTrueOrderByNmChaveAsc().stream()
+                .map(this::toItem)
+                .toList();
 
         LinkedHashMap<String, List<PermissaoItemDTO>> porModulo = new LinkedHashMap<>();
         for (PermissaoItemDTO item : itens) {
@@ -81,11 +72,9 @@ public class PermissaoPlatformService {
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public List<String> listarChavesAtivas() {
-        return jdbcTemplate.queryForList("""
-                select nm_chave from permissao_global where fl_ativo = true order by nm_chave
-                """,
-                Map.of(),
-                String.class);
+        return permissaoRepository.findByFlAtivoTrueOrderByNmChaveAsc().stream()
+                .map(CentralPermissaoGlobal::getNmChave)
+                .toList();
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -100,14 +89,9 @@ public class PermissaoPlatformService {
             return List.of();
         }
 
-        List<Long> ids = jdbcTemplate.queryForList("""
-                select id_permissao
-                from permissao_global
-                where fl_ativo = true and nm_chave in (:chaves)
-                order by id_permissao
-                """,
-                Map.of("chaves", unicas),
-                Long.class);
+        List<Long> ids = permissaoRepository.findByNmChaveInAndFlAtivoTrueOrderByIdPermissaoAsc(unicas).stream()
+                .map(CentralPermissaoGlobal::getIdPermissao)
+                .toList();
 
         if (ids.size() != unicas.size()) {
             throw new BusinessException("Uma ou mais permissoes informadas sao invalidas");
@@ -119,54 +103,53 @@ public class PermissaoPlatformService {
         validarPapel(idPapel);
         List<Long> ids = resolverIdsPorChaves(chaves);
 
-        jdbcTemplate.update("delete from papel_permissao_padrao where id_papel = :idPapel",
-                Map.of("idPapel", idPapel));
-
-        for (Long idPermissao : ids) {
-            jdbcTemplate.update("""
-                    insert into papel_permissao_padrao (id_papel, id_permissao)
-                    values (:idPapel, :idPermissao)
-                    on conflict do nothing
-                    """,
-                    Map.of("idPapel", idPapel, "idPermissao", idPermissao));
-        }
+        papelPermissaoPadraoRepository.deleteByIdPapel(idPapel);
+        salvarVinculosPapel(idPapel, ids);
     }
 
     void substituirPermissoesPlano(Long idPlano, List<String> chaves) {
         List<Long> ids = resolverIdsPorChaves(chaves);
 
-        jdbcTemplate.update("delete from plano_permissao where id_planoassinatura = :idPlano",
-                Map.of("idPlano", idPlano));
-
-        for (Long idPermissao : ids) {
-            jdbcTemplate.update("""
-                    insert into plano_permissao (id_planoassinatura, id_permissao)
-                    values (:idPlano, :idPermissao)
-                    on conflict do nothing
-                    """,
-                    Map.of("idPlano", idPlano, "idPermissao", idPermissao));
-        }
+        planoPermissaoRepository.deleteByIdPlanoAssinatura(idPlano);
+        salvarVinculosPlano(idPlano, ids);
     }
 
     void concederTodasPermissoesPlano(Long idPlano) {
-        jdbcTemplate.update("""
-                insert into plano_permissao (id_planoassinatura, id_permissao)
-                select :idPlano, id_permissao
-                from permissao_global
-                where fl_ativo = true
-                on conflict do nothing
-                """,
-                Map.of("idPlano", idPlano));
+        List<Long> ids = permissaoRepository.findByFlAtivoTrueOrderByNmChaveAsc().stream()
+                .map(CentralPermissaoGlobal::getIdPermissao)
+                .toList();
+        salvarVinculosPlano(idPlano, ids);
+    }
+
+    private void salvarVinculosPapel(Long idPapel, List<Long> idsPermissao) {
+        List<CentralPapelPermissaoPadrao> vinculos = idsPermissao.stream()
+                .map(idPermissao -> new CentralPapelPermissaoPadrao(idPapel, idPermissao))
+                .toList();
+        papelPermissaoPadraoRepository.saveAll(vinculos);
+    }
+
+    private void salvarVinculosPlano(Long idPlano, List<Long> idsPermissao) {
+        List<CentralPlanoPermissao> vinculos = idsPermissao.stream()
+                .map(idPermissao -> new CentralPlanoPermissao(idPlano, idPermissao))
+                .toList();
+        planoPermissaoRepository.saveAll(vinculos);
     }
 
     private void validarPapel(Long idPapel) {
-        Integer count = jdbcTemplate.queryForObject(
-                "select count(*) from papel where id_papel = :id and fl_ativo = true",
-                Map.of("id", idPapel),
-                Integer.class);
-        if (count == null || count == 0) {
+        if (!papelRepository.existsByIdPapelAndFlAtivoTrue(idPapel)) {
             throw new BusinessException("Papel nao encontrado");
         }
+    }
+
+    private PermissaoItemDTO toItem(CentralPermissaoGlobal permissao) {
+        String chave = permissao.getNmChave();
+        int idx = chave.lastIndexOf('.');
+        String acao = idx >= 0 ? chave.substring(idx + 1) : chave;
+        return new PermissaoItemDTO(
+                permissao.getIdPermissao(),
+                permissao.getNmPermissao(),
+                chave,
+                acao);
     }
 
     static String moduloDaChave(String chave) {

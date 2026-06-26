@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
+import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SlugUtil;
 import com.api_orcafacil.common.TipoGlobal;
 import com.api_orcafacil.dto.OrganizacaoRequestDTO;
@@ -46,6 +47,8 @@ public class OrganizacaoPlatformService {
     private final CentralUsuarioOrganizacaoRepository usuarioOrganizacaoRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectProvider<TenantProvisioningService> tenantProvisioningService;
+    private final ObjectProvider<AssinaturaPlatformService> assinaturaPlatformService;
+    private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
     private final boolean autoProvisioningEnabled;
 
     public OrganizacaoPlatformService(
@@ -54,12 +57,16 @@ public class OrganizacaoPlatformService {
             CentralUsuarioOrganizacaoRepository usuarioOrganizacaoRepository,
             PasswordEncoder passwordEncoder,
             ObjectProvider<TenantProvisioningService> tenantProvisioningService,
+            ObjectProvider<AssinaturaPlatformService> assinaturaPlatformService,
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService,
             @org.springframework.beans.factory.annotation.Value("${app.saas.provisioning.auto-enabled:true}") boolean autoProvisioningEnabled) {
         this.organizacaoRepository = organizacaoRepository;
         this.usuarioGlobalRepository = usuarioGlobalRepository;
         this.usuarioOrganizacaoRepository = usuarioOrganizacaoRepository;
         this.passwordEncoder = passwordEncoder;
         this.tenantProvisioningService = tenantProvisioningService;
+        this.assinaturaPlatformService = assinaturaPlatformService;
+        this.politicaPlanoService = politicaPlanoService;
         this.autoProvisioningEnabled = autoProvisioningEnabled;
     }
 
@@ -93,6 +100,7 @@ public class OrganizacaoPlatformService {
         organizacao.setFlAtivo(true);
 
         CentralOrganizacao salva = organizacaoRepository.save(organizacao);
+        assinaturaPlatformService.ifAvailable(s -> s.criarAssinaturaInicial(salva.getIdOrganizacao(), PLANO_GRATUITO_ID));
         agendarProvisionamento(salva.getIdOrganizacao(), slug, databaseName);
         return CentralOrganizacaoMapper.toResponse(salva);
     }
@@ -125,6 +133,14 @@ public class OrganizacaoPlatformService {
         buscarEntidade(idOrganizacao);
 
         var usuarioExistente = usuarioGlobalRepository.findByNuCpf(request.nuCpf());
+        boolean novoVinculo = usuarioExistente.isEmpty()
+                || !usuarioOrganizacaoRepository.existsByIdOrganizacaoAndIdUsuarioAndFlAtivoTrue(
+                        idOrganizacao, usuarioExistente.get().getIdUsuario());
+        if (novoVinculo) {
+            politicaPlanoService.ifAvailable(
+                    p -> p.validarLimiteNovoRegistro(idOrganizacao, ChaveLimite.USUARIOS));
+        }
+
         CentralUsuarioGlobal usuario;
 
         if (usuarioExistente.isPresent()) {

@@ -2,6 +2,7 @@ package com.api_orcafacil.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import com.api_orcafacil.common.TipoGlobal;
 import com.api_orcafacil.dto.LoginRequestDTO;
 import com.api_orcafacil.dto.LoginResponseDTO;
 import com.api_orcafacil.dto.MeResponseDTO;
+import com.api_orcafacil.dto.plano.PoliticaPlanoResumoDTO;
 import com.api_orcafacil.dto.OrganizacaoLoginDTO;
 import com.api_orcafacil.dto.SelecionarOrganizacaoResponseDTO;
 import com.api_orcafacil.exception.UnauthorizedException;
@@ -30,18 +32,21 @@ public class AuthService {
     private final TenantContextService tenantContextService;
     private final AuthDirectory authDirectory;
     private final OrganizationResolver organizationResolver;
+    private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
     public AuthService(
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             TenantContextService tenantContextService,
             AuthDirectory authDirectory,
-            OrganizationResolver organizationResolver) {
+            OrganizationResolver organizationResolver,
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.tenantContextService = tenantContextService;
         this.authDirectory = authDirectory;
         this.organizationResolver = organizationResolver;
+        this.politicaPlanoService = politicaPlanoService;
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -89,11 +94,19 @@ public class AuthService {
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public MeResponseDTO me() {
         JwtAuthentication atual = tenantContextService.atual();
+        PoliticaPlanoResumoDTO politica = null;
+        if (atual.getIdOrganizacao() != null) {
+            PoliticaPlanoService service = politicaPlanoService.getIfAvailable();
+            if (service != null) {
+                politica = service.obterResumo(atual.getIdOrganizacao());
+            }
+        }
         return new MeResponseDTO(
                 atual.getIdUsuario(),
                 atual.getTipoGlobal(),
                 atual.getIdOrganizacao(),
                 atual.getRole(),
-                atual.getPermissoes());
+                atual.getPermissoes(),
+                politica);
     }
 }

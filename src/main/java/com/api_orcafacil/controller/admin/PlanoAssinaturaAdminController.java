@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.PermissoesUpdateDTO;
+import com.api_orcafacil.dto.plano.PlanoLimiteItemDTO;
+import com.api_orcafacil.dto.plano.PlanoLimitesUpdateDTO;
+import com.api_orcafacil.dto.plano.TipoLimiteResponseDTO;
 import com.api_orcafacil.dto.precificacao.PlanoAssinaturaRequest;
 import com.api_orcafacil.dto.precificacao.PlanoAssinaturaResponse;
 import com.api_orcafacil.service.PlanoAssinaturaPlatformService;
@@ -64,5 +67,24 @@ public class PlanoAssinaturaAdminController {
         return ResponseEntity.ok(new ApiResponseDTO<>(
                 "Permissoes do plano atualizadas",
                 service.atualizarPermissoes(id, request.chaves())));
+    }
+
+    @GetMapping("/tipos-limite")
+    public ResponseEntity<ApiResponseDTO<List<TipoLimiteResponseDTO>>> listarTiposLimite() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", service.listarTiposLimite()));
+    }
+
+    @GetMapping("/{id}/limites")
+    public ResponseEntity<ApiResponseDTO<List<PlanoLimiteItemDTO>>> listarLimites(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", service.listarLimites(id)));
+    }
+
+    @PutMapping("/{id}/limites")
+    public ResponseEntity<ApiResponseDTO<List<PlanoLimiteItemDTO>>> atualizarLimites(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody PlanoLimitesUpdateDTO request) {
+        return ResponseEntity.ok(new ApiResponseDTO<>(
+                "Limites do plano atualizados",
+                service.atualizarLimites(id, request)));
     }
 }

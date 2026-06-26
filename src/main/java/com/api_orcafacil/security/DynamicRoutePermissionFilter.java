@@ -60,6 +60,11 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return;
         }
 
+        if ("politica-plano".equals(modulo)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (path.endsWith("/sequencia") && "GET".equalsIgnoreCase(request.getMethod())) {
             String ler = modulo + ".ler";
             String criar = modulo + ".criar";

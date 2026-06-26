@@ -52,4 +52,6 @@ public interface CentralUsuarioOrganizacaoRepository extends JpaRepository<Centr
             @Param("idUsuario") Long idUsuario,
             @Param("idOrganizacao") Long idOrganizacao,
             @Param("status") OrganizationStatus status);
+
+    long countByIdOrganizacaoAndFlAtivoTrue(Long idOrganizacao);
 }

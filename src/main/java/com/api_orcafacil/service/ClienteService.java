@@ -3,10 +3,11 @@ package com.api_orcafacil.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.api_orcafacil.common.SequenciaUtil;
+import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.TipoCliente;
 import com.api_orcafacil.dto.cliente.ClienteRequest;
 import com.api_orcafacil.dto.cliente.ClienteResponse;
@@ -21,10 +22,15 @@ public class ClienteService {
 
     private final ClienteRepository repository;
     private final TenantContextService tenantContextService;
+    private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
-    public ClienteService(ClienteRepository repository, TenantContextService tenantContextService) {
+    public ClienteService(
+            ClienteRepository repository,
+            TenantContextService tenantContextService,
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.repository = repository;
         this.tenantContextService = tenantContextService;
+        this.politicaPlanoService = politicaPlanoService;
     }
 
     public List<ClienteResponse> listar() {
@@ -48,6 +54,10 @@ public class ClienteService {
                 ? repository.findByIdClienteAndIdOrganizacao(request.getIdCliente(), idOrganizacao)
                         .orElseThrow(() -> new ResourceNotFoundException("Cliente nao encontrado"))
                 : new Cliente();
+
+        if (request.getIdCliente() == null) {
+            politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.CLIENTES));
+        }
 
         aplicar(cliente, request, idOrganizacao);
         return ClienteResponse.from(repository.save(cliente));

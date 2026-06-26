@@ -12,6 +12,15 @@ import com.api_orcafacil.dto.precificacao.PlanoAssinaturaResponse;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.repository.central.CentralPlanoAssinaturaRepository;
 import com.api_orcafacil.repository.central.CentralPlanoPermissaoRepository;
+import com.api_orcafacil.dto.plano.PlanoLimiteItemDTO;
+import com.api_orcafacil.dto.plano.PlanoLimitesUpdateDTO;
+import com.api_orcafacil.dto.plano.TipoLimiteResponseDTO;
+import com.api_orcafacil.exception.ConflictException;
+import com.api_orcafacil.repository.central.CentralPlanoLimiteRepository;
+import com.api_orcafacil.repository.central.CentralOrganizacaoAssinaturaRepository;
+import com.api_orcafacil.repository.central.CentralTipoLimiteRepository;
+import com.api_orcafacil.tenant.central.model.CentralPlanoLimite;
+import com.api_orcafacil.tenant.central.model.CentralTipoLimite;
 import com.api_orcafacil.tenant.central.CentralPlanoAssinaturaMapper;
 import com.api_orcafacil.tenant.central.model.CentralPlanoAssinatura;
 
@@ -25,6 +34,9 @@ public class PlanoAssinaturaPlatformService {
 
     private final CentralPlanoAssinaturaRepository planoRepository;
     private final CentralPlanoPermissaoRepository planoPermissaoRepository;
+    private final CentralPlanoLimiteRepository planoLimiteRepository;
+    private final CentralTipoLimiteRepository tipoLimiteRepository;
+    private final CentralOrganizacaoAssinaturaRepository assinaturaRepository;
     private final PermissaoPlatformService permissaoPlatformService;
 
     public List<PlanoAssinaturaResponse> listar() {
@@ -70,8 +82,50 @@ public class PlanoAssinaturaPlatformService {
 
     public void excluir(Long id) {
         buscarEntidade(id);
+        if (assinaturaRepository.countByIdPlanoAssinatura(id) > 0) {
+            throw new ConflictException("Plano em uso por organizacoes e nao pode ser excluido");
+        }
         planoPermissaoRepository.deleteByIdPlanoAssinatura(id);
+        planoLimiteRepository.deleteByIdPlanoAssinatura(id);
         planoRepository.deleteById(id);
+    }
+
+    public List<TipoLimiteResponseDTO> listarTiposLimite() {
+        return tipoLimiteRepository.findByFlAtivoTrueOrderByNmLimiteAsc().stream()
+                .map(t -> new TipoLimiteResponseDTO(
+                        t.getNmChave(), t.getNmLimite(), t.getDsLimite(), t.getTpLimite()))
+                .toList();
+    }
+
+    public List<PlanoLimiteItemDTO> listarLimites(Long id) {
+        buscarEntidade(id);
+        return planoLimiteRepository.findByIdPlanoAssinatura(id).stream()
+                .map(l -> new PlanoLimiteItemDTO(l.getNmChaveLimite(), l.getNuValor()))
+                .toList();
+    }
+
+    public List<PlanoLimiteItemDTO> atualizarLimites(Long id, PlanoLimitesUpdateDTO request) {
+        buscarEntidade(id);
+        planoLimiteRepository.deleteByIdPlanoAssinatura(id);
+        if (request.limites() != null) {
+            for (PlanoLimiteItemDTO item : request.limites()) {
+                validarTipoLimite(item.nmChaveLimite());
+                CentralPlanoLimite limite = new CentralPlanoLimite();
+                limite.setIdPlanoAssinatura(id);
+                limite.setNmChaveLimite(item.nmChaveLimite());
+                limite.setNuValor(item.nuValor());
+                planoLimiteRepository.save(limite);
+            }
+        }
+        return listarLimites(id);
+    }
+
+    private void validarTipoLimite(String nmChave) {
+        tipoLimiteRepository.findAll().stream()
+                .map(CentralTipoLimite::getNmChave)
+                .filter(nmChave::equals)
+                .findFirst()
+                .orElseThrow(() -> new ConflictException("Tipo de limite invalido: " + nmChave));
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)

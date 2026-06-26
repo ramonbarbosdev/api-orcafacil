@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.api_orcafacil.service.PoliticaPlanoService;
 import com.api_orcafacil.tenant.OrganizationResolver;
 import com.api_orcafacil.tenant.TenantDescriptor;
 import com.api_orcafacil.tenant.TenantRuntimeContext;
@@ -25,14 +27,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AuthDirectory authDirectory;
     private final OrganizationResolver organizationResolver;
+    private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
             AuthDirectory authDirectory,
-            OrganizationResolver organizationResolver) {
+            OrganizationResolver organizationResolver,
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.jwtService = jwtService;
         this.authDirectory = authDirectory;
         this.organizationResolver = organizationResolver;
+        this.politicaPlanoService = politicaPlanoService;
     }
 
     @Override
@@ -94,6 +99,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             "ORGANIZATION_UNAVAILABLE",
                             "A organização selecionada não está disponível no momento.",
                             "Selecione outra organização ou entre em contato com o suporte.");
+                    return;
+                }
+                PoliticaPlanoService politica = politicaPlanoService.getIfAvailable();
+                if (politica != null && !politica.assinaturaPermiteAcesso(idOrganizacao)) {
+                    SecurityErrorResponses.escrever(
+                            request,
+                            response,
+                            HttpServletResponse.SC_UNAUTHORIZED,
+                            "SUBSCRIPTION_INACTIVE",
+                            "A assinatura da organização não está ativa.",
+                            "Regularize o plano ou entre em contato com o suporte.");
                     return;
                 }
                 role = vinculo.dsRole();

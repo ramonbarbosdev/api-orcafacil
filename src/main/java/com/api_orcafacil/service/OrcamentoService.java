@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
@@ -30,6 +32,7 @@ public class OrcamentoService {
     private final PrecificacaoService precificacaoService;
     private final EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService;
     private final OrcamentoStatusHistoricoService statusHistoricoService;
+    private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
     public OrcamentoService(OrcamentoRepository repository,
             TenantContextService tenantContextService,
@@ -37,7 +40,8 @@ public class OrcamentoService {
             ConfiguracaoOrcamentoService configuracaoOrcamentoService,
             PrecificacaoService precificacaoService,
             EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService,
-            OrcamentoStatusHistoricoService statusHistoricoService) {
+            OrcamentoStatusHistoricoService statusHistoricoService,
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.repository = repository;
         this.tenantContextService = tenantContextService;
         this.clienteService = clienteService;
@@ -45,6 +49,7 @@ public class OrcamentoService {
         this.precificacaoService = precificacaoService;
         this.empresaMetodoPrecificacaoService = empresaMetodoPrecificacaoService;
         this.statusHistoricoService = statusHistoricoService;
+        this.politicaPlanoService = politicaPlanoService;
     }
 
     public java.util.List<OrcamentoResponse> listar() {
@@ -61,6 +66,9 @@ public class OrcamentoService {
     public OrcamentoResponse salvar(OrcamentoRequest request) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         boolean novo = request.getIdOrcamento() == null;
+        if (novo) {
+            politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.ORCAMENTOS_MES));
+        }
         Orcamento orcamento = novo ? new Orcamento() : buscarEntidade(request.getIdOrcamento());
         aplicarRequest(orcamento, request, idOrganizacao);
         validarObjeto(orcamento);
@@ -90,6 +98,8 @@ public class OrcamentoService {
         Orcamento salvo = repository.save(orcamento);
         if (novo) {
             statusHistoricoService.registrar(salvo, null, orcamento.getTpStatus());
+            politicaPlanoService.ifAvailable(
+                    p -> p.registrarConsumoAtual(ChaveLimite.ORCAMENTOS_MES, 1));
         }
         return OrcamentoResponse.from(salvo);
     }

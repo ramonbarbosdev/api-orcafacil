@@ -1,5 +1,6 @@
 package com.api_orcafacil.repository.central;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,6 @@ public interface CentralOrganizacaoRepository extends JpaRepository<CentralOrgan
     boolean existsBySlugOrDatabaseName(String slug, String databaseName);
 
     boolean existsByIdOrganizacao(Long idOrganizacao);
+
+    List<CentralOrganizacao> findByIdPlanoAssinatura(Long idPlanoAssinatura);
 }

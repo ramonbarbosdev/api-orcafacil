@@ -2,9 +2,11 @@ package com.api_orcafacil.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.dto.servico.ServicoRequest;
 import com.api_orcafacil.dto.servico.ServicoResponse;
@@ -18,10 +20,15 @@ public class ServicoService {
 
     private final ServicoRepository repository;
     private final TenantContextService tenantContextService;
+    private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
-    public ServicoService(ServicoRepository repository, TenantContextService tenantContextService) {
+    public ServicoService(
+            ServicoRepository repository,
+            TenantContextService tenantContextService,
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.repository = repository;
         this.tenantContextService = tenantContextService;
+        this.politicaPlanoService = politicaPlanoService;
     }
 
     public List<ServicoResponse> listar() {
@@ -42,6 +49,9 @@ public class ServicoService {
                 ? repository.findByIdServicoAndIdOrganizacao(request.getIdServico(), idOrganizacao)
                         .orElseThrow(() -> new ResourceNotFoundException("Servico nao encontrado"))
                 : new Servico();
+        if (request.getIdServico() == null) {
+            politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.SERVICOS));
+        }
         servico.setIdOrganizacao(idOrganizacao);
         servico.setIdCategoriaServico(request.getIdCategoriaServico());
         servico.setCdServico(request.getCdServico());

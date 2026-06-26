@@ -15,4 +15,6 @@ public interface ServicoRepository extends TenantRepository<Servico> {
 
     @Query(value = "SELECT * FROM servico b WHERE b.cd_servico = ?1 AND b.id_organizacao = ?2 LIMIT 1", nativeQuery = true)
     Optional<Servico> findByCdServicoAndIdOrganizacao(String cd, Long idOrganizacao);
+
+    long countByIdOrganizacao(Long idOrganizacao);
 }

@@ -22,7 +22,8 @@ public final class PermissaoMensagemUtil {
             Map.entry("campos-personalizados", "campos personalizados"),
             Map.entry("metodos-ajuste", "métodos de ajuste"),
             Map.entry("empresa-metodos-precificacao", "métodos de precificação da empresa"),
-            Map.entry("perfil", "perfil"));
+            Map.entry("perfil", "perfil"),
+            Map.entry("organizacao", "logo da organização"));
 
     private PermissaoMensagemUtil() {
     }

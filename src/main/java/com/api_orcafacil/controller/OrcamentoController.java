@@ -21,6 +21,8 @@ import com.api_orcafacil.relatorio.RelatorioOrcamentoService;
 import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.service.OrcamentoService;
 import com.api_orcafacil.service.VisualizacaoOrcamentoService;
+import com.api_orcafacil.service.logo.OrganizacaoLogoService;
+import com.api_orcafacil.service.logo.OrganizacaoLogoService.ConteudoLogo;
 
 @RestController
 @RequestMapping("/orcamentos")
@@ -30,14 +32,17 @@ public class OrcamentoController {
     private final OrcamentoRepository repository;
     private final VisualizacaoOrcamentoService visualizacaoOrcamentoService;
     private final RelatorioOrcamentoService relatorioOrcamentoService;
+    private final OrganizacaoLogoService organizacaoLogoService;
 
     public OrcamentoController(OrcamentoService service, OrcamentoRepository repository,
             VisualizacaoOrcamentoService visualizacaoOrcamentoService,
-            RelatorioOrcamentoService relatorioOrcamentoService) {
+            RelatorioOrcamentoService relatorioOrcamentoService,
+            OrganizacaoLogoService organizacaoLogoService) {
         this.service = service;
         this.repository = repository;
         this.visualizacaoOrcamentoService = visualizacaoOrcamentoService;
         this.relatorioOrcamentoService = relatorioOrcamentoService;
+        this.organizacaoLogoService = organizacaoLogoService;
     }
 
     @GetMapping
@@ -124,6 +129,12 @@ public class OrcamentoController {
         }
         return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso",
                 visualizacaoOrcamentoService.visualizarPorCdPublico(cdPublico)));
+    }
+
+    @GetMapping(value = "/visualizacao/{cdPublico}/logo", produces = { MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, "image/webp" })
+    public ResponseEntity<byte[]> visualizacaoLogo(@PathVariable String cdPublico) {
+        ConteudoLogo conteudo = organizacaoLogoService.obterConteudoPublico(cdPublico);
+        return OrganizacaoLogoController.respostaImagem(conteudo);
     }
 
     @GetMapping(value = "/relatorio/{cdPublico}", produces = MediaType.APPLICATION_PDF_VALUE)

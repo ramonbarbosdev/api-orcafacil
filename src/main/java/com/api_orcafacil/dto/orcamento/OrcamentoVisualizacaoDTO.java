@@ -29,6 +29,8 @@ public class OrcamentoVisualizacaoDTO {
     private String condicaoPagamento;
     private Integer nuPrazoEntrega;
     private String observacoes;
+    private Boolean possuiLogo;
+    private String logoUrl;
 
     public List<ItemVisualizacaoDTO> getProdutos() {
         if (itens == null) return List.of();

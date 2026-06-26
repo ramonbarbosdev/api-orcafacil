@@ -14,6 +14,7 @@ import com.api_orcafacil.dto.orcamento.OrcamentoVisualizacaoDTO;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.service.VisualizacaoOrcamentoService;
+import com.api_orcafacil.service.logo.OrganizacaoLogoService;
 
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -27,10 +28,14 @@ public class RelatorioOrcamentoService {
 
     private final VisualizacaoOrcamentoService visualizacaoOrcamento;
     private final OrcamentoRepository repository;
+    private final OrganizacaoLogoService organizacaoLogoService;
 
-    public RelatorioOrcamentoService(VisualizacaoOrcamentoService visualizacaoOrcamento, OrcamentoRepository repository) {
+    public RelatorioOrcamentoService(VisualizacaoOrcamentoService visualizacaoOrcamento,
+            OrcamentoRepository repository,
+            OrganizacaoLogoService organizacaoLogoService) {
         this.visualizacaoOrcamento = visualizacaoOrcamento;
         this.repository = repository;
+        this.organizacaoLogoService = organizacaoLogoService;
     }
 
     public byte[] gerarRelatorioOrcamento(String cdPublico) throws Exception {
@@ -48,6 +53,10 @@ public class RelatorioOrcamentoService {
         JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
         Map<String, Object> params = new HashMap<>();
         params.put("TITULO_HEADER", "");
+        String logoPath = organizacaoLogoService.resolverCaminhoFisicoParaRelatorio(orcamento.getIdOrganizacao());
+        if (logoPath != null && !logoPath.isBlank()) {
+            params.put("LOGO_PATH", logoPath);
+        }
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params,
                 new JRBeanCollectionDataSource(List.of(dto)));
         return JasperExportManager.exportReportToPdf(jasperPrint);

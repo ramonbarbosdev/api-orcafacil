@@ -60,6 +60,9 @@
 	<field name="condicaoPagamento" class="java.lang.String"/>
 	<field name="nuPrazoEntrega" class="java.lang.Integer"/>
 
+	<parameter name="TITULO_HEADER" class="java.lang.String"/>
+	<parameter name="LOGO_PATH" class="java.lang.String"/>
+
 	<title>
 		<band height="144" splitType="Stretch">
 			<rectangle>
@@ -74,8 +77,25 @@
 					<pen lineWidth="0.0"/>
 				</graphicElement>
 			</rectangle>
+			<image onErrorType="Blank">
+				<reportElement x="12" y="4" width="90" height="22" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+					<printWhenExpression><![CDATA[$P{LOGO_PATH} != null && !$P{LOGO_PATH}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<imageExpression><![CDATA[$P{LOGO_PATH}]]></imageExpression>
+			</image>
 			<textField isBlankWhenNull="true" textAdjust="StretchHeight">
-				<reportElement x="12" y="7" width="355" height="16" forecolor="#FFFFFF" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afafe"/>
+				<reportElement x="110" y="7" width="257" height="16" forecolor="#FFFFFF" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afafe">
+					<printWhenExpression><![CDATA[$P{LOGO_PATH} != null && !$P{LOGO_PATH}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmEmpresa}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true" textAdjust="StretchHeight">
+				<reportElement x="12" y="7" width="355" height="16" forecolor="#FFFFFF" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afafe-alt">
+					<printWhenExpression><![CDATA[$P{LOGO_PATH} == null || $P{LOGO_PATH}.isEmpty()]]></printWhenExpression>
+				</reportElement>
 				<textElement verticalAlignment="Middle">
 					<font size="11" isBold="true"/>
 				</textElement>

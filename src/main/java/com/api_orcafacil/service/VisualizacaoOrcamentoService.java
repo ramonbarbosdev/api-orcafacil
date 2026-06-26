@@ -20,6 +20,7 @@ import com.api_orcafacil.model.OrcamentoItem;
 import com.api_orcafacil.model.OrcamentoItemCampoValor;
 import com.api_orcafacil.model.OrcamentoStatusHistorico;
 import com.api_orcafacil.repository.OrcamentoRepository;
+import com.api_orcafacil.service.logo.OrganizacaoLogoService;
 
 @Service
 public class VisualizacaoOrcamentoService {
@@ -27,13 +28,16 @@ public class VisualizacaoOrcamentoService {
     private final OrcamentoRepository repository;
     private final OrcamentoStatusHistoricoService historicoService;
     private final ObjectProvider<NamedParameterJdbcTemplate> centralJdbc;
+    private final OrganizacaoLogoService organizacaoLogoService;
 
     public VisualizacaoOrcamentoService(OrcamentoRepository repository,
             OrcamentoStatusHistoricoService historicoService,
-            ObjectProvider<NamedParameterJdbcTemplate> centralJdbcProvider) {
+            ObjectProvider<NamedParameterJdbcTemplate> centralJdbcProvider,
+            OrganizacaoLogoService organizacaoLogoService) {
         this.repository = repository;
         this.historicoService = historicoService;
         this.centralJdbc = centralJdbcProvider;
+        this.organizacaoLogoService = organizacaoLogoService;
     }
 
     public OrcamentoVisualizacaoDTO visualizarPublico(Long idOrcamento, Long idOrganizacao) {
@@ -61,6 +65,11 @@ public class VisualizacaoOrcamentoService {
         dto.setDtValido(orcamento.getDtValido());
         dto.setStatus(orcamento.getTpStatus());
         dto.setNmEmpresa(buscarNomeOrganizacao(orcamento.getIdOrganizacao()));
+        boolean possuiLogo = organizacaoLogoService.possuiLogo(orcamento.getIdOrganizacao());
+        dto.setPossuiLogo(possuiLogo);
+        if (possuiLogo && orcamento.getCdPublico() != null) {
+            dto.setLogoUrl(OrganizacaoLogoService.URL_LOGO_PUBLICA_PREFIXO + orcamento.getCdPublico() + "/logo");
+        }
         dto.setCondicaoPagamento(orcamento.getNmCondicaoPagamento());
         dto.setNuPrazoEntrega(orcamento.getNuPrazoEntrega());
         dto.setTotalDesconto(new BigDecimal("0.00"));

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.api_orcafacil.common.TipoItem;
 import com.api_orcafacil.model.CatalogoCampo;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,5 +26,7 @@ public class CatalogoRequest {
     private String dsCatalogo;
     private BigDecimal vlCustoBase;
     private BigDecimal vlPrecoBase;
+
+    @JsonAlias("catalogoCampo")
     private List<CatalogoCampo> campos;
 }

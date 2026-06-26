@@ -17,12 +17,14 @@ public abstract class AuditableEntity {
     @Column(name = "dt_criacao", nullable = false, updatable = false)
     private LocalDateTime dtCriacao;
 
-    @Column(name = "dt_atualizacao")
+    @Column(name = "dt_atualizacao", nullable = false)
     private LocalDateTime dtAtualizacao;
 
     @PrePersist
     void prePersist() {
-        dtCriacao = LocalDateTime.now();
+        LocalDateTime agora = LocalDateTime.now();
+        dtCriacao = agora;
+        dtAtualizacao = agora;
     }
 
     @PreUpdate

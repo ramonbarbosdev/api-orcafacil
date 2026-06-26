@@ -13,28 +13,26 @@ import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Catalogo;
 import com.api_orcafacil.model.CatalogoCampo;
-import com.api_orcafacil.repository.CatalogoCampoRepository;
 import com.api_orcafacil.repository.CatalogoRepository;
 
 @Service
 public class CatalogoService {
 
     private final CatalogoRepository repository;
-    private final CatalogoCampoRepository campoRepository;
     private final TenantContextService tenantContextService;
 
-    public CatalogoService(CatalogoRepository repository, CatalogoCampoRepository campoRepository,
-            TenantContextService tenantContextService) {
+    public CatalogoService(CatalogoRepository repository, TenantContextService tenantContextService) {
         this.repository = repository;
-        this.campoRepository = campoRepository;
         this.tenantContextService = tenantContextService;
     }
 
+    @Transactional(readOnly = true)
     public List<CatalogoResponse> listar() {
         return repository.findByIdOrganizacao(tenantContextService.idOrganizacaoObrigatoria())
                 .stream().map(CatalogoResponse::from).toList();
     }
 
+    @Transactional(readOnly = true)
     public CatalogoResponse buscar(Long id) {
         Catalogo catalogo = repository.findByIdCatalogoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
                 .orElseThrow(() -> new ResourceNotFoundException("Catalogo nao encontrado"));
@@ -58,16 +56,14 @@ public class CatalogoService {
         catalogo.setVlPrecoBase(request.getVlPrecoBase());
 
         validarCodigo(catalogo);
-        catalogo = repository.save(catalogo);
         salvarCampos(catalogo, request.getCampos());
-        return CatalogoResponse.from(repository.findById(catalogo.getIdCatalogo()).orElseThrow());
+        return CatalogoResponse.from(repository.save(catalogo));
     }
 
     @Transactional
     public void excluir(Long id) {
         Catalogo catalogo = repository.findByIdCatalogoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
                 .orElseThrow(() -> new ResourceNotFoundException("Catalogo nao encontrado"));
-        campoRepository.deleteByIdCatalogo(catalogo.getIdCatalogo());
         repository.delete(catalogo);
     }
 
@@ -76,18 +72,20 @@ public class CatalogoService {
     }
 
     private void salvarCampos(Catalogo catalogo, List<CatalogoCampo> campos) {
-        campoRepository.deleteByIdCatalogo(catalogo.getIdCatalogo());
-        if (campos == null) {
+        catalogo.getCampos().clear();
+        if (campos == null || campos.isEmpty()) {
             return;
         }
         for (CatalogoCampo campo : campos) {
-            campo.setCatalogo(catalogo);
-            if (campo.getIdCatalogoCampo() != null && campo.getIdCatalogoCampo() == 0) {
-                campo.setIdCatalogoCampo(null);
-            }
-            campoRepository.save(campo);
+            CatalogoCampo entidade = new CatalogoCampo();
+            entidade.setIdCampoPersonalizado(campo.getIdCampoPersonalizado());
+            entidade.setVlPadrao(campo.getVlPadrao());
+            entidade.setDsDescricao(campo.getDsDescricao());
+            entidade.setFlEditavel(campo.getFlEditavel() != null ? campo.getFlEditavel() : Boolean.TRUE);
+            entidade.setOrdem(campo.getOrdem());
+            entidade.setCatalogo(catalogo);
+            catalogo.getCampos().add(entidade);
         }
-        catalogo.setCampos(campos);
     }
 
     private void validarCodigo(Catalogo catalogo) {

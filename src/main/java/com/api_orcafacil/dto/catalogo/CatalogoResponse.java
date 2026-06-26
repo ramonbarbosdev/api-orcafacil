@@ -2,11 +2,14 @@ package com.api_orcafacil.dto.catalogo;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.api_orcafacil.common.TipoItem;
 import com.api_orcafacil.model.Catalogo;
 import com.api_orcafacil.model.CatalogoCampo;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +25,10 @@ public class CatalogoResponse {
     private String dsCatalogo;
     private BigDecimal vlCustoBase;
     private BigDecimal vlPrecoBase;
+
+    @JsonProperty("catalogoCampo")
     private List<CatalogoCampo> campos;
+
     private LocalDateTime dtCriacao;
     private LocalDateTime dtAtualizacao;
 
@@ -36,7 +42,8 @@ public class CatalogoResponse {
         r.setDsCatalogo(c.getDsCatalogo());
         r.setVlCustoBase(c.getVlCustoBase());
         r.setVlPrecoBase(c.getVlPrecoBase());
-        r.setCampos(c.getCampos());
+        List<CatalogoCampo> campos = c.getCampos();
+        r.setCampos(campos == null ? Collections.emptyList() : new ArrayList<>(campos));
         r.setDtCriacao(c.getDtCriacao());
         r.setDtAtualizacao(c.getDtAtualizacao());
         return r;

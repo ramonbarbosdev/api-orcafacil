@@ -1,6 +1,7 @@
 package com.api_orcafacil.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,7 +38,8 @@ import lombok.RequiredArgsConstructor;
 public class PermissaoPlatformService {
 
     private static final Set<String> MODULOS_RESERVADOS = Set.of("auth", "admin", "error");
-    private static final List<String> ACOES_PADRAO = List.of("ler", "criar", "editar", "deletar");
+    private static final List<String> ACOES_PADRAO = List.of("exibir", "ler", "criar", "editar", "deletar");
+    private static final List<String> ORDEM_ACOES = List.of("exibir", "ler", "criar", "editar", "deletar");
 
     private static final Map<String, String> ROTULOS_MODULO = Map.ofEntries(
             Map.entry("clientes", "Clientes"),
@@ -74,7 +76,7 @@ public class PermissaoPlatformService {
                 .map(e -> new PermissaoModuloDTO(
                         e.getKey(),
                         rotuloModulo(e.getKey()),
-                        List.copyOf(e.getValue())))
+                        ordenarItens(e.getValue())))
                 .toList();
     }
 
@@ -243,7 +245,7 @@ public class PermissaoPlatformService {
                 .findFirst()
                 .map(p -> extrairNomeRecurso(p.getNmPermissao()))
                 .orElseGet(() -> rotuloModulo(modulo));
-        List<PermissaoItemDTO> itens = permissoes.stream().map(this::toItem).toList();
+        List<PermissaoItemDTO> itens = ordenarItens(permissoes.stream().map(this::toItem).toList());
         return new ModuloPermissaoAdminDTO(modulo, nmModulo, ativo, permissoes.size(), itens);
     }
 
@@ -263,12 +265,24 @@ public class PermissaoPlatformService {
     private String rotuloPermissao(String nmModulo, String acao) {
         String nome = nmModulo.trim();
         return switch (acao) {
+            case "exibir" -> "Exibir " + nome + " no menu";
             case "ler" -> "Listar " + nome;
             case "criar" -> "Criar " + nome;
             case "editar" -> "Editar " + nome;
             case "deletar" -> "Deletar " + nome;
             default -> nome + " " + acao;
         };
+    }
+
+    private List<PermissaoItemDTO> ordenarItens(List<PermissaoItemDTO> itens) {
+        return itens.stream()
+                .sorted(Comparator.comparingInt(item -> ordemAcao(item.acao())))
+                .toList();
+    }
+
+    private int ordemAcao(String acao) {
+        int idx = ORDEM_ACOES.indexOf(acao);
+        return idx >= 0 ? idx : 99;
     }
 
     private String acaoDaChave(String chave) {

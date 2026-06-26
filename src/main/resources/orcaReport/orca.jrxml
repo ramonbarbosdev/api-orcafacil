@@ -49,7 +49,7 @@
 	<field name="nuOrcamento" class="java.lang.String"/>
 	<field name="dtEmissao" class="java.time.LocalDate"/>
 	<field name="dtValido" class="java.time.LocalDate"/>
-	<field name="cliente" class="com.api_orcafacil.domain.orcamento.dto.ClienteVisualizacaoDTO"/>
+	<field name="cliente" class="com.api_orcafacil.dto.orcamento.ClienteVisualizacaoDTO"/>
 	<field name="vlPrecoBase" class="java.math.BigDecimal"/>
 	<field name="totalDesconto" class="java.math.BigDecimal"/>
 	<field name="vlPrecoFinal" class="java.math.BigDecimal"/>
@@ -246,7 +246,7 @@
 								<font size="7"/>
 							</textElement>
 							<textFieldExpression><![CDATA[$F{materiais} != null && !$F{materiais}.isEmpty()
-? ((java.util.List<com.api_orcafacil.domain.orcamento.dto.MaterialVisualizacaoDTO>) $F{materiais}).stream()
+? ((java.util.List<com.api_orcafacil.dto.orcamento.MaterialVisualizacaoDTO>) $F{materiais}).stream()
     .map(m -> "Material: "
         + (m.getNome() != null ? m.getNome() : "")
         + (m.getDescricao() != null && !m.getDescricao().trim().isEmpty() ? " - " + m.getDescricao() : "")
@@ -353,7 +353,7 @@
 								<font size="7"/>
 							</textElement>
 							<textFieldExpression><![CDATA[$F{materiais} != null && !$F{materiais}.isEmpty()
-? ((java.util.List<com.api_orcafacil.domain.orcamento.dto.MaterialVisualizacaoDTO>) $F{materiais}).stream()
+? ((java.util.List<com.api_orcafacil.dto.orcamento.MaterialVisualizacaoDTO>) $F{materiais}).stream()
     .map(m -> "Material: "
         + (m.getNome() != null ? m.getNome() : "")
         + (m.getDescricao() != null && !m.getDescricao().trim().isEmpty() ? " - " + m.getDescricao() : "")

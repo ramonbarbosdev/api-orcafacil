@@ -3,7 +3,8 @@ package com.api_orcafacil.config;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class DotenvLoader {
-       static {
+    
+    static {
         Dotenv dotenv = Dotenv.configure()
             .filename(".env")
             .ignoreIfMissing()

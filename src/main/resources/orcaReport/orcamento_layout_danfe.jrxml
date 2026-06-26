@@ -29,7 +29,7 @@
 	<field name="nuOrcamento" class="java.lang.String"/>
 	<field name="dtEmissao" class="java.time.LocalDate"/>
 	<field name="dtValido" class="java.time.LocalDate"/>
-	<field name="cliente" class="com.api_orcafacil.domain.orcamento.dto.ClienteVisualizacaoDTO"/>
+	<field name="cliente" class="com.api_orcafacil.dto.orcamento.ClienteVisualizacaoDTO"/>
 	<field name="vlPrecoBase" class="java.math.BigDecimal"/>
 	<field name="totalDesconto" class="java.math.BigDecimal"/>
 	<field name="vlPrecoFinal" class="java.math.BigDecimal"/>

@@ -7,6 +7,6 @@ import jakarta.validation.constraints.Size;
 public record VinculoUsuarioRequestDTO(
         @NotBlank @Size(min = 11, max = 11) String nuCpf,
         @NotBlank String nmUsuario,
-        @NotBlank String dsSenha,
+        String dsSenha,
         @NotNull String dsRole) {
 }

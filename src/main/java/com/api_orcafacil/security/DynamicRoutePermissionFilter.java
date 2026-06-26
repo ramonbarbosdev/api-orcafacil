@@ -60,6 +60,23 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return;
         }
 
+        if (path.endsWith("/sequencia") && "GET".equalsIgnoreCase(request.getMethod())) {
+            String ler = modulo + ".ler";
+            String criar = modulo + ".criar";
+            if (!temAuthority(authentication, ler) && !temAuthority(authentication, criar)) {
+                SecurityErrorResponses.escrever(
+                        request,
+                        response,
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "ACCESS_DENIED",
+                        PermissaoMensagemUtil.mensagemAcessoNegado(ler),
+                        "Solicite ao administrador da sua organização a liberação deste acesso.");
+                return;
+            }
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String permissaoNecessaria = modulo + "." + acao;
         if (!temAuthority(authentication, permissaoNecessaria)) {
             SecurityErrorResponses.escrever(

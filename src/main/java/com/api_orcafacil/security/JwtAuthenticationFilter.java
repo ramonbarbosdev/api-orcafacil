@@ -69,13 +69,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authorities.add(new SimpleGrantedAuthority("GLOBAL_" + tipoGlobal));
             }
 
+            TenantDescriptor tenantDescriptor = null;
             if (!superAdmin && idOrganizacao != null) {
                 AuthOrganizationMembership vinculo = authDirectory
                         .buscarVinculoAtivo(idUsuario, idOrganizacao)
                         .orElse(null);
                 if (vinculo == null) {
-                    SecurityContextHolder.clearContext();
-                    filterChain.doFilter(request, response);
+                    SecurityErrorResponses.escrever(
+                            request,
+                            response,
+                            HttpServletResponse.SC_UNAUTHORIZED,
+                            "INVALID_VINCULO",
+                            "Seu acesso a esta organização não está mais ativo.",
+                            "Faça login novamente e selecione uma organização válida.");
+                    return;
+                }
+                try {
+                    tenantDescriptor = organizationResolver.resolver(idOrganizacao);
+                } catch (RuntimeException ex) {
+                    SecurityErrorResponses.escrever(
+                            request,
+                            response,
+                            HttpServletResponse.SC_UNAUTHORIZED,
+                            "ORGANIZATION_UNAVAILABLE",
+                            "A organização selecionada não está disponível no momento.",
+                            "Selecione outra organização ou entre em contato com o suporte.");
                     return;
                 }
                 role = vinculo.dsRole();
@@ -88,14 +106,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(new JwtAuthentication(
                     idUsuario, tipoGlobal, idOrganizacao, role, permissoes, authorities));
 
-            if (idOrganizacao != null && !superAdmin) {
-                TenantDescriptor descriptor = organizationResolver.resolver(idOrganizacao);
+            if (tenantDescriptor != null) {
                 TenantRuntimeContext.set(new TenantRuntimeContext.CurrentTenant(
-                        idUsuario, idOrganizacao, role, permissoes, descriptor));
+                        idUsuario, idOrganizacao, role, permissoes, tenantDescriptor));
             }
         } catch (RuntimeException ex) {
             SecurityContextHolder.clearContext();
             TenantRuntimeContext.clear();
+            SecurityErrorResponses.escrever(
+                    request,
+                    response,
+                    HttpServletResponse.SC_UNAUTHORIZED,
+                    "INVALID_TOKEN",
+                    "Sua sessão não é mais válida.",
+                    "Faça login novamente para continuar.");
+            return;
         }
 
         try {

@@ -124,9 +124,28 @@ public class OrganizacaoPlatformService {
     public void vincularUsuario(Long idOrganizacao, VinculoUsuarioRequestDTO request) {
         buscarEntidade(idOrganizacao);
 
-        CentralUsuarioGlobal usuario = usuarioGlobalRepository.findByNuCpf(request.nuCpf())
-                .map(existente -> atualizarDadosUsuarioGlobal(existente, request.nmUsuario(), request.dsSenha()))
-                .orElseGet(() -> criarUsuarioGlobal(request));
+        var usuarioExistente = usuarioGlobalRepository.findByNuCpf(request.nuCpf());
+        CentralUsuarioGlobal usuario;
+
+        if (usuarioExistente.isPresent()) {
+            usuario = usuarioExistente.get();
+            if (usuario.getTpGlobal() == TipoGlobal.SUPER_ADMIN) {
+                throw new BusinessException("Super administradores nao podem ser vinculados a organizacoes");
+            }
+            if (!usuario.isFlAtivo()) {
+                throw new BusinessException("Usuario inativo");
+            }
+            if (usuarioOrganizacaoRepository.existsByIdOrganizacaoAndIdUsuarioAndFlAtivoTrue(
+                    idOrganizacao, usuario.getIdUsuario())) {
+                throw new ConflictException("Usuario ja vinculado a esta organizacao");
+            }
+            usuario = atualizarDadosUsuarioGlobal(usuario, request.nmUsuario(), request.dsSenha());
+        } else {
+            if (!StringUtils.hasText(request.dsSenha())) {
+                throw new BusinessException("Senha obrigatoria para cadastrar novo usuario");
+            }
+            usuario = criarUsuarioGlobal(request);
+        }
 
         CentralUsuarioOrganizacao vinculo = usuarioOrganizacaoRepository
                 .findByIdUsuarioAndIdOrganizacao(usuario.getIdUsuario(), idOrganizacao)

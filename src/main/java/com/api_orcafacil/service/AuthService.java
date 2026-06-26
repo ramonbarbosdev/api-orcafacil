@@ -18,6 +18,7 @@ import com.api_orcafacil.security.AuthDirectoryUser;
 import com.api_orcafacil.security.AuthOrganizationMembership;
 import com.api_orcafacil.security.JwtAuthentication;
 import com.api_orcafacil.security.JwtService;
+import com.api_orcafacil.tenant.OrganizationResolver;
 
 @Service
 public class AuthService {
@@ -28,16 +29,19 @@ public class AuthService {
     private final JwtService jwtService;
     private final TenantContextService tenantContextService;
     private final AuthDirectory authDirectory;
+    private final OrganizationResolver organizationResolver;
 
     public AuthService(
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             TenantContextService tenantContextService,
-            AuthDirectory authDirectory) {
+            AuthDirectory authDirectory,
+            OrganizationResolver organizationResolver) {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.tenantContextService = tenantContextService;
         this.authDirectory = authDirectory;
+        this.organizationResolver = organizationResolver;
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -66,6 +70,12 @@ public class AuthService {
         AuthOrganizationMembership vinculo = authDirectory
                 .buscarVinculoAtivo(atual.getIdUsuario(), idOrganizacao)
                 .orElseThrow(() -> new UnauthorizedException("Usuario sem vinculo ativo com a organizacao"));
+
+        try {
+            organizationResolver.resolver(idOrganizacao);
+        } catch (RuntimeException ex) {
+            throw new UnauthorizedException("Organizacao indisponivel ou inativa");
+        }
 
         List<String> permissoes = authDirectory.listarPermissoes(
                 atual.getIdUsuario(), idOrganizacao, vinculo.dsRole());

@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.api_orcafacil.common.TipoAjuste;
+import com.api_orcafacil.common.TipoOperacaoAjuste;
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.precificacao.MetodoAjusteRequest;
 import com.api_orcafacil.model.MetodoAjuste;
@@ -24,6 +26,16 @@ public class MetodoAjusteController {
     @GetMapping
     public ResponseEntity<ApiResponseDTO<List<MetodoAjuste>>> listar() {
         return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", service.listar()));
+    }
+
+    @GetMapping({ "/tipo-ajuste", "/tipo-ajuste/" })
+    public ResponseEntity<ApiResponseDTO<TipoAjuste[]>> listarTiposAjuste() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", TipoAjuste.values()));
+    }
+
+    @GetMapping({ "/tipo-operacao", "/tipo-operacao/" })
+    public ResponseEntity<ApiResponseDTO<TipoOperacaoAjuste[]>> listarTiposOperacao() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", TipoOperacaoAjuste.values()));
     }
 
     @GetMapping("/{id}")

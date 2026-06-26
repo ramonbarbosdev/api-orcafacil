@@ -23,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.api_orcafacil.security.DynamicRoutePermissionFilter;
 import com.api_orcafacil.security.JwtAuthenticationFilter;
+import com.api_orcafacil.security.SecurityErrorResponses;
 
 @Configuration
 @EnableMethodSecurity
@@ -48,14 +49,50 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            SecurityErrorResponses.escrever(
+                                    request,
+                                    response,
+                                    HttpServletResponse.SC_UNAUTHORIZED,
+                                    "UNAUTHORIZED",
+                                    "Autenticação necessária.",
+                                    "Faça login para continuar utilizando o sistema.");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            boolean admin = isAdminPath(request);
+                            if (admin) {
+                                SecurityErrorResponses.escrever(
+                                        request,
+                                        response,
+                                        HttpServletResponse.SC_FORBIDDEN,
+                                        "PLATFORM_ADMIN_REQUIRED",
+                                        "Esta área é exclusiva para administradores da plataforma.",
+                                        "Se você precisa de acesso administrativo, entre em contato com o suporte.");
+                            } else {
+                                SecurityErrorResponses.escrever(
+                                        request,
+                                        response,
+                                        HttpServletResponse.SC_FORBIDDEN,
+                                        "ACCESS_DENIED",
+                                        "Você não tem permissão para realizar esta ação.",
+                                        "Solicite ao administrador da sua organização a liberação deste acesso.");
+                            }
                         }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(dynamicRoutePermissionFilter, JwtAuthenticationFilter.class)
                 .build();
+    }
+
+    private static boolean isAdminPath(jakarta.servlet.http.HttpServletRequest request) {
+        String servletPath = request.getServletPath();
+        if (servletPath != null && servletPath.startsWith("/admin")) {
+            return true;
+        }
+        String uri = request.getRequestURI();
+        String context = request.getContextPath();
+        if (context != null && !context.isEmpty() && uri.startsWith(context)) {
+            return uri.substring(context.length()).startsWith("/admin");
+        }
+        return uri.startsWith("/admin");
     }
 
     private static RequestMatcher adminPathMatcher() {

@@ -9,7 +9,13 @@ import com.api_orcafacil.tenant.central.model.CentralPermissaoGlobal;
 
 public interface CentralPermissaoGlobalRepository extends JpaRepository<CentralPermissaoGlobal, Long> {
 
+    List<CentralPermissaoGlobal> findAllByOrderByNmChaveAsc();
+
     List<CentralPermissaoGlobal> findByFlAtivoTrueOrderByNmChaveAsc();
 
     List<CentralPermissaoGlobal> findByNmChaveInAndFlAtivoTrueOrderByIdPermissaoAsc(Collection<String> chaves);
+
+    List<CentralPermissaoGlobal> findByNmChaveStartingWith(String prefix);
+
+    boolean existsByNmChaveStartingWith(String prefix);
 }

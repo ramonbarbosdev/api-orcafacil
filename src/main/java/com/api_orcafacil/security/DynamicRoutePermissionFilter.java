@@ -49,13 +49,26 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return;
         }
 
+        if (!temAuthority(authentication, "TENANT_ACCESS")) {
+            SecurityErrorResponses.escrever(
+                    request,
+                    response,
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "ORGANIZATION_REQUIRED",
+                    "Selecione uma organização para continuar.",
+                    "Escolha a empresa na qual deseja trabalhar antes de acessar este recurso.");
+            return;
+        }
+
         String permissaoNecessaria = modulo + "." + acao;
-        if (!temAuthority(authentication, "TENANT_ACCESS") || !temAuthority(authentication, permissaoNecessaria)) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("""
-                    {"status":403,"error":"ACCESS_DENIED","message":"Permissao necessaria: %s"}
-                    """.formatted(permissaoNecessaria));
+        if (!temAuthority(authentication, permissaoNecessaria)) {
+            SecurityErrorResponses.escrever(
+                    request,
+                    response,
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "ACCESS_DENIED",
+                    PermissaoMensagemUtil.mensagemAcessoNegado(permissaoNecessaria),
+                    "Solicite ao administrador da sua organização a liberação deste acesso.");
             return;
         }
 

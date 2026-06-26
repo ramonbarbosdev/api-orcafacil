@@ -12,9 +12,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.api_orcafacil.dto.ModuloPermissaoAdminDTO;
+import com.api_orcafacil.dto.ModuloPermissaoRequestDTO;
+import com.api_orcafacil.dto.ModuloPermissaoUpdateDTO;
 import com.api_orcafacil.dto.PermissaoItemDTO;
 import com.api_orcafacil.dto.PermissaoModuloDTO;
 import com.api_orcafacil.exception.BusinessException;
+import com.api_orcafacil.exception.ConflictException;
+import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.repository.central.CentralPapelPermissaoPadraoRepository;
 import com.api_orcafacil.repository.central.CentralPapelRepository;
 import com.api_orcafacil.repository.central.CentralPermissaoGlobalRepository;
@@ -30,6 +35,9 @@ import lombok.RequiredArgsConstructor;
 @Transactional(transactionManager = "centralTransactionManager")
 @RequiredArgsConstructor
 public class PermissaoPlatformService {
+
+    private static final Set<String> MODULOS_RESERVADOS = Set.of("auth", "admin", "error");
+    private static final List<String> ACOES_PADRAO = List.of("ler", "criar", "editar", "deletar");
 
     private static final Map<String, String> ROTULOS_MODULO = Map.ofEntries(
             Map.entry("clientes", "Clientes"),
@@ -68,6 +76,66 @@ public class PermissaoPlatformService {
                         rotuloModulo(e.getKey()),
                         List.copyOf(e.getValue())))
                 .toList();
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public List<ModuloPermissaoAdminDTO> listarModulos() {
+        LinkedHashMap<String, List<CentralPermissaoGlobal>> porModulo = new LinkedHashMap<>();
+        for (CentralPermissaoGlobal permissao : permissaoRepository.findAllByOrderByNmChaveAsc()) {
+            String modulo = moduloDaChave(permissao.getNmChave());
+            porModulo.computeIfAbsent(modulo, k -> new ArrayList<>()).add(permissao);
+        }
+        return porModulo.entrySet().stream()
+                .map(e -> toModuloAdmin(e.getKey(), e.getValue()))
+                .toList();
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public ModuloPermissaoAdminDTO buscarModulo(String modulo) {
+        List<CentralPermissaoGlobal> permissoes = buscarPermissoesModulo(modulo);
+        if (permissoes.isEmpty()) {
+            throw new ResourceNotFoundException("Modulo nao encontrado");
+        }
+        return toModuloAdmin(modulo, permissoes);
+    }
+
+    public ModuloPermissaoAdminDTO criarModulo(ModuloPermissaoRequestDTO request) {
+        String codigo = request.codigoModulo().trim().toLowerCase();
+        validarCodigoModulo(codigo);
+        if (permissaoRepository.existsByNmChaveStartingWith(codigo + ".")) {
+            throw new ConflictException("Modulo ja cadastrado: " + codigo);
+        }
+
+        String nmModulo = request.nmModulo().trim();
+        for (String acao : ACOES_PADRAO) {
+            CentralPermissaoGlobal permissao = new CentralPermissaoGlobal();
+            permissao.setNmChave(codigo + "." + acao);
+            permissao.setNmPermissao(rotuloPermissao(nmModulo, acao));
+            permissao.setFlAtivo(true);
+            permissaoRepository.save(permissao);
+        }
+        return buscarModulo(codigo);
+    }
+
+    public ModuloPermissaoAdminDTO atualizarModulo(String modulo, ModuloPermissaoUpdateDTO request) {
+        List<CentralPermissaoGlobal> permissoes = buscarPermissoesModulo(modulo);
+        if (permissoes.isEmpty()) {
+            throw new ResourceNotFoundException("Modulo nao encontrado");
+        }
+
+        String nmModulo = request.nmModulo().trim();
+        boolean ativo = Boolean.TRUE.equals(request.flAtivo());
+        for (CentralPermissaoGlobal permissao : permissoes) {
+            permissao.setNmPermissao(rotuloPermissao(nmModulo, acaoDaChave(permissao.getNmChave())));
+            permissao.setFlAtivo(ativo);
+        }
+        permissaoRepository.saveAll(permissoes);
+        return buscarModulo(modulo);
+    }
+
+    public void desativarModulo(String modulo) {
+        ModuloPermissaoAdminDTO atual = buscarModulo(modulo);
+        atualizarModulo(modulo, new ModuloPermissaoUpdateDTO(atual.nmModulo(), false));
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -166,5 +234,56 @@ public class PermissaoPlatformService {
             return modulo;
         }
         return Character.toUpperCase(legivel.charAt(0)) + legivel.substring(1);
+    }
+
+    private ModuloPermissaoAdminDTO toModuloAdmin(String modulo, List<CentralPermissaoGlobal> permissoes) {
+        boolean ativo = permissoes.stream().allMatch(CentralPermissaoGlobal::isFlAtivo);
+        String nmModulo = permissoes.stream()
+                .filter(p -> p.getNmChave().endsWith(".ler"))
+                .findFirst()
+                .map(p -> extrairNomeRecurso(p.getNmPermissao()))
+                .orElseGet(() -> rotuloModulo(modulo));
+        List<PermissaoItemDTO> itens = permissoes.stream().map(this::toItem).toList();
+        return new ModuloPermissaoAdminDTO(modulo, nmModulo, ativo, permissoes.size(), itens);
+    }
+
+    private List<CentralPermissaoGlobal> buscarPermissoesModulo(String modulo) {
+        return permissaoRepository.findByNmChaveStartingWith(modulo + ".");
+    }
+
+    private void validarCodigoModulo(String codigo) {
+        if (!codigo.matches("^[a-z][a-z0-9-]*$")) {
+            throw new BusinessException("Codigo do modulo invalido. Use letras minusculas, numeros e hifen.");
+        }
+        if (MODULOS_RESERVADOS.contains(codigo)) {
+            throw new BusinessException("Codigo reservado: " + codigo);
+        }
+    }
+
+    private String rotuloPermissao(String nmModulo, String acao) {
+        String nome = nmModulo.trim();
+        return switch (acao) {
+            case "ler" -> "Listar " + nome;
+            case "criar" -> "Criar " + nome;
+            case "editar" -> "Editar " + nome;
+            case "deletar" -> "Deletar " + nome;
+            default -> nome + " " + acao;
+        };
+    }
+
+    private String acaoDaChave(String chave) {
+        int idx = chave.lastIndexOf('.');
+        return idx >= 0 ? chave.substring(idx + 1) : chave;
+    }
+
+    private String extrairNomeRecurso(String nmPermissao) {
+        if (nmPermissao != null && nmPermissao.length() > 7
+                && nmPermissao.regionMatches(true, 0, "Listar ", 0, 7)) {
+            String nome = nmPermissao.substring(7).trim();
+            if (!nome.isEmpty()) {
+                return Character.toUpperCase(nome.charAt(0)) + nome.substring(1);
+            }
+        }
+        return nmPermissao;
     }
 }

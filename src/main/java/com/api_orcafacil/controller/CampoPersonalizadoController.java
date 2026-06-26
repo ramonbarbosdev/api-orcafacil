@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.api_orcafacil.common.TipoCampo;
+import com.api_orcafacil.common.TipoCampoValor;
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.precificacao.CampoPersonalizadoRequest;
 import com.api_orcafacil.model.CampoPersonalizado;
@@ -24,6 +26,16 @@ public class CampoPersonalizadoController {
     @GetMapping
     public ResponseEntity<ApiResponseDTO<List<CampoPersonalizado>>> listar() {
         return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", service.listar()));
+    }
+
+    @GetMapping({ "/tipo-valor", "/tipo-valor/" })
+    public ResponseEntity<ApiResponseDTO<TipoCampoValor[]>> listarTiposValor() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", TipoCampoValor.values()));
+    }
+
+    @GetMapping({ "/tipo-campo", "/tipo-campo/" })
+    public ResponseEntity<ApiResponseDTO<TipoCampo[]>> listarTiposCampo() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso", TipoCampo.values()));
     }
 
     @GetMapping("/{id}")

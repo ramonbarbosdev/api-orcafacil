@@ -23,15 +23,15 @@ class LogoImagemValidacaoServiceTest {
 
     @Test
     void deveAceitarPngValido() throws Exception {
-        byte[] bytes = criarPng(400, 120);
+        byte[] bytes = criarPng(600, 200);
         MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", bytes);
 
         LogoImagemValidacaoService.ResultadoValidacao resultado = service.validar(file);
 
         assertEquals("png", resultado.extensao());
         assertEquals("image/png", resultado.contentType());
-        assertEquals(400, resultado.largura());
-        assertEquals(120, resultado.altura());
+        assertEquals(600, resultado.largura());
+        assertEquals(200, resultado.altura());
     }
 
     @Test
@@ -45,12 +45,12 @@ class LogoImagemValidacaoServiceTest {
         byte[] bytes = criarPng(1200, 100);
         MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", bytes);
         BusinessException ex = assertThrows(BusinessException.class, () -> service.validar(file));
-        assertEquals("Proporcao invalida. Envie uma logo horizontal ou proporcional (entre 1:1 e 5:1)", ex.getMessage());
+        assertEquals("Proporcao invalida. Envie uma logo horizontal em 2:1, 3:1 ou 4:1", ex.getMessage());
     }
 
     @Test
     void deveRejeitarExtensaoFalsa() throws Exception {
-        byte[] bytes = criarPng(400, 120);
+        byte[] bytes = criarPng(600, 200);
         MockMultipartFile file = new MockMultipartFile("file", "logo.pdf", "application/pdf", bytes);
         assertThrows(BusinessException.class, () -> service.validar(file));
     }

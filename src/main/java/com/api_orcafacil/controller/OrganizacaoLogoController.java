@@ -47,9 +47,9 @@ public class OrganizacaoLogoController {
     }
 
     @DeleteMapping("/logo")
-    public ResponseEntity<ApiResponseDTO<Void>> removerLogo() throws Exception {
+    public ResponseEntity<ApiResponseDTO<OrganizacaoLogoMetadadosDTO>> removerLogo() throws Exception {
         service.remover();
-        return ResponseEntity.ok(new ApiResponseDTO<>("Logo removida", null));
+        return ResponseEntity.ok(new ApiResponseDTO<>("Logo removida", service.obterMetadadosAtual()));
     }
 
     static ResponseEntity<byte[]> respostaImagem(ConteudoLogo conteudo) {

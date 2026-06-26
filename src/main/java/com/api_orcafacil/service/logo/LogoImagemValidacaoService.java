@@ -22,8 +22,8 @@ public class LogoImagemValidacaoService {
     static final int ALTURA_MINIMA = 80;
     static final int LARGURA_MAXIMA = 2000;
     static final int ALTURA_MAXIMA = 1000;
-    static final double PROPORCAO_MINIMA = 1.0;
-    static final double PROPORCAO_MAXIMA = 5.0;
+    static final double[] PROPORCOES_IDEAIS = { 2.0, 3.0, 4.0 };
+    static final double TOLERANCIA_PROPORCAO_IDEAL = 0.08;
 
     private static final Set<String> EXTENSOES_PERMITIDAS = Set.of("png", "jpg", "jpeg", "webp");
     private static final Set<String> MIME_PERMITIDOS = Set.of("image/png", "image/jpeg", "image/webp");
@@ -73,13 +73,22 @@ public class LogoImagemValidacaoService {
                     "A logo e muito grande. Envie uma imagem com no maximo " + LARGURA_MAXIMA + "x" + ALTURA_MAXIMA + " pixels");
         }
 
-        double proporcao = (double) largura / altura;
-        if (proporcao < PROPORCAO_MINIMA || proporcao > PROPORCAO_MAXIMA) {
+        if (!proporcaoCorrespondeIdeal(largura, altura)) {
             throw new BusinessException(
-                    "Proporcao invalida. Envie uma logo horizontal ou proporcional (entre 1:1 e 5:1)");
+                    "Proporcao invalida. Envie uma logo horizontal em 2:1, 3:1 ou 4:1");
         }
 
         return new ResultadoValidacao(bytes, extensao, mimeDetectado, largura, altura);
+    }
+
+    private boolean proporcaoCorrespondeIdeal(int largura, int altura) {
+        double proporcao = (double) largura / altura;
+        for (double ideal : PROPORCOES_IDEAIS) {
+            if (Math.abs(proporcao - ideal) / ideal <= TOLERANCIA_PROPORCAO_IDEAL) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String extrairExtensaoSegura(String nomeOriginal) {

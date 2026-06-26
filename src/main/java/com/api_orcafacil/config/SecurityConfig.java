@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,7 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/orcamentos/visualizacao/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orcamentos/relatorio/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("GLOBAL_SUPER_ADMIN")
+                        .requestMatchers(PathPatternRequestMatcher.withDefaults().matcher("/admin/**"))
+                                .hasAuthority("GLOBAL_SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(dynamicRoutePermissionFilter, JwtAuthenticationFilter.class)

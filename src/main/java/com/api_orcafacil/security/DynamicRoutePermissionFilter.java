@@ -24,6 +24,11 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
+        if (isRotaIgnorada(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String acao = acaoPorMetodo(request.getMethod());
         String modulo = moduloDaRota(request.getServletPath());
 
@@ -54,6 +59,20 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isRotaIgnorada(HttpServletRequest request) {
+        String path = pathSemContexto(request);
+        return path.startsWith("/admin") || path.startsWith("/auth");
+    }
+
+    private String pathSemContexto(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isEmpty() && uri.startsWith(contextPath)) {
+            return uri.substring(contextPath.length());
+        }
+        return uri;
     }
 
     private String acaoPorMetodo(String method) {

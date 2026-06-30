@@ -33,11 +33,26 @@ public class OrcamentoItemRequest {
 
     public OrcamentoItem toEntity() {
         OrcamentoItem item = new OrcamentoItem();
-        item.setIdOrcamentoItem(idOrcamentoItem);
         item.setIdCatalogo(idCatalogo);
         item.setQtItem(qtItem);
         item.setVlCustoUnitario(vlCustoUnitario);
-        item.setCamposValor(camposValor != null ? camposValor : new ArrayList<>());
+        item.setCamposValor(copiarCamposValor());
         return item;
+    }
+
+    private List<OrcamentoItemCampoValor> copiarCamposValor() {
+        if (camposValor == null || camposValor.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<OrcamentoItemCampoValor> copia = new ArrayList<>(camposValor.size());
+        for (OrcamentoItemCampoValor origem : camposValor) {
+            OrcamentoItemCampoValor campo = new OrcamentoItemCampoValor();
+            campo.setIdCampoPersonalizado(origem.getIdCampoPersonalizado());
+            campo.setTpValor(origem.getTpValor());
+            campo.setVlInformado(origem.getVlInformado());
+            campo.setDsDescricao(origem.getDsDescricao());
+            copia.add(campo);
+        }
+        return copia;
     }
 }

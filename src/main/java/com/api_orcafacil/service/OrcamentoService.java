@@ -2,7 +2,11 @@ package com.api_orcafacil.service;
 
 import java.math.BigDecimal;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -168,8 +172,23 @@ public class OrcamentoService {
 
 
     private Orcamento buscarEntidade(Long id) {
-        return repository.findByIdOrcamentoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
+        Orcamento orcamento = repository.findByIdOrcamentoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
                 .orElseThrow(() -> new ResourceNotFoundException("Orcamento nao encontrado"));
+        inicializarItensGerenciados(orcamento);
+        return orcamento;
+    }
+
+    private void inicializarItensGerenciados(Orcamento orcamento) {
+        List<OrcamentoItem> itens = orcamento.getItens();
+        if (itens == null) {
+            return;
+        }
+        for (OrcamentoItem item : itens) {
+            List<OrcamentoItemCampoValor> campos = item.getCamposValor();
+            if (campos != null) {
+                campos.size();
+            }
+        }
     }
 
     private void aplicarRequest(Orcamento orcamento, OrcamentoRequest request, Long idOrganizacao) {
@@ -187,10 +206,95 @@ public class OrcamentoService {
             orcamento.setTpStatus(request.getTpStatus());
         }
         if (request.getItens() != null) {
-            orcamento.setItens(request.getItens().stream()
-                    .map(OrcamentoItemRequest::toEntity)
-                    .toList());
+            if (orcamento.getIdOrcamento() == null) {
+                orcamento.setItens(request.getItens().stream()
+                        .map(OrcamentoItemRequest::toEntity)
+                        .toList());
+            } else {
+                sincronizarItens(orcamento, request.getItens());
+            }
         }
+    }
+
+    private void sincronizarItens(Orcamento orcamento, List<OrcamentoItemRequest> requests) {
+        List<OrcamentoItem> itens = orcamento.getItens();
+        if (itens == null) {
+            itens = new ArrayList<>();
+            orcamento.setItens(itens);
+        }
+
+        Set<Long> idsRequest = new HashSet<>();
+        for (OrcamentoItemRequest request : requests) {
+            if (request.getIdOrcamentoItem() != null) {
+                idsRequest.add(request.getIdOrcamentoItem());
+            }
+        }
+        itens.removeIf(item -> item.getIdOrcamentoItem() != null
+                && !idsRequest.contains(item.getIdOrcamentoItem()));
+
+        for (OrcamentoItemRequest request : requests) {
+            if (request.getIdOrcamentoItem() != null) {
+                OrcamentoItem existente = itens.stream()
+                        .filter(item -> request.getIdOrcamentoItem().equals(item.getIdOrcamentoItem()))
+                        .findFirst()
+                        .orElse(null);
+                if (existente != null) {
+                    aplicarItemRequest(existente, request);
+                    continue;
+                }
+            }
+            itens.add(request.toEntity());
+        }
+    }
+
+    private void aplicarItemRequest(OrcamentoItem item, OrcamentoItemRequest request) {
+        item.setIdCatalogo(request.getIdCatalogo());
+        item.setQtItem(request.getQtItem());
+        item.setVlCustoUnitario(request.getVlCustoUnitario());
+        sincronizarCamposValor(item, request.getCamposValor());
+    }
+
+    private void sincronizarCamposValor(OrcamentoItem item, List<OrcamentoItemCampoValor> camposRequest) {
+        List<OrcamentoItemCampoValor> campos = item.getCamposValor();
+        if (campos == null) {
+            campos = new ArrayList<>();
+            item.setCamposValor(campos);
+        }
+        if (camposRequest == null || camposRequest.isEmpty()) {
+            campos.clear();
+            return;
+        }
+
+        Set<Long> idsRequest = new HashSet<>();
+        for (OrcamentoItemCampoValor campo : camposRequest) {
+            if (campo.getIdOrcamentoItemCampoValor() != null) {
+                idsRequest.add(campo.getIdOrcamentoItemCampoValor());
+            }
+        }
+        campos.removeIf(campo -> campo.getIdOrcamentoItemCampoValor() != null
+                && !idsRequest.contains(campo.getIdOrcamentoItemCampoValor()));
+
+        for (OrcamentoItemCampoValor campoRequest : camposRequest) {
+            if (campoRequest.getIdOrcamentoItemCampoValor() != null) {
+                campos.stream()
+                        .filter(campo -> campoRequest.getIdOrcamentoItemCampoValor()
+                                .equals(campo.getIdOrcamentoItemCampoValor()))
+                        .findFirst()
+                        .ifPresent(campo -> copiarCamposValor(campo, campoRequest));
+            } else {
+                OrcamentoItemCampoValor novo = new OrcamentoItemCampoValor();
+                copiarCamposValor(novo, campoRequest);
+                novo.setOrcamentoItem(item);
+                campos.add(novo);
+            }
+        }
+    }
+
+    private void copiarCamposValor(OrcamentoItemCampoValor destino, OrcamentoItemCampoValor origem) {
+        destino.setIdCampoPersonalizado(origem.getIdCampoPersonalizado());
+        destino.setTpValor(origem.getTpValor());
+        destino.setVlInformado(origem.getVlInformado());
+        destino.setDsDescricao(origem.getDsDescricao());
     }
 
     private void validarObjeto(Orcamento orcamento) {

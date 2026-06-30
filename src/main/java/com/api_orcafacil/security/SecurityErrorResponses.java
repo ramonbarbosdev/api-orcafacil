@@ -37,4 +37,27 @@ public final class SecurityErrorResponses {
                 .build();
         response.getWriter().write(MAPPER.writeValueAsString(body));
     }
+
+    public static void escreverAcessoNegado(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String modulo,
+            String acao,
+            String permissaoEsperada) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        ApiErrorResponse body = ApiErrorResponse.builder()
+                .status(HttpServletResponse.SC_FORBIDDEN)
+                .error("ACCESS_DENIED")
+                .message(PermissaoMensagemUtil.mensagemAcessoNegado(permissaoEsperada))
+                .hint("Solicite ao administrador da sua organização a liberação deste acesso.")
+                .path(request != null ? request.getRequestURI() : null)
+                .timestamp(LocalDateTime.now())
+                .modulo(modulo)
+                .acao(acao)
+                .permissaoEsperada(permissaoEsperada)
+                .build();
+        response.getWriter().write(MAPPER.writeValueAsString(body));
+    }
 }

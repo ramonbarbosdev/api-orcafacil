@@ -18,6 +18,14 @@ import com.api_orcafacil.dto.ModuloPermissaoRequestDTO;
 import com.api_orcafacil.dto.ModuloPermissaoUpdateDTO;
 import com.api_orcafacil.dto.PermissaoItemDTO;
 import com.api_orcafacil.dto.PermissaoModuloDTO;
+import com.api_orcafacil.dto.permissao.CatalogoRecursoCuradoDTO;
+import com.api_orcafacil.dto.permissao.CatalogoRecursoItemDTO;
+import com.api_orcafacil.dto.permissao.PermissaoDetalheDTO;
+import com.api_orcafacil.dto.permissao.PermissaoItemRequestDTO;
+import com.api_orcafacil.dto.permissao.PermissaoItemUpdateDTO;
+import com.api_orcafacil.dto.permissao.RegistrarRecursoRequestDTO;
+import com.api_orcafacil.dto.permissao.RegistrarRecursoResponseDTO;
+import com.api_orcafacil.dto.permissao.RecursoDescobertoDTO;
 import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
@@ -25,6 +33,9 @@ import com.api_orcafacil.repository.central.CentralPapelPermissaoPadraoRepositor
 import com.api_orcafacil.repository.central.CentralPapelRepository;
 import com.api_orcafacil.repository.central.CentralPermissaoGlobalRepository;
 import com.api_orcafacil.repository.central.CentralPlanoPermissaoRepository;
+import com.api_orcafacil.security.permissao.PermissaoCatalogoCurado;
+import com.api_orcafacil.security.permissao.PermissaoNormalizador;
+import com.api_orcafacil.security.permissao.RotaPermissaoScanner;
 import com.api_orcafacil.tenant.central.model.CentralPapelPermissaoPadrao;
 import com.api_orcafacil.tenant.central.model.CentralPermissaoGlobal;
 import com.api_orcafacil.tenant.central.model.CentralPlanoPermissao;
@@ -39,26 +50,16 @@ public class PermissaoPlatformService {
 
     private static final Set<String> MODULOS_RESERVADOS = Set.of("auth", "admin", "error");
     private static final List<String> ACOES_PADRAO = List.of("exibir", "ler", "criar", "editar", "deletar");
+    private static final List<String> ACOES_CRUD = List.of("exibir", "ler", "criar", "editar", "deletar");
     private static final List<String> ORDEM_ACOES = List.of("exibir", "ler", "criar", "editar", "deletar");
 
-    private static final Map<String, String> ROTULOS_MODULO = Map.ofEntries(
-            Map.entry("clientes", "Clientes"),
-            Map.entry("catalogos", "Catálogos"),
-            Map.entry("servicos", "Serviços"),
-            Map.entry("categorias-servico", "Categorias de serviço"),
-            Map.entry("orcamentos", "Orçamentos"),
-            Map.entry("condicoes-pagamento", "Condições de pagamento"),
-            Map.entry("configuracao-orcamento", "Configuração de orçamento"),
-            Map.entry("metodos-precificacao", "Métodos de precificação"),
-            Map.entry("campos-personalizados", "Campos personalizados"),
-            Map.entry("metodos-ajuste", "Métodos de ajuste"),
-            Map.entry("empresa-metodos-precificacao", "Métodos da empresa"),
-            Map.entry("perfil", "Perfil"));
+    private static final Map<String, String> ROTULOS_MODULO = new LinkedHashMap<>(PermissaoCatalogoCurado.rotulosPorModulo());
 
     private final CentralPermissaoGlobalRepository permissaoRepository;
     private final CentralPapelRepository papelRepository;
     private final CentralPapelPermissaoPadraoRepository papelPermissaoPadraoRepository;
     private final CentralPlanoPermissaoRepository planoPermissaoRepository;
+    private final RotaPermissaoScanner rotaPermissaoScanner;
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public List<PermissaoModuloDTO> listarCatalogo() {
@@ -138,6 +139,113 @@ public class PermissaoPlatformService {
     public void desativarModulo(String modulo) {
         ModuloPermissaoAdminDTO atual = buscarModulo(modulo);
         atualizarModulo(modulo, new ModuloPermissaoUpdateDTO(atual.nmModulo(), false));
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public List<CatalogoRecursoItemDTO> listarCatalogoRecursos() {
+        Map<String, List<String>> existentesPorModulo = permissoesAtivasPorModulo();
+        LinkedHashMap<String, CatalogoRecursoItemDTO> uniao = new LinkedHashMap<>();
+
+        for (CatalogoRecursoCuradoDTO curado : PermissaoCatalogoCurado.listar()) {
+            uniao.put(curado.modulo(), montarItemCatalogo(curado, existentesPorModulo, "CATALOGO", true));
+        }
+
+        for (RecursoDescobertoDTO descoberto : rotaPermissaoScanner.descobrir()) {
+            if (uniao.containsKey(descoberto.modulo())) {
+                continue;
+            }
+            CatalogoRecursoCuradoDTO sintetico = new CatalogoRecursoCuradoDTO(
+                    descoberto.modulo(),
+                    rotuloModulo(descoberto.modulo()),
+                    descoberto.rota(),
+                    "Descoberto",
+                    ACOES_CRUD);
+            uniao.put(descoberto.modulo(), montarItemCatalogo(sintetico, existentesPorModulo, "DESCOBERTO", false));
+        }
+
+        return uniao.values().stream()
+                .sorted(Comparator.comparing(CatalogoRecursoItemDTO::grupo)
+                        .thenComparing(CatalogoRecursoItemDTO::modulo))
+                .toList();
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public List<CatalogoRecursoItemDTO> listarCatalogoSugeridos() {
+        return listarCatalogoRecursos().stream()
+                .filter(item -> !item.noCatalogoCurado() || !"COMPLETO".equals(item.status()))
+                .toList();
+    }
+
+    public RegistrarRecursoResponseDTO registrarRecurso(RegistrarRecursoRequestDTO request) {
+        String modulo = PermissaoNormalizador.normalizarModulo(request.recurso());
+        validarCodigoModulo(modulo);
+        validarRecursoConhecido(modulo);
+
+        List<String> acoes = resolverAcoesRegistro(modulo, request.acoes());
+        String nmModulo = request.descricao() != null && !request.descricao().isBlank()
+                ? request.descricao().trim()
+                : rotuloModulo(modulo);
+
+        List<String> criadas = new ArrayList<>();
+        List<String> jaExistentes = new ArrayList<>();
+
+        for (String acao : acoes) {
+            String chave = PermissaoNormalizador.montarChave(modulo, acao);
+            if (permissaoRepository.existsByNmChave(chave)) {
+                jaExistentes.add(chave);
+                continue;
+            }
+            CentralPermissaoGlobal permissao = new CentralPermissaoGlobal();
+            permissao.setNmChave(chave);
+            permissao.setNmPermissao(rotuloPermissao(nmModulo, acao));
+            permissao.setFlAtivo(true);
+            permissaoRepository.save(permissao);
+            criadas.add(chave);
+        }
+
+        return new RegistrarRecursoResponseDTO(modulo, criadas, jaExistentes);
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public List<PermissaoDetalheDTO> listarPermissoesDetalhadas() {
+        return permissaoRepository.findAllByOrderByNmChaveAsc().stream()
+                .map(this::toDetalhe)
+                .toList();
+    }
+
+    public PermissaoDetalheDTO criarPermissao(PermissaoItemRequestDTO request) {
+        String modulo = PermissaoNormalizador.normalizarModulo(request.modulo());
+        String acao = PermissaoNormalizador.normalizarAcao(request.acao());
+        validarCodigoModulo(modulo);
+        String chave = PermissaoNormalizador.montarChave(modulo, acao);
+        if (permissaoRepository.existsByNmChave(chave)) {
+            throw new ConflictException("Permissao ja cadastrada: " + chave);
+        }
+
+        CentralPermissaoGlobal permissao = new CentralPermissaoGlobal();
+        permissao.setNmChave(chave);
+        permissao.setNmPermissao(request.descricao() != null && !request.descricao().isBlank()
+                ? request.descricao().trim()
+                : rotuloPermissao(rotuloModulo(modulo), acao));
+        permissao.setFlAtivo(true);
+        return toDetalhe(permissaoRepository.save(permissao));
+    }
+
+    public PermissaoDetalheDTO atualizarPermissao(Long id, PermissaoItemUpdateDTO request) {
+        CentralPermissaoGlobal permissao = permissaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Permissao nao encontrada"));
+        permissao.setNmPermissao(request.descricao().trim());
+        if (request.flAtivo() != null) {
+            permissao.setFlAtivo(request.flAtivo());
+        }
+        return toDetalhe(permissaoRepository.save(permissao));
+    }
+
+    public void desativarPermissao(Long id) {
+        CentralPermissaoGlobal permissao = permissaoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Permissao nao encontrada"));
+        permissao.setFlAtivo(false);
+        permissaoRepository.save(permissao);
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -223,8 +331,7 @@ public class PermissaoPlatformService {
     }
 
     static String moduloDaChave(String chave) {
-        int idx = chave.lastIndexOf('.');
-        return idx >= 0 ? chave.substring(0, idx) : chave;
+        return PermissaoNormalizador.moduloDaChave(chave);
     }
 
     static String rotuloModulo(String modulo) {
@@ -236,6 +343,85 @@ public class PermissaoPlatformService {
             return modulo;
         }
         return Character.toUpperCase(legivel.charAt(0)) + legivel.substring(1);
+    }
+
+    private Map<String, List<String>> permissoesAtivasPorModulo() {
+        Map<String, List<String>> mapa = new LinkedHashMap<>();
+        for (CentralPermissaoGlobal permissao : permissaoRepository.findByFlAtivoTrueOrderByNmChaveAsc()) {
+            String modulo = moduloDaChave(permissao.getNmChave());
+            mapa.computeIfAbsent(modulo, k -> new ArrayList<>()).add(permissao.getNmChave());
+        }
+        return mapa;
+    }
+
+    private CatalogoRecursoItemDTO montarItemCatalogo(
+            CatalogoRecursoCuradoDTO base,
+            Map<String, List<String>> existentesPorModulo,
+            String origem,
+            boolean noCatalogoCurado) {
+        List<String> sugeridas = base.acoesSugeridas();
+        List<String> existentes = existentesPorModulo.getOrDefault(base.modulo(), List.of()).stream()
+                .filter(chave -> sugeridas.contains(acaoDaChave(chave)))
+                .sorted()
+                .toList();
+        String status = calcularStatus(sugeridas, existentes);
+        boolean cadastrado = "COMPLETO".equals(status);
+        return new CatalogoRecursoItemDTO(
+                base.modulo(),
+                base.label(),
+                base.rota(),
+                base.grupo(),
+                origem,
+                cadastrado,
+                noCatalogoCurado,
+                status,
+                sugeridas,
+                existentes);
+    }
+
+    private String calcularStatus(List<String> sugeridas, List<String> existentes) {
+        if (existentes.isEmpty()) {
+            return "PENDENTE";
+        }
+        long faltantes = sugeridas.stream()
+                .filter(acao -> existentes.stream().noneMatch(chave -> chave.endsWith("." + acao)))
+                .count();
+        if (faltantes == 0) {
+            return "COMPLETO";
+        }
+        return "PARCIAL";
+    }
+
+    private List<String> resolverAcoesRegistro(String modulo, List<String> acoesRequest) {
+        if (acoesRequest != null && !acoesRequest.isEmpty()) {
+            return acoesRequest.stream()
+                    .map(PermissaoNormalizador::normalizarAcao)
+                    .distinct()
+                    .toList();
+        }
+        return PermissaoCatalogoCurado.buscar(modulo)
+                .map(CatalogoRecursoCuradoDTO::acoesSugeridas)
+                .orElse(ACOES_CRUD);
+    }
+
+    private void validarRecursoConhecido(String modulo) {
+        boolean conhecido = PermissaoCatalogoCurado.buscar(modulo).isPresent()
+                || rotaPermissaoScanner.descobrir().stream().anyMatch(r -> r.modulo().equals(modulo))
+                || permissaoRepository.existsByNmChaveStartingWith(modulo + ".");
+        if (!conhecido) {
+            throw new BusinessException(
+                    "Recurso nao encontrado no catalogo nem descoberto pelos controllers: " + modulo);
+        }
+    }
+
+    private PermissaoDetalheDTO toDetalhe(CentralPermissaoGlobal permissao) {
+        return new PermissaoDetalheDTO(
+                permissao.getIdPermissao(),
+                permissao.getNmChave(),
+                moduloDaChave(permissao.getNmChave()),
+                acaoDaChave(permissao.getNmChave()),
+                permissao.getNmPermissao(),
+                permissao.isFlAtivo());
     }
 
     private ModuloPermissaoAdminDTO toModuloAdmin(String modulo, List<CentralPermissaoGlobal> permissoes) {

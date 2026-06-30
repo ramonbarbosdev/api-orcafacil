@@ -45,7 +45,7 @@ public class ClienteService {
         return ClienteResponse.from(cliente);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ClienteResponse salvar(ClienteRequest request) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         validarDuplicidade(request.getNuCpfcnpj(), idOrganizacao, request.getIdCliente());
@@ -63,7 +63,7 @@ public class ClienteService {
         return ClienteResponse.from(repository.save(cliente));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         Cliente cliente = repository.findByIdClienteAndIdOrganizacao(id, idOrganizacao)
@@ -71,7 +71,7 @@ public class ClienteService {
         repository.delete(cliente);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Cliente registrarClienteAPartirDoOrcamento(Orcamento orcamento) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         Cliente entrada = orcamento.getCliente();

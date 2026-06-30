@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
@@ -52,17 +54,19 @@ public class OrcamentoService {
         this.politicaPlanoService = politicaPlanoService;
     }
 
+    @Transactional(readOnly = true)
     public java.util.List<OrcamentoResponse> listar() {
         return repository.findByIdOrganizacao(tenantContextService.idOrganizacaoObrigatoria())
                 .stream().map(OrcamentoResponse::from).toList();
     }
 
+    @Transactional(readOnly = true)
     public OrcamentoResponse buscar(Long id) {
         Orcamento orcamento = buscarEntidade(id);
         return OrcamentoResponse.from(orcamento);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrcamentoResponse salvar(OrcamentoRequest request) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         boolean novo = request.getIdOrcamento() == null;
@@ -98,12 +102,16 @@ public class OrcamentoService {
         Orcamento salvo = repository.save(orcamento);
         if (novo) {
             statusHistoricoService.registrar(salvo, null, orcamento.getTpStatus());
-            politicaPlanoService.ifAvailable(
-                    p -> p.registrarConsumoAtual(ChaveLimite.ORCAMENTOS_MES, 1));
         }
-        return OrcamentoResponse.from(salvo);
+
+        OrcamentoResponse response = OrcamentoResponse.from(salvo);
+        if (novo) {
+            registrarConsumoOrcamentoAposCommit(idOrganizacao);
+        }
+        return response;
     }
 
+    @Transactional(readOnly = true)
     public BigDecimal previewPrecificacao(OrcamentoRequest request) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         Orcamento orcamento = new Orcamento();
@@ -125,7 +133,7 @@ public class OrcamentoService {
         return total;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public OrcamentoResponse alterarStatus(Long idOrcamento, StatusOrcamento novoStatus) {
         Orcamento orcamento = buscarEntidade(idOrcamento);
         StatusOrcamento statusAtual = orcamento.getTpStatus();
@@ -136,6 +144,7 @@ public class OrcamentoService {
         return OrcamentoResponse.from(salvo);
     }
 
+    @Transactional(readOnly = true)
     public String sequencia() {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         var config = configuracaoOrcamentoService.obterPrimeiroObjeto();
@@ -143,11 +152,26 @@ public class OrcamentoService {
         return config.getPrefixoNumero() + "-" + sq;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) {
         buscarEntidade(id);
         statusHistoricoService.excluirPorIdOrcamento(id);
         repository.deleteById(id);
+    }
+
+    private void registrarConsumoOrcamentoAposCommit(Long idOrganizacao) {
+        politicaPlanoService.ifAvailable(politica -> {
+            if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+                politica.registrarConsumo(idOrganizacao, ChaveLimite.ORCAMENTOS_MES, 1);
+                return;
+            }
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    politica.registrarConsumo(idOrganizacao, ChaveLimite.ORCAMENTOS_MES, 1);
+                }
+            });
+        });
     }
 
     private Orcamento buscarEntidade(Long id) {

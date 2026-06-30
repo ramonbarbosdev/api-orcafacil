@@ -8,6 +8,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.api_orcafacil.security.permissao.PermissaoAcaoHttp;
+import com.api_orcafacil.security.permissao.PermissaoCatalogoCurado;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,10 +33,20 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return;
         }
 
-        String acao = acaoPorMetodo(request.getMethod());
-        String modulo = moduloDaRota(path);
+        String modulo;
+        String acao;
 
-        if (acao == null || modulo == null || MODULOS_PLATAFORMA.contains(modulo)) {
+        Object override = request.getAttribute(PermissaoRequeridaContext.REQUEST_ATTR);
+        if (override instanceof PermissaoRequeridaContext ctx) {
+            modulo = ctx.getModulo();
+            acao = ctx.getAcao();
+        } else {
+            acao = PermissaoAcaoHttp.acaoPorMetodoHttp(request.getMethod()).orElse(null);
+            modulo = moduloDaRota(path);
+        }
+
+        if (acao == null || modulo == null || MODULOS_PLATAFORMA.contains(modulo)
+                || PermissaoCatalogoCurado.isReservado(modulo)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -69,13 +82,7 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             String ler = modulo + ".ler";
             String criar = modulo + ".criar";
             if (!temAuthority(authentication, ler) && !temAuthority(authentication, criar)) {
-                SecurityErrorResponses.escrever(
-                        request,
-                        response,
-                        HttpServletResponse.SC_FORBIDDEN,
-                        "ACCESS_DENIED",
-                        PermissaoMensagemUtil.mensagemAcessoNegado(ler),
-                        "Solicite ao administrador da sua organização a liberação deste acesso.");
+                SecurityErrorResponses.escreverAcessoNegado(request, response, modulo, "ler", ler);
                 return;
             }
             filterChain.doFilter(request, response);
@@ -84,13 +91,8 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
 
         String permissaoNecessaria = modulo + "." + acao;
         if (!temAuthority(authentication, permissaoNecessaria)) {
-            SecurityErrorResponses.escrever(
-                    request,
-                    response,
-                    HttpServletResponse.SC_FORBIDDEN,
-                    "ACCESS_DENIED",
-                    PermissaoMensagemUtil.mensagemAcessoNegado(permissaoNecessaria),
-                    "Solicite ao administrador da sua organização a liberação deste acesso.");
+            SecurityErrorResponses.escreverAcessoNegado(
+                    request, response, modulo, acao, permissaoNecessaria);
             return;
         }
 
@@ -108,16 +110,6 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return uri.substring(contextPath.length());
         }
         return uri;
-    }
-
-    private String acaoPorMetodo(String method) {
-        return switch (method) {
-            case "GET", "HEAD" -> "ler";
-            case "POST" -> "criar";
-            case "PUT", "PATCH" -> "editar";
-            case "DELETE" -> "deletar";
-            default -> null;
-        };
     }
 
     private String moduloDaRota(String path) {

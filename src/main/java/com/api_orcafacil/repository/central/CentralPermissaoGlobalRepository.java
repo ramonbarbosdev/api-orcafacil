@@ -18,4 +18,8 @@ public interface CentralPermissaoGlobalRepository extends JpaRepository<CentralP
     List<CentralPermissaoGlobal> findByNmChaveStartingWith(String prefix);
 
     boolean existsByNmChaveStartingWith(String prefix);
+
+    java.util.Optional<CentralPermissaoGlobal> findByNmChave(String nmChave);
+
+    boolean existsByNmChave(String nmChave);
 }

@@ -23,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.api_orcafacil.security.DynamicRoutePermissionFilter;
 import com.api_orcafacil.security.JwtAuthenticationFilter;
+import com.api_orcafacil.security.PermissaoRequeridaResolverFilter;
 import com.api_orcafacil.security.SecurityErrorResponses;
 
 @Configuration
@@ -33,6 +34,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            PermissaoRequeridaResolverFilter permissaoRequeridaResolverFilter,
             DynamicRoutePermissionFilter dynamicRoutePermissionFilter) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -78,7 +80,8 @@ public class SecurityConfig {
                             }
                         }))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(dynamicRoutePermissionFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(permissaoRequeridaResolverFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(dynamicRoutePermissionFilter, PermissaoRequeridaResolverFilter.class)
                 .build();
     }
 
@@ -142,6 +145,14 @@ public class SecurityConfig {
     FilterRegistrationBean<DynamicRoutePermissionFilter> dynamicFilterRegistration(
             DynamicRoutePermissionFilter filter) {
         FilterRegistrationBean<DynamicRoutePermissionFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<PermissaoRequeridaResolverFilter> permissaoResolverFilterRegistration(
+            PermissaoRequeridaResolverFilter filter) {
+        FilterRegistrationBean<PermissaoRequeridaResolverFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }

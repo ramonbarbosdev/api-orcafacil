@@ -22,7 +22,7 @@ public class OrcamentoStatusHistoricoService {
         this.tenantContextService = tenantContextService;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void registrar(Orcamento orcamento, StatusOrcamento statusAnterior, StatusOrcamento statusNovo) {
         OrcamentoStatusHistorico historico = new OrcamentoStatusHistorico();
         historico.setIdOrganizacao(orcamento.getIdOrganizacao());
@@ -37,7 +37,7 @@ public class OrcamentoStatusHistoricoService {
         return repository.findByIdOrcamentoOrderByDtCriacaoAsc(idOrcamento);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void excluirPorIdOrcamento(Long idOrcamento) {
         repository.deleteByIdOrcamento(idOrcamento);
     }

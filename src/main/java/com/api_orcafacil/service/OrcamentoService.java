@@ -12,6 +12,7 @@ import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoItemRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
 import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
@@ -175,7 +176,9 @@ public class OrcamentoService {
             orcamento.setTpStatus(request.getTpStatus());
         }
         if (request.getItens() != null) {
-            orcamento.setItens(request.getItens());
+            orcamento.setItens(request.getItens().stream()
+                    .map(OrcamentoItemRequest::toEntity)
+                    .toList());
         }
     }
 

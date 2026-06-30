@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.validation.Valid;
+
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
@@ -68,14 +70,14 @@ public class OrcamentoController {
 
     @PostMapping
     @RequerPermissao(modulo = "orcamentos", acao = "criar")
-    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> criar(@RequestBody OrcamentoRequest request) {
+    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> criar(@Valid @RequestBody OrcamentoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Orcamento salvo", service.salvar(request)));
     }
 
     @PostMapping("/rascunho")
     @RequerPermissao(modulo = "orcamentos", acao = "criar")
-    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> rascunho(@RequestBody OrcamentoRequest request) {
+    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> rascunho(@Valid @RequestBody OrcamentoRequest request) {
         request.setTpStatus(StatusOrcamento.RASCUNHO);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Rascunho salvo", service.salvar(request)));
@@ -83,7 +85,7 @@ public class OrcamentoController {
 
     @PostMapping("/{id}/gerar")
     @RequerPermissao(modulo = "orcamentos", acao = "editar")
-    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> gerar(@PathVariable Long id, @RequestBody OrcamentoRequest request) {
+    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> gerar(@PathVariable Long id, @Valid @RequestBody OrcamentoRequest request) {
         request.setIdOrcamento(id);
         request.setTpStatus(StatusOrcamento.GERADO);
         OrcamentoResponse response = service.salvar(request);
@@ -117,7 +119,7 @@ public class OrcamentoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> atualizar(@PathVariable Long id, @RequestBody OrcamentoRequest request) {
+    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> atualizar(@PathVariable Long id, @Valid @RequestBody OrcamentoRequest request) {
         request.setIdOrcamento(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento atualizado", service.salvar(request)));
     }

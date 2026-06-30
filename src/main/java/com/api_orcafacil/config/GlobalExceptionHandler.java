@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.api_orcafacil.dto.ApiErrorResponse;
@@ -27,6 +28,15 @@ public class GlobalExceptionHandler {
         return build(401, "UNAUTHORIZED", ex.getMessage(), request);
     }
 
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> validation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Dados invalidos");
+        return build(422, "VALIDATION_ERROR", message, request);
+    }
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiErrorResponse> business(BusinessException ex, HttpServletRequest request) {
         return build(422, "BUSINESS_ERROR", ex.getMessage(), request);

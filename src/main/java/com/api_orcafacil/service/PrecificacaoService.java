@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import com.api_orcafacil.common.TipoPrecificacao;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.model.MetodoPrecificacao;
 import com.api_orcafacil.model.OrcamentoItem;
@@ -18,13 +19,13 @@ public class PrecificacaoService {
     public BigDecimal precificarItem(OrcamentoItem item, EmpresaMetodoPrecificacao empresaMetodo) {
         MetodoPrecificacao metodo = empresaMetodo.getMetodoPrecificacao();
         if (metodo == null || metodo.getCdMetodoPrecificacao() == null) {
-            throw new IllegalArgumentException("Metodo de precificacao nao definido");
+            throw new BusinessException("Metodo de precificacao nao definido");
         }
         if (item.getQtItem() == null) {
-            throw new IllegalArgumentException("Quantidade do item nao informada");
+            throw new BusinessException("Quantidade do item nao informada");
         }
         if (item.getVlCustoUnitario() == null) {
-            throw new IllegalArgumentException("Custo unitario do item nao informado");
+            throw new BusinessException("Custo unitario do item nao informado");
         }
 
         BigDecimal quantidade = item.getQtItem();
@@ -64,12 +65,12 @@ public class PrecificacaoService {
 
     private BigDecimal obterDecimal(Map<String, Object> config, String chave) {
         if (config == null || !config.containsKey(chave)) {
-            throw new IllegalArgumentException("Configuracao obrigatoria nao encontrada: " + chave);
+            throw new BusinessException("Configuracao obrigatoria nao encontrada: " + chave);
         }
         try {
             return new BigDecimal(config.get(chave).toString());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Valor invalido para configuracao: " + chave);
+            throw new BusinessException("Valor invalido para configuracao: " + chave);
         }
     }
 }

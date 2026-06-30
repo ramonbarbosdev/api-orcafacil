@@ -144,7 +144,7 @@ public class PoliticaPlanoService {
 
     @Transactional(transactionManager = "centralTransactionManager")
     public void registrarConsumo(Long idOrganizacao, String chaveLimite, long incremento) {
-        if (incremento == 0) {
+        if (incremento == 0 || isConsumoDinamico(chaveLimite)) {
             return;
         }
         LocalDate referencia = referenciaConsumo(chaveLimite);
@@ -168,6 +168,9 @@ public class PoliticaPlanoService {
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public long obterConsumo(Long idOrganizacao, String chaveLimite) {
+        if (isConsumoDinamico(chaveLimite)) {
+            return calcularConsumoDinamico(idOrganizacao, chaveLimite);
+        }
         Optional<CentralOrganizacaoConsumo> persistido = consumoRepository
                 .findByIdOrganizacaoAndNmChaveLimiteAndDtReferencia(
                         idOrganizacao, chaveLimite, referenciaConsumo(chaveLimite));
@@ -196,7 +199,7 @@ public class PoliticaPlanoService {
         Long idPlano = organizacao.getIdPlanoAssinatura();
         String nmPlano = planoRepository.findById(idPlano)
                 .map(CentralPlanoAssinatura::getNmPlanoAssinatura)
-                .orElse("—");
+                .orElse("-");
         Optional<CentralOrganizacaoAssinatura> assinatura = resolverAssinaturaAtiva(idOrganizacao);
         String status = assinatura.map(a -> a.getTpStatus().name()).orElse("INDEFINIDA");
         boolean ativa = assinatura.isPresent();
@@ -244,6 +247,11 @@ public class PoliticaPlanoService {
         return organizacaoRepository.findById(idOrganizacao)
                 .map(CentralOrganizacao::getIdPlanoAssinatura)
                 .orElse(1L);
+    }
+
+    private boolean isConsumoDinamico(String chaveLimite) {
+        return chaveLimite != null
+                && ChaveLimite.ORCAMENTOS_MES.equalsIgnoreCase(chaveLimite.trim());
     }
 
     private long calcularConsumoDinamico(Long idOrganizacao, String chaveLimite) {

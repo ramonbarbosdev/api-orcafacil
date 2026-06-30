@@ -19,6 +19,7 @@ import com.api_orcafacil.dto.orcamento.OrcamentoVisualizacaoDTO;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.relatorio.RelatorioOrcamentoService;
 import com.api_orcafacil.repository.OrcamentoRepository;
+import com.api_orcafacil.security.RequerPermissao;
 import com.api_orcafacil.service.OrcamentoService;
 import com.api_orcafacil.service.VisualizacaoOrcamentoService;
 import com.api_orcafacil.service.logo.OrganizacaoLogoService;
@@ -66,12 +67,14 @@ public class OrcamentoController {
     }
 
     @PostMapping
+    @RequerPermissao(modulo = "orcamentos", acao = "criar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> criar(@RequestBody OrcamentoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Orcamento salvo", service.salvar(request)));
     }
 
     @PostMapping("/rascunho")
+    @RequerPermissao(modulo = "orcamentos", acao = "criar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> rascunho(@RequestBody OrcamentoRequest request) {
         request.setTpStatus(StatusOrcamento.RASCUNHO);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -79,6 +82,7 @@ public class OrcamentoController {
     }
 
     @PostMapping("/{id}/gerar")
+    @RequerPermissao(modulo = "orcamentos", acao = "editar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> gerar(@PathVariable Long id, @RequestBody OrcamentoRequest request) {
         request.setIdOrcamento(id);
         request.setTpStatus(StatusOrcamento.GERADO);
@@ -88,21 +92,25 @@ public class OrcamentoController {
     }
 
     @PostMapping("/{id}/enviar")
+    @RequerPermissao(modulo = "orcamentos", acao = "editar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> enviar(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento enviado", service.alterarStatus(id, StatusOrcamento.ENVIADO)));
     }
 
     @PostMapping("/{id}/aprovar")
+    @RequerPermissao(modulo = "orcamentos", acao = "editar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> aprovar(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento aprovado", service.alterarStatus(id, StatusOrcamento.APROVADO)));
     }
 
     @PostMapping("/{id}/rejeitar")
+    @RequerPermissao(modulo = "orcamentos", acao = "editar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> rejeitar(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento rejeitado", service.alterarStatus(id, StatusOrcamento.REJEITADO)));
     }
 
     @PostMapping("/preview-precificacao")
+    @RequerPermissao(modulo = "orcamentos", acao = "ler")
     public ResponseEntity<ApiResponseDTO<Map<String, BigDecimal>>> previewPrecificacao(@RequestBody OrcamentoRequest request) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Preview calculado",
                 Map.of("valorTotal", service.previewPrecificacao(request))));

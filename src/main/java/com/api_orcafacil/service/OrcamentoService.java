@@ -7,8 +7,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
@@ -105,9 +103,6 @@ public class OrcamentoService {
         }
 
         OrcamentoResponse response = OrcamentoResponse.from(salvo);
-        if (novo) {
-            registrarConsumoOrcamentoAposCommit(idOrganizacao);
-        }
         return response;
     }
 
@@ -159,20 +154,6 @@ public class OrcamentoService {
         repository.deleteById(id);
     }
 
-    private void registrarConsumoOrcamentoAposCommit(Long idOrganizacao) {
-        politicaPlanoService.ifAvailable(politica -> {
-            if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-                politica.registrarConsumo(idOrganizacao, ChaveLimite.ORCAMENTOS_MES, 1);
-                return;
-            }
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    politica.registrarConsumo(idOrganizacao, ChaveLimite.ORCAMENTOS_MES, 1);
-                }
-            });
-        });
-    }
 
     private Orcamento buscarEntidade(Long id) {
         return repository.findByIdOrcamentoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
@@ -214,8 +195,12 @@ public class OrcamentoService {
     }
 
     private void validarItem(OrcamentoItem item, java.util.List<OrcamentoItem> itens) {
+        if (item.getIdCatalogo() == null) {
+            throw new BusinessException("Catalogo do item nao informado");
+        }
         boolean repetido = itens.stream()
                 .filter(i -> !Objects.equals(i.getIdOrcamentoItem(), item.getIdOrcamentoItem()))
+                .filter(i -> i.getIdCatalogo() != null)
                 .anyMatch(i -> i.getIdCatalogo().equals(item.getIdCatalogo()));
         if (repetido) {
             throw new ConflictException("Existem itens repetidos no orcamento");

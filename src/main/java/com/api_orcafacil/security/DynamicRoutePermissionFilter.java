@@ -41,8 +41,11 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             modulo = ctx.getModulo();
             acao = ctx.getAcao();
         } else {
-            acao = PermissaoAcaoHttp.acaoPorMetodoHttp(request.getMethod()).orElse(null);
             modulo = moduloDaRota(path);
+            acao = acaoPorSubrota(path, request.getMethod());
+            if (acao == null) {
+                acao = PermissaoAcaoHttp.acaoPorMetodoHttp(request.getMethod()).orElse(null);
+            }
         }
 
         if (acao == null || modulo == null || MODULOS_PLATAFORMA.contains(modulo)
@@ -68,7 +71,7 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
                     response,
                     HttpServletResponse.SC_FORBIDDEN,
                     "ORGANIZATION_REQUIRED",
-                    "Selecione uma organização para continuar.",
+                    "Selecione uma organizaÃƒÂ§ÃƒÂ£o para continuar.",
                     "Escolha a empresa na qual deseja trabalhar antes de acessar este recurso.");
             return;
         }
@@ -110,6 +113,24 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return uri.substring(contextPath.length());
         }
         return uri;
+    }
+
+    private String acaoPorSubrota(String path, String method) {
+        if (path == null || method == null || !"POST".equalsIgnoreCase(method)) {
+            return null;
+        }
+        String normalizado = path.startsWith("/") ? path.substring(1) : path;
+        String[] partes = normalizado.split("/");
+        if (partes.length < 2) {
+            return null;
+        }
+        String ultimaParte = partes[partes.length - 1];
+        return switch (ultimaParte) {
+            case "gerar", "enviar", "aprovar", "rejeitar" -> "editar";
+            case "preview-precificacao" -> "ler";
+            case "rascunho" -> "criar";
+            default -> null;
+        };
     }
 
     private String moduloDaRota(String path) {

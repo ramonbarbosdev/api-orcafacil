@@ -3,11 +3,13 @@ package com.api_orcafacil.dto.orcamento;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.model.OrcamentoItem;
+import com.api_orcafacil.model.OrcamentoItemCampoValor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -53,9 +55,29 @@ public class OrcamentoResponse {
         r.setVlPrecoFinal(o.getVlPrecoFinal());
         r.setTpStatus(o.getTpStatus());
         r.setCdPublico(o.getCdPublico());
-        r.setItens(o.getItens());
+        r.setItens(inicializarItens(o.getItens()));
         r.setDtCriacao(o.getDtCriacao());
         r.setDtAtualizacao(o.getDtAtualizacao());
         return r;
+    }
+
+    private static List<OrcamentoItem> inicializarItens(List<OrcamentoItem> origem) {
+        if (origem == null || origem.isEmpty()) {
+            return List.of();
+        }
+        List<OrcamentoItem> itens = new ArrayList<>(origem.size());
+        for (OrcamentoItem item : origem) {
+            item.getCdCatalogo();
+            item.getNmCatalogo();
+            item.getTpItem();
+            List<OrcamentoItemCampoValor> campos = item.getCamposValor();
+            if (campos != null) {
+                for (OrcamentoItemCampoValor campo : new ArrayList<>(campos)) {
+                    campo.getNmCampoPersonalizado();
+                }
+            }
+            itens.add(item);
+        }
+        return itens;
     }
 }

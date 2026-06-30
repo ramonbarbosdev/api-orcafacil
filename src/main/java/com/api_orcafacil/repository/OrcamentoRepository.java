@@ -24,12 +24,4 @@ public interface OrcamentoRepository extends TenantRepository<Orcamento> {
 
     @Query(value = "SELECT * FROM orcamento b WHERE b.nu_orcamento = ?1 AND b.id_organizacao = ?2 LIMIT 1", nativeQuery = true)
     Optional<Orcamento> findByNuOrcamentoAndIdOrganizacao(String nuOrcamento, Long idOrganizacao);
-
-    @Query(value = """
-            SELECT COUNT(*)
-            FROM orcamento o
-            WHERE o.id_organizacao = ?1
-              AND date_trunc('month', o.dt_criacao) = date_trunc('month', CURRENT_TIMESTAMP)
-            """, nativeQuery = true)
-    long countMesAtual(Long idOrganizacao);
 }

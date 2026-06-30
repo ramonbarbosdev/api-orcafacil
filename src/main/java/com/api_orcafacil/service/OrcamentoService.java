@@ -1,6 +1,7 @@
 package com.api_orcafacil.service;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -104,6 +105,11 @@ public class OrcamentoService {
         }
 
         OrcamentoResponse response = OrcamentoResponse.from(salvo);
+        if (novo) {
+            politicaPlanoService.ifAvailable(
+                    p -> p.registrarConsumoAtual(ChaveLimite.ORCAMENTOS_MES, 1));
+        }
+
         return response;
     }
 
@@ -150,9 +156,14 @@ public class OrcamentoService {
 
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) {
-        buscarEntidade(id);
+        Orcamento orcamento = buscarEntidade(id);
+        boolean consumoMesAtual = YearMonth.from(orcamento.getDtCriacao()).equals(YearMonth.now());
         statusHistoricoService.excluirPorIdOrcamento(id);
         repository.deleteById(id);
+        if (consumoMesAtual) {
+            politicaPlanoService.ifAvailable(
+                    p -> p.registrarConsumoAtual(ChaveLimite.ORCAMENTOS_MES, -1));
+        }
     }
 
 

@@ -17,7 +17,6 @@ import com.api_orcafacil.dto.plano.LimitePlanoDTO;
 import com.api_orcafacil.dto.plano.PoliticaPlanoResumoDTO;
 import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.repository.ClienteRepository;
-import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.repository.ServicoRepository;
 import com.api_orcafacil.repository.central.CentralOrganizacaoAssinaturaRepository;
 import com.api_orcafacil.repository.central.CentralOrganizacaoConsumoRepository;
@@ -51,7 +50,6 @@ public class PoliticaPlanoService {
     private final CentralUsuarioOrganizacaoRepository usuarioOrganizacaoRepository;
     private final ClienteRepository clienteRepository;
     private final ServicoRepository servicoRepository;
-    private final OrcamentoRepository orcamentoRepository;
     private final TenantContextService tenantContextService;
 
     public PoliticaPlanoService(
@@ -65,7 +63,6 @@ public class PoliticaPlanoService {
             CentralUsuarioOrganizacaoRepository usuarioOrganizacaoRepository,
             ClienteRepository clienteRepository,
             ServicoRepository servicoRepository,
-            OrcamentoRepository orcamentoRepository,
             TenantContextService tenantContextService) {
         this.organizacaoRepository = organizacaoRepository;
         this.assinaturaRepository = assinaturaRepository;
@@ -77,7 +74,6 @@ public class PoliticaPlanoService {
         this.usuarioOrganizacaoRepository = usuarioOrganizacaoRepository;
         this.clienteRepository = clienteRepository;
         this.servicoRepository = servicoRepository;
-        this.orcamentoRepository = orcamentoRepository;
         this.tenantContextService = tenantContextService;
     }
 
@@ -144,7 +140,7 @@ public class PoliticaPlanoService {
 
     @Transactional(transactionManager = "centralTransactionManager")
     public void registrarConsumo(Long idOrganizacao, String chaveLimite, long incremento) {
-        if (incremento == 0 || isConsumoDinamico(chaveLimite)) {
+        if (incremento == 0) {
             return;
         }
         LocalDate referencia = referenciaConsumo(chaveLimite);
@@ -168,14 +164,14 @@ public class PoliticaPlanoService {
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public long obterConsumo(Long idOrganizacao, String chaveLimite) {
-        if (isConsumoDinamico(chaveLimite)) {
-            return calcularConsumoDinamico(idOrganizacao, chaveLimite);
-        }
         Optional<CentralOrganizacaoConsumo> persistido = consumoRepository
                 .findByIdOrganizacaoAndNmChaveLimiteAndDtReferencia(
                         idOrganizacao, chaveLimite, referenciaConsumo(chaveLimite));
         if (persistido.isPresent()) {
             return persistido.get().getNuConsumo();
+        }
+        if (isConsumoPorPeriodo(chaveLimite)) {
+            return 0L;
         }
         return calcularConsumoDinamico(idOrganizacao, chaveLimite);
     }
@@ -249,9 +245,8 @@ public class PoliticaPlanoService {
                 .orElse(1L);
     }
 
-    private boolean isConsumoDinamico(String chaveLimite) {
-        return chaveLimite != null
-                && ChaveLimite.ORCAMENTOS_MES.equalsIgnoreCase(chaveLimite.trim());
+    private boolean isConsumoPorPeriodo(String chaveLimite) {
+        return ChaveLimite.ORCAMENTOS_MES.equals(chaveLimite);
     }
 
     private long calcularConsumoDinamico(Long idOrganizacao, String chaveLimite) {
@@ -259,7 +254,6 @@ public class PoliticaPlanoService {
             case ChaveLimite.CLIENTES -> clienteRepository.countByIdOrganizacao(idOrganizacao);
             case ChaveLimite.SERVICOS -> servicoRepository.countByIdOrganizacao(idOrganizacao);
             case ChaveLimite.USUARIOS -> usuarioOrganizacaoRepository.countByIdOrganizacaoAndFlAtivoTrue(idOrganizacao);
-            case ChaveLimite.ORCAMENTOS_MES -> orcamentoRepository.countMesAtual(idOrganizacao);
             default -> 0L;
         };
     }

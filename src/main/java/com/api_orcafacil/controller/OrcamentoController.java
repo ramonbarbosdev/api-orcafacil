@@ -19,7 +19,7 @@ import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoVisualizacaoDTO;
 import com.api_orcafacil.model.Orcamento;
-import com.api_orcafacil.relatorio.RelatorioOrcamentoService;
+import com.api_orcafacil.relatorio.orcamento.service.OrcamentoRelatorioService;
 import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.security.RequerPermissao;
 import com.api_orcafacil.service.OrcamentoService;
@@ -34,17 +34,17 @@ public class OrcamentoController {
     private final OrcamentoService service;
     private final OrcamentoRepository repository;
     private final VisualizacaoOrcamentoService visualizacaoOrcamentoService;
-    private final RelatorioOrcamentoService relatorioOrcamentoService;
+    private final OrcamentoRelatorioService orcamentoRelatorioService;
     private final OrganizacaoLogoService organizacaoLogoService;
 
     public OrcamentoController(OrcamentoService service, OrcamentoRepository repository,
             VisualizacaoOrcamentoService visualizacaoOrcamentoService,
-            RelatorioOrcamentoService relatorioOrcamentoService,
+            OrcamentoRelatorioService orcamentoRelatorioService,
             OrganizacaoLogoService organizacaoLogoService) {
         this.service = service;
         this.repository = repository;
         this.visualizacaoOrcamentoService = visualizacaoOrcamentoService;
-        this.relatorioOrcamentoService = relatorioOrcamentoService;
+        this.orcamentoRelatorioService = orcamentoRelatorioService;
         this.organizacaoLogoService = organizacaoLogoService;
     }
 
@@ -144,7 +144,7 @@ public class OrcamentoController {
 
     @GetMapping(value = "/relatorio/{cdPublico}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> relatorio(@PathVariable String cdPublico) {
-        byte[] pdf = relatorioOrcamentoService.gerarRelatorioOrcamento(cdPublico);
+        byte[] pdf = orcamentoRelatorioService.gerarPorCdPublico(cdPublico);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=orcamento.pdf")
                 .contentType(MediaType.APPLICATION_PDF)

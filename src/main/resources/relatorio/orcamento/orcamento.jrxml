@@ -3,7 +3,7 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
               xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd"
-              name="orca"
+              name="orcamento"
               pageWidth="595"
               pageHeight="842"
               columnWidth="555"
@@ -26,7 +26,7 @@
 		<field name="quantidade" class="java.math.BigDecimal"/>
 		<field name="precoUnitario" class="java.math.BigDecimal"/>
 		<field name="subtotal" class="java.math.BigDecimal"/>
-		<field name="materiais" class="java.util.List"/>
+		<field name="materiaisTexto" class="java.lang.String"/>
 		<field name="codigo" class="java.lang.String"/>
 		<field name="precoCusto" class="java.math.BigDecimal"/>
 	</subDataset>
@@ -35,21 +35,18 @@
 		<field name="quantidade" class="java.math.BigDecimal"/>
 		<field name="precoUnitario" class="java.math.BigDecimal"/>
 		<field name="subtotal" class="java.math.BigDecimal"/>
-		<field name="materiais" class="java.util.List"/>
+		<field name="materiaisTexto" class="java.lang.String"/>
 		<field name="codigo" class="java.lang.String"/>
 		<field name="precoCusto" class="java.math.BigDecimal"/>
 	</subDataset>
-	<subDataset name="dsMateriais" uuid="445fbffd-e377-4f34-aa29-1fae65cf8dfb">
-		<field name="descricao" class="java.lang.String"/>
-		<field name="quantidade" class="java.math.BigDecimal"/>
-		<field name="valor" class="java.math.BigDecimal"/>
-		<field name="nome" class="java.lang.String"/>
-	</subDataset>
+
+	<parameter name="LOGO_PATH" class="java.lang.String"/>
 
 	<field name="nuOrcamento" class="java.lang.String"/>
-	<field name="dtEmissao" class="java.time.LocalDate"/>
-	<field name="dtValido" class="java.time.LocalDate"/>
-	<field name="cliente" class="com.api_orcafacil.dto.orcamento.ClienteVisualizacaoDTO"/>
+	<field name="dtEmissaoFormatada" class="java.lang.String"/>
+	<field name="dtValidoFormatada" class="java.lang.String"/>
+	<field name="clienteNome" class="java.lang.String"/>
+	<field name="clienteCpfCnpj" class="java.lang.String"/>
 	<field name="vlPrecoBase" class="java.math.BigDecimal"/>
 	<field name="totalDesconto" class="java.math.BigDecimal"/>
 	<field name="vlPrecoFinal" class="java.math.BigDecimal"/>
@@ -57,11 +54,10 @@
 	<field name="produtos" class="java.util.List"/>
 	<field name="servicos" class="java.util.List"/>
 	<field name="nmEmpresa" class="java.lang.String"/>
-	<field name="condicaoPagamento" class="java.lang.String"/>
-	<field name="nuPrazoEntrega" class="java.lang.Integer"/>
-
-	<parameter name="TITULO_HEADER" class="java.lang.String"/>
-	<parameter name="LOGO_PATH" class="java.lang.String"/>
+	<field name="condicaoPagamentoTexto" class="java.lang.String"/>
+	<field name="prazoEntregaTexto" class="java.lang.String"/>
+	<field name="possuiProdutos" class="java.lang.Boolean"/>
+	<field name="possuiServicos" class="java.lang.Boolean"/>
 
 	<title>
 		<band height="144" splitType="Stretch">
@@ -93,7 +89,7 @@
 				<textFieldExpression><![CDATA[$F{nmEmpresa}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true" textAdjust="StretchHeight">
-				<reportElement x="12" y="7" width="355" height="16" forecolor="#FFFFFF" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afafe-alt">
+				<reportElement x="12" y="7" width="355" height="16" forecolor="#FFFFFF" uuid="2fbb88ff-41a6-4dc5-afd5-e7a6036afb0b">
 					<printWhenExpression><![CDATA[$P{LOGO_PATH} == null || $P{LOGO_PATH}.isEmpty()]]></printWhenExpression>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
@@ -128,7 +124,7 @@
 				<textElement verticalAlignment="Middle">
 					<font size="9" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{dtEmissao} != null ? $F{dtEmissao}.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{dtEmissaoFormatada}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement style="Label" x="236" y="43" width="70" height="10" uuid="ecefc885-1500-4229-93dc-e4928393167c"/>
@@ -139,7 +135,7 @@
 				<textElement verticalAlignment="Middle">
 					<font size="9" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{dtValido} != null ? $F{dtValido}.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{dtValidoFormatada}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement x="0" y="83" width="555" height="1" forecolor="#E5EAF0" uuid="b6ebd893-01a9-458f-8e83-f624d854ffcf"/>
@@ -156,7 +152,7 @@
 				<textElement verticalAlignment="Top">
 					<font size="9" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{cliente} != null ? $F{cliente}.getNome() : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{clienteNome}]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement style="Label" x="342" y="92" width="72" height="10" uuid="010914a5-2e16-4355-8b52-b17205f84e18"/>
@@ -167,14 +163,14 @@
 				<textElement verticalAlignment="Top">
 					<font size="9" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{cliente} != null ? $F{cliente}.getCpfCnpj() : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{clienteCpfCnpj}]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
 
 	<detail>
 		<band height="156" splitType="Stretch">
-			<printWhenExpression><![CDATA[$F{produtos} != null && !$F{produtos}.isEmpty()]]></printWhenExpression>
+			<printWhenExpression><![CDATA[Boolean.TRUE.equals($F{possuiProdutos})]]></printWhenExpression>
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="0" width="555" height="22" forecolor="#E5EAF0" backcolor="#F6F8FA" uuid="f699373e-08d5-4c46-93f6-684301dab497"/>
 				<graphicElement>
@@ -223,7 +219,7 @@
 				<reportElement positionType="Float" x="0" y="42" width="555" height="106" uuid="dcc4b13b-17b3-4fc5-a3df-491edcf6b977"/>
 				<jr:list printOrder="Vertical">
 					<datasetRun subDataset="dsProdutos" uuid="07f74092-2d17-4b27-bf95-e829e2ba80d3">
-						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{produtos} == null ? java.util.Collections.emptyList() : $F{produtos})]]></dataSourceExpression>
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{produtos})]]></dataSourceExpression>
 					</datasetRun>
 					<jr:listContents height="28" width="555">
 						<rectangle>
@@ -265,15 +261,7 @@
 							<textElement verticalAlignment="Top">
 								<font size="7"/>
 							</textElement>
-							<textFieldExpression><![CDATA[$F{materiais} != null && !$F{materiais}.isEmpty()
-? ((java.util.List<com.api_orcafacil.dto.orcamento.MaterialVisualizacaoDTO>) $F{materiais}).stream()
-    .map(m -> "Material: "
-        + (m.getNome() != null ? m.getNome() : "")
-        + (m.getDescricao() != null && !m.getDescricao().trim().isEmpty() ? " - " + m.getDescricao() : "")
-        + (m.getQuantidade() != null ? " | Qtd: " + m.getQuantidade() : "")
-        + (m.getValor() != null && m.getValor().compareTo(java.math.BigDecimal.ZERO) != 0 ? " | R$ " + new java.text.DecimalFormat("#,##0.00").format(m.getValor()) : ""))
-    .collect(java.util.stream.Collectors.joining("\n"))
-: ""]]></textFieldExpression>
+							<textFieldExpression><![CDATA[$F{materiaisTexto}]]></textFieldExpression>
 						</textField>
 					</jr:listContents>
 				</jr:list>
@@ -281,7 +269,7 @@
 		</band>
 
 		<band height="156" splitType="Stretch">
-			<printWhenExpression><![CDATA[$F{servicos} != null && !$F{servicos}.isEmpty()]]></printWhenExpression>
+			<printWhenExpression><![CDATA[Boolean.TRUE.equals($F{possuiServicos})]]></printWhenExpression>
 			<rectangle>
 				<reportElement mode="Opaque" x="0" y="0" width="555" height="22" forecolor="#E5EAF0" backcolor="#F6F8FA" uuid="958ef4bf-6096-4601-b704-49c0b003717e"/>
 				<graphicElement>
@@ -330,7 +318,7 @@
 				<reportElement positionType="Float" x="0" y="42" width="555" height="106" uuid="7f40bebe-f6b9-4ac2-a9ce-5a9a2e2341b2"/>
 				<jr:list printOrder="Vertical">
 					<datasetRun subDataset="dsServicos" uuid="0e63bdd8-03d7-4708-a31f-3c3db455cb35">
-						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{servicos} == null ? java.util.Collections.emptyList() : $F{servicos})]]></dataSourceExpression>
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{servicos})]]></dataSourceExpression>
 					</datasetRun>
 					<jr:listContents height="28" width="555">
 						<rectangle>
@@ -372,15 +360,7 @@
 							<textElement verticalAlignment="Top">
 								<font size="7"/>
 							</textElement>
-							<textFieldExpression><![CDATA[$F{materiais} != null && !$F{materiais}.isEmpty()
-? ((java.util.List<com.api_orcafacil.dto.orcamento.MaterialVisualizacaoDTO>) $F{materiais}).stream()
-    .map(m -> "Material: "
-        + (m.getNome() != null ? m.getNome() : "")
-        + (m.getDescricao() != null && !m.getDescricao().trim().isEmpty() ? " - " + m.getDescricao() : "")
-        + (m.getQuantidade() != null ? " | Qtd: " + m.getQuantidade() : "")
-        + (m.getValor() != null && m.getValor().compareTo(java.math.BigDecimal.ZERO) != 0 ? " | R$ " + new java.text.DecimalFormat("#,##0.00").format(m.getValor()) : ""))
-    .collect(java.util.stream.Collectors.joining("\n"))
-: ""]]></textFieldExpression>
+							<textFieldExpression><![CDATA[$F{materiaisTexto}]]></textFieldExpression>
 						</textField>
 					</jr:listContents>
 				</jr:list>
@@ -453,14 +433,14 @@
 				<textElement verticalAlignment="Top">
 					<font size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{condicaoPagamento} != null ? "Condicao de pagamento: " + $F{condicaoPagamento} : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{condicaoPagamentoTexto}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true" textAdjust="StretchHeight">
 				<reportElement positionType="Float" x="10" y="122" width="535" height="14" forecolor="#263238" uuid="927ccae0-9e65-46e6-ab32-9c74fb220234"/>
 				<textElement verticalAlignment="Top">
 					<font size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{nuPrazoEntrega} != null ? "Previsao de entrega: " + $F{nuPrazoEntrega} + " dias" : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{prazoEntregaTexto}]]></textFieldExpression>
 			</textField>
 			<rectangle>
 				<reportElement positionType="Float" mode="Opaque" x="0" y="154" width="555" height="22" forecolor="#E5EAF0" backcolor="#F6F8FA" uuid="6a76e963-dcb1-4b7e-82b6-a3a5c4d0aa5f"/>

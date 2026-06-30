@@ -76,7 +76,7 @@ public class DynamicRoutePermissionFilter extends OncePerRequestFilter {
             return;
         }
 
-        if ("politica-plano".equals(modulo)) {
+        if ("politica-plano".equals(modulo) || "dashboard".equals(modulo)) {
             filterChain.doFilter(request, response);
             return;
         }

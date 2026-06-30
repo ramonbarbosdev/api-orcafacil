@@ -8,6 +8,8 @@ import com.api_orcafacil.model.Catalogo;
 
 public interface CatalogoRepository extends TenantRepository<Catalogo> {
 
+    long countByIdOrganizacao(Long idOrganizacao);
+
     Optional<Catalogo> findByIdCatalogoAndIdOrganizacao(Long idCatalogo, Long idOrganizacao);
 
     @Query(value = "SELECT COALESCE(MAX(CAST(c.cd_catalogo AS BIGINT)), 0) FROM catalogo c WHERE c.id_organizacao = ?1", nativeQuery = true)

@@ -132,11 +132,6 @@ public class OrcamentoController {
 
     @GetMapping("/visualizacao/{cdPublico}")
     public ResponseEntity<ApiResponseDTO<OrcamentoVisualizacaoDTO>> visualizacao(@PathVariable String cdPublico) {
-        Orcamento orcamento = repository.findByCdPublico(cdPublico)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Orcamento nao encontrado"));
-        if (orcamento.getTpStatus() == StatusOrcamento.RASCUNHO) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
         return ResponseEntity.ok(new ApiResponseDTO<>("Operacao realizada com sucesso",
                 visualizacaoOrcamentoService.visualizarPorCdPublico(cdPublico)));
     }
@@ -148,7 +143,7 @@ public class OrcamentoController {
     }
 
     @GetMapping(value = "/relatorio/{cdPublico}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> relatorio(@PathVariable String cdPublico) throws Exception {
+    public ResponseEntity<byte[]> relatorio(@PathVariable String cdPublico) {
         byte[] pdf = relatorioOrcamentoService.gerarRelatorioOrcamento(cdPublico);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=orcamento.pdf")

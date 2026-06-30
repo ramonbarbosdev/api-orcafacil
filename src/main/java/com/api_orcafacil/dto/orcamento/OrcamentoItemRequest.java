@@ -29,6 +29,10 @@ public class OrcamentoItemRequest {
     @DecimalMin(value = "0.0", message = "Custo unitario invalido")
     private BigDecimal vlCustoUnitario;
 
+    @NotNull(message = "Preco unitario nao informado")
+    @DecimalMin(value = "0.0", message = "Preco unitario invalido")
+    private BigDecimal vlPrecoUnitario;
+
     private List<OrcamentoItemCampoValor> camposValor = new ArrayList<>();
 
     public OrcamentoItem toEntity() {
@@ -36,6 +40,7 @@ public class OrcamentoItemRequest {
         item.setIdCatalogo(idCatalogo);
         item.setQtItem(qtItem);
         item.setVlCustoUnitario(vlCustoUnitario);
+        item.setVlPrecoUnitario(vlPrecoUnitario);
         item.setCamposValor(copiarCamposValor());
         return item;
     }

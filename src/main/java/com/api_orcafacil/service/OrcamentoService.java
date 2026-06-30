@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
@@ -39,6 +42,7 @@ public class OrcamentoService {
     private final EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService;
     private final OrcamentoStatusHistoricoService statusHistoricoService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
+    private final ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService;
 
     public OrcamentoService(OrcamentoRepository repository,
             TenantContextService tenantContextService,
@@ -47,7 +51,8 @@ public class OrcamentoService {
             PrecificacaoService precificacaoService,
             EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService,
             OrcamentoStatusHistoricoService statusHistoricoService,
-            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService,
+            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService) {
         this.repository = repository;
         this.tenantContextService = tenantContextService;
         this.clienteService = clienteService;
@@ -56,6 +61,7 @@ public class OrcamentoService {
         this.empresaMetodoPrecificacaoService = empresaMetodoPrecificacaoService;
         this.statusHistoricoService = statusHistoricoService;
         this.politicaPlanoService = politicaPlanoService;
+        this.orcamentoPublicoService = orcamentoPublicoService;
     }
 
     @Transactional(readOnly = true)
@@ -79,8 +85,11 @@ public class OrcamentoService {
         }
         Orcamento orcamento = novo ? new Orcamento() : buscarEntidade(request.getIdOrcamento());
         aplicarRequest(orcamento, request, idOrganizacao);
-        validarObjeto(orcamento);
-        clienteService.registrarClienteAPartirDoOrcamento(orcamento);
+        prepararItensAntesDeConsultas(orcamento);
+        if (orcamento.getIdEmpresaMetodoPrecificacao() == null) {
+            orcamento.setIdEmpresaMetodoPrecificacao(
+                    empresaMetodoPrecificacaoService.obterEmpresaMetodoPrecificacaoSimples().getIdEmpresaMetodoPrecificacao());
+        }
 
         BigDecimal totalOrcamento = BigDecimal.ZERO;
         for (OrcamentoItem item : orcamento.getItens()) {
@@ -97,6 +106,9 @@ public class OrcamentoService {
             }
         }
 
+        validarObjeto(orcamento);
+        clienteService.registrarClienteAPartirDoOrcamento(orcamento);
+
         if (novo) {
             orcamento.setCdPublico(UUID.randomUUID().toString());
         }
@@ -109,11 +121,7 @@ public class OrcamentoService {
         }
 
         OrcamentoResponse response = OrcamentoResponse.from(salvo);
-        if (novo) {
-            politicaPlanoService.ifAvailable(
-                    p -> p.registrarConsumoAtual(ChaveLimite.ORCAMENTOS_MES, 1));
-        }
-
+        agendarEfeitosCentraisAposCommit(salvo, novo);
         return response;
     }
 
@@ -161,12 +169,63 @@ public class OrcamentoService {
     @Transactional(rollbackFor = Exception.class)
     public void excluir(Long id) {
         Orcamento orcamento = buscarEntidade(id);
+        String cdPublico = orcamento.getCdPublico();
+        Long idOrganizacao = orcamento.getIdOrganizacao();
         boolean consumoMesAtual = YearMonth.from(orcamento.getDtCriacao()).equals(YearMonth.now());
+
         statusHistoricoService.excluirPorIdOrcamento(id);
         repository.deleteById(id);
+
+        agendarLimpezaCentraisAposCommit(cdPublico, idOrganizacao, id, consumoMesAtual);
+    }
+
+    private void agendarEfeitosCentraisAposCommit(Orcamento salvo, boolean novo) {
+        if (!novo && (salvo.getCdPublico() == null || salvo.getCdPublico().isBlank())) {
+            return;
+        }
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            aplicarEfeitosCentrais(salvo, novo);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                aplicarEfeitosCentrais(salvo, novo);
+            }
+        });
+    }
+
+    private void aplicarEfeitosCentrais(Orcamento salvo, boolean novo) {
+        if (novo) {
+            politicaPlanoService.ifAvailable(p -> p.registrarConsumo(
+                    salvo.getIdOrganizacao(), ChaveLimite.ORCAMENTOS_MES, 1));
+        }
+        if (salvo.getCdPublico() != null && !salvo.getCdPublico().isBlank()) {
+            orcamentoPublicoService.ifAvailable(p -> p.registrar(
+                    salvo.getCdPublico(), salvo.getIdOrganizacao(), salvo.getIdOrcamento()));
+        }
+    }
+
+    private void agendarLimpezaCentraisAposCommit(
+            String cdPublico, Long idOrganizacao, Long idOrcamento, boolean consumoMesAtual) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            aplicarLimpezaCentrais(cdPublico, idOrganizacao, idOrcamento, consumoMesAtual);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                aplicarLimpezaCentrais(cdPublico, idOrganizacao, idOrcamento, consumoMesAtual);
+            }
+        });
+    }
+
+    private void aplicarLimpezaCentrais(
+            String cdPublico, Long idOrganizacao, Long idOrcamento, boolean consumoMesAtual) {
+        orcamentoPublicoService.ifAvailable(p -> p.excluir(cdPublico, idOrganizacao, idOrcamento));
         if (consumoMesAtual) {
-            politicaPlanoService.ifAvailable(
-                    p -> p.registrarConsumoAtual(ChaveLimite.ORCAMENTOS_MES, -1));
+            politicaPlanoService.ifAvailable(p -> p.registrarConsumo(
+                    idOrganizacao, ChaveLimite.ORCAMENTOS_MES, -1));
         }
     }
 
@@ -191,6 +250,21 @@ public class OrcamentoService {
         }
     }
 
+    private void prepararItensAntesDeConsultas(Orcamento orcamento) {
+        if (orcamento.getItens() == null) {
+            return;
+        }
+        for (OrcamentoItem item : orcamento.getItens()) {
+            item.setOrcamento(orcamento);
+            if (item.getVlPrecoUnitario() == null) {
+                item.setVlPrecoUnitario(BigDecimal.ZERO);
+            }
+            if (item.getVlPrecoTotal() == null) {
+                item.setVlPrecoTotal(BigDecimal.ZERO);
+            }
+        }
+    }
+
     private void aplicarRequest(Orcamento orcamento, OrcamentoRequest request, Long idOrganizacao) {
         orcamento.setIdOrganizacao(idOrganizacao);
         orcamento.setNuOrcamento(request.getNuOrcamento());
@@ -207,9 +281,13 @@ public class OrcamentoService {
         }
         if (request.getItens() != null) {
             if (orcamento.getIdOrcamento() == null) {
-                orcamento.setItens(request.getItens().stream()
+                List<OrcamentoItem> itens = request.getItens().stream()
                         .map(OrcamentoItemRequest::toEntity)
-                        .toList());
+                        .collect(Collectors.toCollection(ArrayList::new));
+                for (OrcamentoItem item : itens) {
+                    item.setOrcamento(orcamento);
+                }
+                orcamento.setItens(itens);
             } else {
                 sincronizarItens(orcamento, request.getItens());
             }
@@ -244,6 +322,9 @@ public class OrcamentoService {
                 }
             }
             itens.add(request.toEntity());
+        }
+        for (OrcamentoItem item : itens) {
+            item.setOrcamento(orcamento);
         }
     }
 

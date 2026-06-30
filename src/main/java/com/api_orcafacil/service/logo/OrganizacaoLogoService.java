@@ -18,6 +18,7 @@ import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.repository.central.CentralOrganizacaoLogoRepository;
+import com.api_orcafacil.service.OrcamentoPublicoService;
 import com.api_orcafacil.service.PoliticaPlanoService;
 import com.api_orcafacil.service.TenantContextService;
 import com.api_orcafacil.service.logo.LogoImagemValidacaoService.ResultadoValidacao;
@@ -37,6 +38,7 @@ public class OrganizacaoLogoService {
     private final TenantContextService tenantContextService;
     private final OrcamentoRepository orcamentoRepository;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
+    private final ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService;
 
     public OrganizacaoLogoService(
             CentralOrganizacaoLogoRepository logoRepository,
@@ -44,13 +46,15 @@ public class OrganizacaoLogoService {
             LogoImagemValidacaoService validacao,
             TenantContextService tenantContextService,
             OrcamentoRepository orcamentoRepository,
-            ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
+            ObjectProvider<PoliticaPlanoService> politicaPlanoService,
+            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService) {
         this.logoRepository = logoRepository;
         this.armazenamento = armazenamento;
         this.validacao = validacao;
         this.tenantContextService = tenantContextService;
         this.orcamentoRepository = orcamentoRepository;
         this.politicaPlanoService = politicaPlanoService;
+        this.orcamentoPublicoService = orcamentoPublicoService;
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -80,12 +84,20 @@ public class OrganizacaoLogoService {
 
     @Transactional(readOnly = true)
     public ConteudoLogo obterConteudoPublico(String cdPublico) {
+        OrcamentoPublicoService publicoService = orcamentoPublicoService.getIfAvailable();
+        if (publicoService != null) {
+            return publicoService.executarComCdPublico(cdPublico, ref -> obterConteudoPublicoInterno(ref.idOrganizacao()));
+        }
         Orcamento orcamento = orcamentoRepository.findByCdPublico(cdPublico)
                 .orElseThrow(() -> new ResourceNotFoundException("Orcamento nao encontrado"));
         if (orcamento.getTpStatus() == StatusOrcamento.RASCUNHO) {
             throw new ResourceNotFoundException("Orcamento nao encontrado");
         }
-        Optional<CentralOrganizacaoLogo> logo = logoRepository.findByIdOrganizacaoAndFlAtivoTrue(orcamento.getIdOrganizacao());
+        return obterConteudoPublicoInterno(orcamento.getIdOrganizacao());
+    }
+
+    private ConteudoLogo obterConteudoPublicoInterno(Long idOrganizacao) {
+        Optional<CentralOrganizacaoLogo> logo = logoRepository.findByIdOrganizacaoAndFlAtivoTrue(idOrganizacao);
         if (logo.isEmpty()) {
             throw new ResourceNotFoundException("Logo nao encontrada");
         }
@@ -170,6 +182,15 @@ public class OrganizacaoLogoService {
     }
 
     private boolean logoPublicaDisponivel(String cdPublico) {
+        OrcamentoPublicoService publicoService = orcamentoPublicoService.getIfAvailable();
+        if (publicoService != null) {
+            try {
+                return publicoService.executarComCdPublico(cdPublico, ref ->
+                        logoRepository.findByIdOrganizacaoAndFlAtivoTrue(ref.idOrganizacao()).isPresent());
+            } catch (ResourceNotFoundException ex) {
+                return false;
+            }
+        }
         return orcamentoRepository.findByCdPublico(cdPublico)
                 .filter(o -> o.getTpStatus() != StatusOrcamento.RASCUNHO)
                 .map(Orcamento::getIdOrganizacao)

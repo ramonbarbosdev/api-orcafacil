@@ -23,6 +23,17 @@ public final class NotificacaoErroParser {
     public static NotificacaoErroUsuario interpretar(RestClientResponseException ex) {
         int status = ex.getStatusCode().value();
         String tecnica = extrairMensagemTecnica(ex);
+        String codigo = extrairCodigoErro(ex);
+
+        if ("WHATSAPP_NAO_CONECTADO".equals(codigo)
+                || contemWhatsappNaoConectado(tecnica)) {
+            return new NotificacaoErroUsuario(
+                    "WHATSAPP_NAO_CONECTADO",
+                    "O WhatsApp nao esta conectado. Acesse Integracoes e conecte o numero antes de enviar mensagens ao cliente.",
+                    tecnica,
+                    false);
+        }
+
         return switch (status) {
             case 401 -> new NotificacaoErroUsuario(
                     "API_KEY_INVALIDA",
@@ -59,7 +70,63 @@ public final class NotificacaoErroParser {
                             "ERRO_ENVIO",
                             "Não foi possível enviar a mensagem agora. Verifique os dados e tente novamente.",
                             tecnica,
-                            status >= 400);
+                            false);
+        };
+    }
+
+    public static NotificacaoErroUsuario interpretarErroEnvio(String mensagem) {
+        if (contemWhatsappNaoConectado(mensagem)) {
+            return new NotificacaoErroUsuario(
+                    "WHATSAPP_NAO_CONECTADO",
+                    "O WhatsApp nao esta conectado. Acesse Integracoes e conecte o numero antes de enviar mensagens ao cliente.",
+                    mensagem,
+                    false);
+        }
+        if (mensagem != null) {
+            String normalizada = mensagem.toLowerCase();
+            if (normalizada.contains("pausada automaticamente")) {
+                return new NotificacaoErroUsuario(
+                        "WHATSAPP_SESSAO_PAUSADA",
+                        "Os envios WhatsApp estao pausados. Aguarde ou reative a sessao em Integracoes.",
+                        mensagem,
+                        false);
+            }
+            if (normalizada.contains("risco operacional")) {
+                return new NotificacaoErroUsuario(
+                        "WHATSAPP_SESSAO_RISCO",
+                        "Os envios WhatsApp estao bloqueados por protecao. Reative a sessao em Integracoes.",
+                        mensagem,
+                        false);
+            }
+            if (normalizada.contains("duplicada bloqueada")) {
+                return new NotificacaoErroUsuario(
+                        "MENSAGEM_DUPLICADA",
+                        "Esta mensagem ja foi enviada recentemente. Aguarde antes de tentar novamente.",
+                        mensagem,
+                        false);
+            }
+        }
+        return new NotificacaoErroUsuario(
+                "ERRO_ENVIO",
+                "Nao foi possivel enfileirar a mensagem. Verifique a integracao e tente novamente.",
+                mensagem,
+                false);
+    }
+
+    public static boolean deveNotificarEquipe(String codigoErro) {
+        if (codigoErro == null || codigoErro.isBlank()) {
+            return false;
+        }
+        return switch (codigoErro.trim().toUpperCase()) {
+            case "WHATSAPP_NAO_CONECTADO",
+                    "WHATSAPP_SESSAO_PAUSADA",
+                    "WHATSAPP_SESSAO_RISCO",
+                    "API_KEY_INVALIDA",
+                    "API_KEY_SEM_PERMISSAO",
+                    "LIMITE_EXCEDIDO",
+                    "MENSAGEM_DUPLICADA",
+                    "ERRO_ENVIO" -> false;
+            default -> true;
         };
     }
 
@@ -117,5 +184,27 @@ public final class NotificacaoErroParser {
             // usa corpo bruto abaixo
         }
         return body.length() > 300 ? body.substring(0, 300) : body;
+    }
+
+    private static String extrairCodigoErro(RestClientResponseException ex) {
+        String body = ex.getResponseBodyAsString();
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        try {
+            NotificacaoApiErrorResponse erro = MAPPER.readValue(body, NotificacaoApiErrorResponse.class);
+            return erro.erro();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static boolean contemWhatsappNaoConectado(String mensagem) {
+        if (mensagem == null || mensagem.isBlank()) {
+            return false;
+        }
+        String normalizada = mensagem.toLowerCase();
+        return normalizada.contains("whatsapp") && normalizada.contains("nao conectado")
+                || normalizada.contains("whatsapp") && normalizada.contains("não conectado");
     }
 }

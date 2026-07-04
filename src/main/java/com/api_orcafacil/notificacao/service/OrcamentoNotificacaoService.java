@@ -132,11 +132,7 @@ public class OrcamentoNotificacaoService {
                     credenciais, new NotificacaoEnviarRequest(canal, destinatario, assunto, mensagem));
             boolean sucesso = Boolean.TRUE.equals(resposta.sucesso());
             if (!sucesso) {
-                NotificacaoErroUsuario erroUsuario = new NotificacaoErroUsuario(
-                        "ERRO_ENVIO",
-                        "Não foi possível enfileirar a mensagem. Sua equipe foi avisada — tente novamente.",
-                        resposta.erro(),
-                        true);
+                NotificacaoErroUsuario erroUsuario = NotificacaoErroParser.interpretarErroEnvio(resposta.erro());
                 return erroComAlerta(
                         credenciais,
                         canal,
@@ -179,7 +175,8 @@ public class OrcamentoNotificacaoService {
             Long idNotificacao,
             String status) {
         boolean equipeNotificada = false;
-        if (erroUsuario.notificarEquipe()) {
+        if (erroUsuario.notificarEquipe()
+                && NotificacaoErroParser.deveNotificarEquipe(erroUsuario.codigoErro())) {
             equipeNotificada = registrarAlertaEquipe(
                     credenciais,
                     canal,

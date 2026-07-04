@@ -16,4 +16,9 @@ public class NotificacaoIntegracaoStatusDTO {
     private Long idOrganizacaoOrcafacil;
     private Long idOrganizacaoNotificacao;
     private String mensagem;
+    private boolean apiKeyValida;
+    private boolean whatsappConectado;
+    private String whatsappStatus;
+    private String whatsappTelefone;
+    private boolean usaApiKeyTenant;
 }

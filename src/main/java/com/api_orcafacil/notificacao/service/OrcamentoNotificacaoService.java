@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse.ResultadoNotificacao;
+import com.api_orcafacil.dto.orcamento.OrcamentoMensagemCompartilhamentoResponse;
 import com.api_orcafacil.model.Cliente;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.notificacao.client.NotificacaoApiClient;
@@ -83,6 +84,29 @@ public class OrcamentoNotificacaoService {
             resultados.add(enviarPorCanal(credenciais, canal, orcamento, cliente, link, mensagem, request));
         }
         return resultados;
+    }
+
+    public OrcamentoMensagemCompartilhamentoResponse previewMensagemCompartilhamento(Orcamento orcamento) {
+        Cliente cliente = clienteRepository.findByIdClienteAndIdOrganizacao(
+                        orcamento.getIdCliente(), orcamento.getIdOrganizacao())
+                .orElse(null);
+        if (cliente == null) {
+            throw new IllegalStateException("Cliente do orcamento nao encontrado");
+        }
+        String link = montarLinkPublico(orcamento.getCdPublico());
+        String mensagem = montarMensagemPadrao(orcamento, cliente, link);
+        return new OrcamentoMensagemCompartilhamentoResponse(mensagem, link);
+    }
+
+    public String resolverMensagemPreview(Orcamento orcamento, String mensagemPersonalizada) {
+        Cliente cliente = clienteRepository.findByIdClienteAndIdOrganizacao(
+                        orcamento.getIdCliente(), orcamento.getIdOrganizacao())
+                .orElse(null);
+        if (cliente == null) {
+            return mensagemPersonalizada;
+        }
+        String link = montarLinkPublico(orcamento.getCdPublico());
+        return resolverMensagem(orcamento, cliente, link, mensagemPersonalizada);
     }
 
     private ResultadoNotificacao enviarPorCanal(

@@ -15,6 +15,8 @@ import jakarta.validation.Valid;
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoMensagemCompartilhamentoResponse;
+import com.api_orcafacil.dto.orcamento.OrcamentoNotificacaoHistoricoResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoPreviewPrecificacaoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
@@ -93,6 +95,21 @@ public class OrcamentoController {
             @RequestBody(required = false) OrcamentoEnviarRequest request) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento enviado",
                 service.enviarComNotificacao(id, request != null ? request : new OrcamentoEnviarRequest())));
+    }
+
+    @GetMapping("/{id}/mensagem-compartilhamento")
+    @RequerPermissao(modulo = "orcamentos", acao = "ler")
+    public ResponseEntity<ApiResponseDTO<OrcamentoMensagemCompartilhamentoResponse>> previewMensagem(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Mensagem de compartilhamento",
+                service.previewMensagemCompartilhamento(id)));
+    }
+
+    @GetMapping("/{id}/notificacoes")
+    @RequerPermissao(modulo = "orcamentos", acao = "ler")
+    public ResponseEntity<ApiResponseDTO<List<OrcamentoNotificacaoHistoricoResponse>>> listarNotificacoes(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Historico de envios", service.listarNotificacoes(id)));
     }
 
     @PostMapping("/{id}/aprovar")

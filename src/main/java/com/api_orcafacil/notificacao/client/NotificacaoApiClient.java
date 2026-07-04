@@ -64,10 +64,16 @@ public class NotificacaoApiClient {
     public void verificarConexao(NotificacaoCredenciais credenciais) {
         validarCredenciais(credenciais);
         if (credenciais.usaApiKey()) {
-            get(credenciais, "/app/integracao/status", Map.class);
+            obterStatusIntegracao(credenciais);
             return;
         }
         obterToken(credenciais.idOrganizacaoNotificacao());
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> obterStatusIntegracao(NotificacaoCredenciais credenciais) {
+        validarCredenciais(credenciais);
+        return get(credenciais, "/app/integracao/status", Map.class);
     }
 
     private void validarCredenciais(NotificacaoCredenciais credenciais) {

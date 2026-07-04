@@ -22,6 +22,8 @@ import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.orcamento.OrcamentoPreviewPrecificacaoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoMensagemCompartilhamentoResponse;
+import com.api_orcafacil.dto.orcamento.OrcamentoNotificacaoHistoricoResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoItemCampoValorRequest;
@@ -34,7 +36,10 @@ import com.api_orcafacil.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.model.OrcamentoItem;
 import com.api_orcafacil.model.OrcamentoItemCampoValor;
+import com.api_orcafacil.model.OrcamentoNotificacaoEnviada;
+import com.api_orcafacil.notificacao.service.OrcamentoNotificacaoHistoricoService;
 import com.api_orcafacil.notificacao.service.OrcamentoNotificacaoService;
+import com.api_orcafacil.repository.OrcamentoNotificacaoEnviadaRepository;
 import com.api_orcafacil.repository.CatalogoRepository;
 import com.api_orcafacil.repository.CondicaoPagamentoRepository;
 import com.api_orcafacil.repository.OrcamentoRepository;
@@ -55,7 +60,10 @@ public class OrcamentoService {
     private final OrcamentoStatusHistoricoService statusHistoricoService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
     private final ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService;
+    private final ObjectProvider<OrcamentoNotificacaoHistoricoService> orcamentoNotificacaoHistoricoService;
+    private final ObjectProvider<OrcamentoNotificacaoEnviadaRepository> orcamentoNotificacaoRepository;
     private final ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService;
+    private final ObjectProvider<OrcamentoCentralSyncRetryService> orcamentoCentralSyncRetryService;
 
     public OrcamentoService(OrcamentoRepository repository,
             CatalogoRepository catalogoRepository,
@@ -68,7 +76,10 @@ public class OrcamentoService {
             OrcamentoStatusHistoricoService statusHistoricoService,
             ObjectProvider<PoliticaPlanoService> politicaPlanoService,
             ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService,
-            ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService) {
+            ObjectProvider<OrcamentoNotificacaoHistoricoService> orcamentoNotificacaoHistoricoService,
+            ObjectProvider<OrcamentoNotificacaoEnviadaRepository> orcamentoNotificacaoRepository,
+            ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService,
+            ObjectProvider<OrcamentoCentralSyncRetryService> orcamentoCentralSyncRetryService) {
         this.repository = repository;
         this.catalogoRepository = catalogoRepository;
         this.condicaoPagamentoRepository = condicaoPagamentoRepository;
@@ -80,7 +91,10 @@ public class OrcamentoService {
         this.statusHistoricoService = statusHistoricoService;
         this.politicaPlanoService = politicaPlanoService;
         this.orcamentoNotificacaoService = orcamentoNotificacaoService;
+        this.orcamentoNotificacaoHistoricoService = orcamentoNotificacaoHistoricoService;
+        this.orcamentoNotificacaoRepository = orcamentoNotificacaoRepository;
         this.orcamentoCentralSyncService = orcamentoCentralSyncService;
+        this.orcamentoCentralSyncRetryService = orcamentoCentralSyncRetryService;
     }
 
     @Transactional(readOnly = true)
@@ -183,7 +197,53 @@ public class OrcamentoService {
         var notificacoes = notificacaoService != null
                 ? notificacaoService.notificarOrcamentoEnviado(entidade, request)
                 : List.<OrcamentoEnviarResponse.ResultadoNotificacao>of();
+
+        String mensagemEnviada = notificacaoService != null
+                ? notificacaoService.resolverMensagemPreview(entidade, request != null ? request.getMensagem() : null)
+                : null;
+        orcamentoNotificacaoHistoricoService.ifAvailable(historico -> {
+            for (OrcamentoEnviarResponse.ResultadoNotificacao resultado : notificacoes) {
+                historico.registrar(idOrcamento, resultado, mensagemEnviada);
+            }
+        });
+
         return new OrcamentoEnviarResponse(orcamento, notificacoes);
+    }
+
+    @Transactional(readOnly = true)
+    public OrcamentoMensagemCompartilhamentoResponse previewMensagemCompartilhamento(Long idOrcamento) {
+        Orcamento entidade = buscarEntidade(idOrcamento);
+        OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
+        if (notificacaoService == null) {
+            throw new BusinessException("Integracao de notificacoes desabilitada");
+        }
+        return notificacaoService.previewMensagemCompartilhamento(entidade);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrcamentoNotificacaoHistoricoResponse> listarNotificacoes(Long idOrcamento) {
+        buscarEntidade(idOrcamento);
+        OrcamentoNotificacaoEnviadaRepository repo = orcamentoNotificacaoRepository.getIfAvailable();
+        if (repo == null) {
+            return List.of();
+        }
+        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        return repo.findByIdOrcamentoAndIdOrganizacaoOrderByDtCriacaoDesc(idOrcamento, idOrganizacao)
+                .stream()
+                .map(this::paraHistoricoResponse)
+                .collect(Collectors.toList());
+    }
+
+    private OrcamentoNotificacaoHistoricoResponse paraHistoricoResponse(OrcamentoNotificacaoEnviada item) {
+        return new OrcamentoNotificacaoHistoricoResponse(
+                item.getIdOrcamentoNotificacao(),
+                item.getTpCanal(),
+                item.getDsDestinatario(),
+                item.isFlSucesso(),
+                item.getIdNotificacaoExterna(),
+                item.getDsErro(),
+                item.getDsMensagem(),
+                item.getDtCriacao());
     }
 
     /** Reservado para fluxo futuro de aprovacao/rejeicao. */
@@ -244,6 +304,8 @@ public class OrcamentoService {
                         "Falha ao sincronizar orcamento {} com banco central apos commit do tenant",
                         salvo.getIdOrcamento(),
                         ex);
+                orcamentoCentralSyncRetryService.ifAvailable(retry -> retry.agendarSalvar(
+                        salvo.getIdOrganizacao(), salvo.getCdPublico(), salvo.getIdOrcamento(), novo));
             }
         });
     }
@@ -272,6 +334,8 @@ public class OrcamentoService {
                         "Falha ao limpar dados centrais do orcamento {} apos exclusao no tenant",
                         idOrcamento,
                         ex);
+                orcamentoCentralSyncRetryService.ifAvailable(retry -> retry.agendarExcluir(
+                        cdPublico, idOrganizacao, idOrcamento, consumoMesAtual));
             }
         });
     }

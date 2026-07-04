@@ -63,6 +63,14 @@ public class CentralOrganizacao {
     @Column(name = "ds_webhook_url")
     private String dsWebhookUrl;
 
+    /** ID da organizacao correspondente na notificacao-api (multi-tenant). */
+    @Column(name = "id_organizacao_notificacao")
+    private Long idOrganizacaoNotificacao;
+
+    /** API Key da notificacao-api para integracao M2M (nak_xxx.chave). */
+    @Column(name = "ds_api_key_notificacao", length = 512)
+    private String dsApiKeyNotificacao;
+
     @Column(name = "fl_ativo", nullable = false)
     private boolean flAtivo = true;
 

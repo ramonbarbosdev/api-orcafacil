@@ -20,6 +20,8 @@ import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoItemCampoValorRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoItemRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
@@ -30,6 +32,7 @@ import com.api_orcafacil.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.model.OrcamentoItem;
 import com.api_orcafacil.model.OrcamentoItemCampoValor;
+import com.api_orcafacil.notificacao.service.OrcamentoNotificacaoService;
 import com.api_orcafacil.repository.CatalogoRepository;
 import com.api_orcafacil.repository.CondicaoPagamentoRepository;
 import com.api_orcafacil.repository.OrcamentoRepository;
@@ -51,6 +54,7 @@ public class OrcamentoService {
     private final OrcamentoStatusHistoricoService statusHistoricoService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
     private final ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService;
+    private final ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService;
 
     public OrcamentoService(OrcamentoRepository repository,
             CatalogoRepository catalogoRepository,
@@ -62,7 +66,8 @@ public class OrcamentoService {
             EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService,
             OrcamentoStatusHistoricoService statusHistoricoService,
             ObjectProvider<PoliticaPlanoService> politicaPlanoService,
-            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService) {
+            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService,
+            ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService) {
         this.repository = repository;
         this.catalogoRepository = catalogoRepository;
         this.condicaoPagamentoRepository = condicaoPagamentoRepository;
@@ -74,6 +79,7 @@ public class OrcamentoService {
         this.statusHistoricoService = statusHistoricoService;
         this.politicaPlanoService = politicaPlanoService;
         this.orcamentoPublicoService = orcamentoPublicoService;
+        this.orcamentoNotificacaoService = orcamentoNotificacaoService;
     }
 
     @Transactional(readOnly = true)
@@ -173,6 +179,18 @@ public class OrcamentoService {
             total = total.add(calcularPrecoItem(item, orcamento.getIdEmpresaMetodoPrecificacao()));
         }
         return total;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public OrcamentoEnviarResponse enviarComNotificacao(Long idOrcamento, OrcamentoEnviarRequest request) {
+        OrcamentoResponse orcamento = alterarStatus(idOrcamento, StatusOrcamento.ENVIADO);
+        Orcamento entidade = buscarEntidade(idOrcamento);
+        OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
+        var notificacoes = notificacaoService != null
+                ? notificacaoService.notificarOrcamentoEnviado(
+                        entidade, request != null ? request.getCanais() : List.of())
+                : List.<OrcamentoEnviarResponse.ResultadoNotificacao>of();
+        return new OrcamentoEnviarResponse(orcamento, notificacoes);
     }
 
     @Transactional(rollbackFor = Exception.class)

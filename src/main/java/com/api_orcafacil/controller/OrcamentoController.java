@@ -14,6 +14,8 @@ import jakarta.validation.Valid;
 
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.ApiResponseDTO;
+import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoVisualizacaoDTO;
@@ -89,8 +91,11 @@ public class OrcamentoController {
 
     @PostMapping("/{id}/enviar")
     @RequerPermissao(modulo = "orcamentos", acao = "editar")
-    public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> enviar(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento enviado", service.alterarStatus(id, StatusOrcamento.ENVIADO)));
+    public ResponseEntity<ApiResponseDTO<OrcamentoEnviarResponse>> enviar(
+            @PathVariable Long id,
+            @RequestBody(required = false) OrcamentoEnviarRequest request) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento enviado",
+                service.enviarComNotificacao(id, request != null ? request : new OrcamentoEnviarRequest())));
     }
 
     @PostMapping("/{id}/aprovar")

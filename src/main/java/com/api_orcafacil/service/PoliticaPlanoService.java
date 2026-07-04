@@ -100,14 +100,17 @@ public class PoliticaPlanoService {
         }
     }
 
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public void validarRecursoAtual(String chaveRecurso) {
         validarRecurso(tenantContextService.idOrganizacaoObrigatoria(), chaveRecurso);
     }
 
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public void validarLimiteAtual(String chaveLimite) {
         validarLimite(tenantContextService.idOrganizacaoObrigatoria(), chaveLimite);
     }
 
+    @Transactional(transactionManager = "centralTransactionManager")
     public void validarLimiteNovoRegistroAtual(String chaveLimite) {
         validarLimiteNovoRegistro(tenantContextService.idOrganizacaoObrigatoria(), chaveLimite);
     }
@@ -165,6 +168,7 @@ public class PoliticaPlanoService {
         consumoRepository.save(consumo);
     }
 
+    @Transactional(transactionManager = "centralTransactionManager")
     public void registrarConsumoAtual(String chaveLimite, long incremento) {
         registrarConsumo(tenantContextService.idOrganizacaoObrigatoria(), chaveLimite, incremento);
     }

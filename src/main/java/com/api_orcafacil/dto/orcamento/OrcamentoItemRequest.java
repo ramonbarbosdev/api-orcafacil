@@ -42,7 +42,9 @@ public class OrcamentoItemRequest {
         item.setIdCatalogo(idCatalogo);
         item.setQtItem(qtItem);
         item.setVlCustoUnitario(vlCustoUnitario);
-        item.setVlPrecoUnitario(vlPrecoUnitario);
+        BigDecimal precoUnitario = vlPrecoUnitario != null ? vlPrecoUnitario : BigDecimal.ZERO;
+        item.setVlPrecoUnitario(precoUnitario);
+        item.setVlPrecoTotal(qtItem != null ? precoUnitario.multiply(qtItem) : BigDecimal.ZERO);
         item.setCamposValor(copiarCamposValor());
         return item;
     }

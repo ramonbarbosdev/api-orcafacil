@@ -119,8 +119,8 @@ public class OrcamentoService {
         } else {
             orcamento.setTpStatus(statusAtual);
         }
-        validarReferencias(orcamento, idOrganizacao);
         prepararItensAntesDeConsultas(orcamento);
+        validarReferencias(orcamento, idOrganizacao);
         if (orcamento.getIdEmpresaMetodoPrecificacao() == null) {
             orcamento.setIdEmpresaMetodoPrecificacao(
                     empresaMetodoPrecificacaoService.obterEmpresaMetodoPrecificacaoSimples().getIdEmpresaMetodoPrecificacao());
@@ -305,7 +305,11 @@ public class OrcamentoService {
                 item.setVlPrecoUnitario(BigDecimal.ZERO);
             }
             if (item.getVlPrecoTotal() == null) {
-                item.setVlPrecoTotal(BigDecimal.ZERO);
+                if (item.getQtItem() != null) {
+                    item.setVlPrecoTotal(item.getVlPrecoUnitario().multiply(item.getQtItem()));
+                } else {
+                    item.setVlPrecoTotal(BigDecimal.ZERO);
+                }
             }
         }
     }
@@ -372,6 +376,12 @@ public class OrcamentoService {
         item.setIdCatalogo(request.getIdCatalogo());
         item.setQtItem(request.getQtItem());
         item.setVlCustoUnitario(request.getVlCustoUnitario());
+        BigDecimal precoUnitario = request.getVlPrecoUnitario() != null
+                ? request.getVlPrecoUnitario()
+                : BigDecimal.ZERO;
+        item.setVlPrecoUnitario(precoUnitario);
+        item.setVlPrecoTotal(
+                request.getQtItem() != null ? precoUnitario.multiply(request.getQtItem()) : BigDecimal.ZERO);
         sincronizarCamposValor(item, request.getCamposValor());
     }
 

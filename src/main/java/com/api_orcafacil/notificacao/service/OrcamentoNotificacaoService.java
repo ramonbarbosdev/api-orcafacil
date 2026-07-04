@@ -80,7 +80,7 @@ public class OrcamentoNotificacaoService {
         List<ResultadoNotificacao> resultados = new ArrayList<>();
 
         for (NotificacaoCanal canal : canaisEfetivos) {
-            resultados.add(enviarPorCanal(credenciais, canal, orcamento, cliente, link, mensagem));
+            resultados.add(enviarPorCanal(credenciais, canal, orcamento, cliente, link, mensagem, request));
         }
         return resultados;
     }
@@ -91,8 +91,9 @@ public class OrcamentoNotificacaoService {
             Orcamento orcamento,
             Cliente cliente,
             String link,
-            String mensagem) {
-        String destinatario = resolverDestinatario(canal, cliente);
+            String mensagem,
+            OrcamentoEnviarRequest request) {
+        String destinatario = resolverDestinatario(canal, cliente, request);
         if (!StringUtils.hasText(destinatario)) {
             return erro(canal, destinatario, "Destinatario nao informado para o canal " + canal);
         }
@@ -156,10 +157,18 @@ public class OrcamentoNotificacaoService {
         return canais;
     }
 
-    private String resolverDestinatario(NotificacaoCanal canal, Cliente cliente) {
+    private String resolverDestinatario(NotificacaoCanal canal, Cliente cliente, OrcamentoEnviarRequest request) {
         return switch (canal) {
-            case WHATSAPP -> normalizarTelefone(cliente.getNuTelefone());
-            case EMAIL -> cliente.getDsEmail() != null ? cliente.getDsEmail().trim() : null;
+            case WHATSAPP -> {
+                String informado = request != null ? request.getNuTelefone() : null;
+                String telefone = StringUtils.hasText(informado) ? informado : cliente.getNuTelefone();
+                yield normalizarTelefone(telefone);
+            }
+            case EMAIL -> {
+                String informado = request != null ? request.getDsEmail() : null;
+                String email = StringUtils.hasText(informado) ? informado : cliente.getDsEmail();
+                yield email != null ? email.trim() : null;
+            }
             default -> null;
         };
     }
@@ -214,7 +223,7 @@ public class OrcamentoNotificacaoService {
         if (digits.length() >= 10) {
             return "55" + digits;
         }
-        return digits;
+        return null;
     }
 
     private ResultadoNotificacao erro(NotificacaoCanal canal, String destinatario, String mensagem) {

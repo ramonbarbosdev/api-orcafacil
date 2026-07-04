@@ -17,4 +17,10 @@ public class OrcamentoEnviarRequest {
 
     /** Mensagem opcional. Se vazia, o OrcaFacil monta o texto automaticamente. */
     private String mensagem;
+
+    /** Telefone opcional para WhatsApp (usa cadastro do cliente se vazio). */
+    private String nuTelefone;
+
+    /** E-mail opcional (usa cadastro do cliente se vazio). */
+    private String dsEmail;
 }

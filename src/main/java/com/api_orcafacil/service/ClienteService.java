@@ -7,6 +7,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.TipoCliente;
@@ -89,7 +90,9 @@ public class ClienteService {
 
         Optional<Cliente> existente = repository.findByNuCpfcnpjAndIdOrganizacao(entrada.getNuCpfcnpj(), idOrganizacao);
         if (existente.isPresent()) {
-            return existente.get().getIdCliente();
+            Cliente cliente = existente.get();
+            sincronizarDadosDoOrcamento(cliente, entrada);
+            return repository.save(cliente).getIdCliente();
         }
 
         politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.CLIENTES));
@@ -102,6 +105,21 @@ public class ClienteService {
         cliente.setDsEmail(entrada.getDsEmail());
         cliente.setDsObservacoes(entrada.getDsObservacoes());
         return repository.save(cliente).getIdCliente();
+    }
+
+    private void sincronizarDadosDoOrcamento(Cliente cliente, ClienteOrcamentoRequest entrada) {
+        if (StringUtils.hasText(entrada.getNmCliente())) {
+            cliente.setNmCliente(entrada.getNmCliente().trim());
+        }
+        if (StringUtils.hasText(entrada.getNuTelefone())) {
+            cliente.setNuTelefone(entrada.getNuTelefone().trim());
+        }
+        if (entrada.getDsEmail() != null) {
+            cliente.setDsEmail(entrada.getDsEmail().isBlank() ? null : entrada.getDsEmail().trim());
+        }
+        if (entrada.getDsObservacoes() != null) {
+            cliente.setDsObservacoes(entrada.getDsObservacoes());
+        }
     }
 
     private void aplicar(Cliente cliente, ClienteRequest request, Long idOrganizacao) {

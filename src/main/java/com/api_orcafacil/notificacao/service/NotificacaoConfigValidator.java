@@ -34,6 +34,10 @@ public class NotificacaoConfigValidator {
                     + "ou NOTIFICACAO_LOGIN/NOTIFICACAO_SENHA");
         } else if (temApiKey) {
             log.info("Integracao notificacao: autenticacao via API Key");
+            if (!properties.getApiKey().contains(".")) {
+                log.error("NOTIFICACAO_API_KEY incompleta: use a chave inteira (nak_prefixo.segredo), "
+                        + "nao apenas o prefixo. Rode scripts/criar-notificacao-api-key.sh para gerar uma nova.");
+            }
         }
         if (!temApiKey && properties.getIdOrganizacao() == null) {
             log.warn("Integracao notificacao: id-organizacao padrao nao configurado — "

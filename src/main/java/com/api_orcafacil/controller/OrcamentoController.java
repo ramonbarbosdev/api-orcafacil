@@ -16,6 +16,7 @@ import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse;
+import com.api_orcafacil.dto.orcamento.OrcamentoPreviewPrecificacaoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoVisualizacaoDTO;
@@ -112,7 +113,8 @@ public class OrcamentoController {
 
     @PostMapping("/preview-precificacao")
     @RequerPermissao(modulo = "orcamentos", acao = "ler")
-    public ResponseEntity<ApiResponseDTO<Map<String, BigDecimal>>> previewPrecificacao(@Valid @RequestBody OrcamentoRequest request) {
+    public ResponseEntity<ApiResponseDTO<Map<String, BigDecimal>>> previewPrecificacao(
+            @Valid @RequestBody OrcamentoPreviewPrecificacaoRequest request) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Preview calculado",
                 Map.of("valorTotal", service.previewPrecificacao(request))));
     }

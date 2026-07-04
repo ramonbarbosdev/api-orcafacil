@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.StatusOrcamento;
+import com.api_orcafacil.dto.orcamento.OrcamentoPreviewPrecificacaoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse;
@@ -160,23 +161,21 @@ public class OrcamentoService {
     }
 
     @Transactional(readOnly = true)
-    public BigDecimal previewPrecificacao(OrcamentoRequest request) {
-        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
-        Orcamento orcamento = new Orcamento();
-        aplicarRequest(orcamento, request, idOrganizacao);
-        if (orcamento.getIdEmpresaMetodoPrecificacao() == null) {
-            orcamento.setIdEmpresaMetodoPrecificacao(
-                    empresaMetodoPrecificacaoService.obterEmpresaMetodoPrecificacaoSimples().getIdEmpresaMetodoPrecificacao());
+    public BigDecimal previewPrecificacao(OrcamentoPreviewPrecificacaoRequest request) {
+        Long idEmpresaMetodoPrecificacao = request.getIdEmpresaMetodoPrecificacao();
+        if (idEmpresaMetodoPrecificacao == null) {
+            idEmpresaMetodoPrecificacao = empresaMetodoPrecificacaoService
+                    .obterEmpresaMetodoPrecificacaoSimples()
+                    .getIdEmpresaMetodoPrecificacao();
         }
+
         BigDecimal total = BigDecimal.ZERO;
-        if (orcamento.getItens() == null) {
-            return total;
-        }
-        for (OrcamentoItem item : orcamento.getItens()) {
+        for (OrcamentoItemRequest itemRequest : request.getItens()) {
+            OrcamentoItem item = itemRequest.toEntity();
             if (item.getIdCatalogo() == null) {
                 throw new BusinessException("Catalogo do item nao informado");
             }
-            total = total.add(calcularPrecoItem(item, orcamento.getIdEmpresaMetodoPrecificacao()));
+            total = total.add(calcularPrecoItem(item, idEmpresaMetodoPrecificacao));
         }
         return total;
     }

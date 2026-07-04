@@ -6,19 +6,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.common.SequenciaUtil;
+import com.api_orcafacil.dto.servico.CategoriaServicoRequest;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.CategoriaServico;
 import com.api_orcafacil.repository.CategoriaServicoRepository;
+import com.api_orcafacil.repository.ServicoRepository;
 
 @Service
 public class CategoriaServicoService {
 
     private final CategoriaServicoRepository repository;
+    private final ServicoRepository servicoRepository;
     private final TenantContextService tenantContextService;
 
-    public CategoriaServicoService(CategoriaServicoRepository repository, TenantContextService tenantContextService) {
+    public CategoriaServicoService(CategoriaServicoRepository repository,
+            ServicoRepository servicoRepository,
+            TenantContextService tenantContextService) {
         this.repository = repository;
+        this.servicoRepository = servicoRepository;
         this.tenantContextService = tenantContextService;
     }
 
@@ -32,9 +39,15 @@ public class CategoriaServicoService {
     }
 
     @Transactional
-    public CategoriaServico salvar(CategoriaServico objeto) {
+    public CategoriaServico salvar(CategoriaServicoRequest request) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        CategoriaServico objeto = request.getIdCategoriaServico() != null
+                ? buscar(request.getIdCategoriaServico())
+                : new CategoriaServico();
         objeto.setIdOrganizacao(idOrganizacao);
+        objeto.setCdCategoriaServico(request.getCdCategoriaServico());
+        objeto.setNmCategoriaServico(request.getNmCategoriaServico());
+        objeto.setDsCategoriaServico(request.getDsCategoriaServico());
         validarCodigo(objeto);
         return repository.save(objeto);
     }
@@ -42,6 +55,9 @@ public class CategoriaServicoService {
     @Transactional
     public void excluir(Long id) {
         CategoriaServico categoria = buscar(id);
+        if (servicoRepository.existsByIdCategoriaServico(id)) {
+            throw new BusinessException("Categoria possui servicos vinculados e nao pode ser excluida");
+        }
         repository.delete(categoria);
     }
 

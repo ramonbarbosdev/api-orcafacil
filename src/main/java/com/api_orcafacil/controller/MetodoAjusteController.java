@@ -13,6 +13,8 @@ import com.api_orcafacil.dto.precificacao.MetodoAjusteRequest;
 import com.api_orcafacil.model.MetodoAjuste;
 import com.api_orcafacil.service.MetodoAjusteService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/metodos-ajuste")
 public class MetodoAjusteController {
@@ -44,14 +46,14 @@ public class MetodoAjusteController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<MetodoAjuste>> criar(@RequestBody MetodoAjusteRequest request) {
+    public ResponseEntity<ApiResponseDTO<MetodoAjuste>> criar(@Valid @RequestBody MetodoAjusteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Ajuste salvo", service.salvar(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<MetodoAjuste>> atualizar(@PathVariable Long id,
-            @RequestBody MetodoAjusteRequest request) {
+            @Valid @RequestBody MetodoAjusteRequest request) {
         request.setIdMetodoAjuste(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Ajuste atualizado", service.salvar(request)));
     }

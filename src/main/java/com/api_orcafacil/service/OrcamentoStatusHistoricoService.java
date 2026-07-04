@@ -27,7 +27,6 @@ public class OrcamentoStatusHistoricoService {
         OrcamentoStatusHistorico historico = new OrcamentoStatusHistorico();
         historico.setIdOrganizacao(orcamento.getIdOrganizacao());
         historico.setIdOrcamento(orcamento.getIdOrcamento());
-        historico.setOrcamento(orcamento);
         historico.setTpStatusAnterior(statusAnterior);
         historico.setTpStatusNovo(statusNovo);
         repository.save(historico);

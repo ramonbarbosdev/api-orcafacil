@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
 
@@ -18,9 +17,7 @@ import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
 import com.api_orcafacil.dto.orcamento.OrcamentoVisualizacaoDTO;
-import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.relatorio.orcamento.service.OrcamentoRelatorioService;
-import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.security.RequerPermissao;
 import com.api_orcafacil.service.OrcamentoService;
 import com.api_orcafacil.service.VisualizacaoOrcamentoService;
@@ -32,17 +29,15 @@ import com.api_orcafacil.service.logo.OrganizacaoLogoService.ConteudoLogo;
 public class OrcamentoController {
 
     private final OrcamentoService service;
-    private final OrcamentoRepository repository;
     private final VisualizacaoOrcamentoService visualizacaoOrcamentoService;
     private final OrcamentoRelatorioService orcamentoRelatorioService;
     private final OrganizacaoLogoService organizacaoLogoService;
 
-    public OrcamentoController(OrcamentoService service, OrcamentoRepository repository,
+    public OrcamentoController(OrcamentoService service,
             VisualizacaoOrcamentoService visualizacaoOrcamentoService,
             OrcamentoRelatorioService orcamentoRelatorioService,
             OrganizacaoLogoService organizacaoLogoService) {
         this.service = service;
-        this.repository = repository;
         this.visualizacaoOrcamentoService = visualizacaoOrcamentoService;
         this.orcamentoRelatorioService = orcamentoRelatorioService;
         this.organizacaoLogoService = organizacaoLogoService;
@@ -87,10 +82,9 @@ public class OrcamentoController {
     @RequerPermissao(modulo = "orcamentos", acao = "editar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> gerar(@PathVariable Long id, @Valid @RequestBody OrcamentoRequest request) {
         request.setIdOrcamento(id);
-        request.setTpStatus(StatusOrcamento.GERADO);
-        OrcamentoResponse response = service.salvar(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponseDTO<>("Orcamento gerado", response));
+        service.salvar(request);
+        OrcamentoResponse response = service.alterarStatus(id, StatusOrcamento.GERADO);
+        return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento gerado", response));
     }
 
     @PostMapping("/{id}/enviar")
@@ -113,7 +107,7 @@ public class OrcamentoController {
 
     @PostMapping("/preview-precificacao")
     @RequerPermissao(modulo = "orcamentos", acao = "ler")
-    public ResponseEntity<ApiResponseDTO<Map<String, BigDecimal>>> previewPrecificacao(@RequestBody OrcamentoRequest request) {
+    public ResponseEntity<ApiResponseDTO<Map<String, BigDecimal>>> previewPrecificacao(@Valid @RequestBody OrcamentoRequest request) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Preview calculado",
                 Map.of("valorTotal", service.previewPrecificacao(request))));
     }

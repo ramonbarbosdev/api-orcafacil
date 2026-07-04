@@ -76,4 +76,8 @@ public interface OrcamentoRepository extends TenantRepository<Orcamento> {
 
     @Query(value = "SELECT * FROM orcamento b WHERE b.nu_orcamento = ?1 AND b.id_organizacao = ?2 LIMIT 1", nativeQuery = true)
     Optional<Orcamento> findByNuOrcamentoAndIdOrganizacao(String nuOrcamento, Long idOrganizacao);
+
+    boolean existsByIdCliente(Long idCliente);
+
+    boolean existsByIdCondicaoPagamento(Long idCondicaoPagamento);
 }

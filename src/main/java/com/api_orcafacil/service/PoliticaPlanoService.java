@@ -125,11 +125,18 @@ public class PoliticaPlanoService {
         }
     }
 
-    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    @Transactional(transactionManager = "centralTransactionManager")
     public void validarLimiteNovoRegistro(Long idOrganizacao, String chaveLimite) {
         validarAcessoOrganizacao(idOrganizacao);
         Long limite = obterLimitePlano(idOrganizacao, chaveLimite);
         if (limite == null) {
+            return;
+        }
+        if (isConsumoPorPeriodo(chaveLimite)) {
+            long consumo = obterConsumoComLock(idOrganizacao, chaveLimite);
+            if (consumo + 1 > limite) {
+                throw new BusinessException("Limite do plano atingido para: " + chaveLimite);
+            }
             return;
         }
         long consumo = obterConsumo(idOrganizacao, chaveLimite);
@@ -145,7 +152,7 @@ public class PoliticaPlanoService {
         }
         LocalDate referencia = referenciaConsumo(chaveLimite);
         CentralOrganizacaoConsumo consumo = consumoRepository
-                .findByIdOrganizacaoAndNmChaveLimiteAndDtReferencia(idOrganizacao, chaveLimite, referencia)
+                .findForUpdate(idOrganizacao, chaveLimite, referencia)
                 .orElseGet(() -> {
                     CentralOrganizacaoConsumo novo = new CentralOrganizacaoConsumo();
                     novo.setIdOrganizacao(idOrganizacao);
@@ -264,5 +271,13 @@ public class PoliticaPlanoService {
             return mes.atDay(1);
         }
         return LocalDate.EPOCH;
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager")
+    public long obterConsumoComLock(Long idOrganizacao, String chaveLimite) {
+        LocalDate referencia = referenciaConsumo(chaveLimite);
+        return consumoRepository.findForUpdate(idOrganizacao, chaveLimite, referencia)
+                .map(CentralOrganizacaoConsumo::getNuConsumo)
+                .orElse(0L);
     }
 }

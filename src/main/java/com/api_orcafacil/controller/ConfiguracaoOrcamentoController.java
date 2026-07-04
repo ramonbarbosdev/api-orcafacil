@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.organizacao.OrganizacaoEmpresaDTO;
 import com.api_orcafacil.dto.organizacao.OrganizacaoEmpresaRequestDTO;
+import com.api_orcafacil.dto.orcamento.ConfiguracaoOrcamentoRequest;
 import com.api_orcafacil.model.ConfiguracaoOrcamento;
 import com.api_orcafacil.service.ConfiguracaoOrcamentoService;
 import com.api_orcafacil.service.OrganizacaoEmpresaService;
@@ -35,7 +36,8 @@ public class ConfiguracaoOrcamentoController {
     }
 
     @PutMapping
-    public ResponseEntity<ApiResponseDTO<ConfiguracaoOrcamento>> salvar(@RequestBody ConfiguracaoOrcamento request) {
+    public ResponseEntity<ApiResponseDTO<ConfiguracaoOrcamento>> salvar(
+            @Valid @RequestBody ConfiguracaoOrcamentoRequest request) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Configuracao salva", service.salvar(request)));
     }
 

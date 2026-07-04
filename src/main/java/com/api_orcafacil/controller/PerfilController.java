@@ -9,6 +9,8 @@ import com.api_orcafacil.dto.perfil.PerfilRequest;
 import com.api_orcafacil.dto.perfil.PerfilResponse;
 import com.api_orcafacil.service.PerfilService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/perfil")
 public class PerfilController {
@@ -25,7 +27,7 @@ public class PerfilController {
     }
 
     @PutMapping
-    public ResponseEntity<ApiResponseDTO<Void>> atualizar(@RequestBody PerfilRequest request) {
+    public ResponseEntity<ApiResponseDTO<Void>> atualizar(@Valid @RequestBody PerfilRequest request) {
         service.atualizar(request);
         return ResponseEntity.ok(new ApiResponseDTO<>("Perfil atualizado", null));
     }

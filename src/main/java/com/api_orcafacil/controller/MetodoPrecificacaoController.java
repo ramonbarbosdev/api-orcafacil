@@ -6,11 +6,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.common.TipoPrecificacao;
+import com.api_orcafacil.dto.ApiResponseDTO;
+import com.api_orcafacil.dto.precificacao.MetodoPrecificacaoRequest;
 import com.api_orcafacil.dto.precificacao.MetodoPrecificacaoResponse;
-import com.api_orcafacil.model.MetodoPrecificacao;
 import com.api_orcafacil.service.MetodoPrecificacaoService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/metodos-precificacao")
@@ -38,7 +40,8 @@ public class MetodoPrecificacaoController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<MetodoPrecificacao>> criar(@RequestBody MetodoPrecificacao request) {
+    public ResponseEntity<ApiResponseDTO<MetodoPrecificacaoResponse>> criar(
+            @Valid @RequestBody MetodoPrecificacaoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Metodo salvo", service.salvar(request)));
     }

@@ -20,6 +20,7 @@ import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.orcamento.OrcamentoRequest;
+import com.api_orcafacil.dto.orcamento.OrcamentoItemCampoValorRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoItemRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoResponse;
 import com.api_orcafacil.exception.BusinessException;
@@ -29,12 +30,19 @@ import com.api_orcafacil.model.EmpresaMetodoPrecificacao;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.model.OrcamentoItem;
 import com.api_orcafacil.model.OrcamentoItemCampoValor;
+import com.api_orcafacil.repository.CatalogoRepository;
+import com.api_orcafacil.repository.CondicaoPagamentoRepository;
 import com.api_orcafacil.repository.OrcamentoRepository;
 
 @Service
 public class OrcamentoService {
 
+    private static final Set<StatusOrcamento> STATUS_NAO_EDITAVEL = Set.of(
+            StatusOrcamento.ENVIADO, StatusOrcamento.APROVADO, StatusOrcamento.REJEITADO);
+
     private final OrcamentoRepository repository;
+    private final CatalogoRepository catalogoRepository;
+    private final CondicaoPagamentoRepository condicaoPagamentoRepository;
     private final TenantContextService tenantContextService;
     private final ClienteService clienteService;
     private final ConfiguracaoOrcamentoService configuracaoOrcamentoService;
@@ -45,6 +53,8 @@ public class OrcamentoService {
     private final ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService;
 
     public OrcamentoService(OrcamentoRepository repository,
+            CatalogoRepository catalogoRepository,
+            CondicaoPagamentoRepository condicaoPagamentoRepository,
             TenantContextService tenantContextService,
             ClienteService clienteService,
             ConfiguracaoOrcamentoService configuracaoOrcamentoService,
@@ -54,6 +64,8 @@ public class OrcamentoService {
             ObjectProvider<PoliticaPlanoService> politicaPlanoService,
             ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService) {
         this.repository = repository;
+        this.catalogoRepository = catalogoRepository;
+        this.condicaoPagamentoRepository = condicaoPagamentoRepository;
         this.tenantContextService = tenantContextService;
         this.clienteService = clienteService;
         this.configuracaoOrcamentoService = configuracaoOrcamentoService;
@@ -84,7 +96,23 @@ public class OrcamentoService {
             politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.ORCAMENTOS_MES));
         }
         Orcamento orcamento = novo ? new Orcamento() : buscarEntidade(request.getIdOrcamento());
+        StatusOrcamento statusAtual = novo ? null : orcamento.getTpStatus();
+        if (!novo) {
+            validarEditavel(statusAtual);
+        }
         aplicarRequest(orcamento, request, idOrganizacao);
+        Long idCliente = clienteService.registrarClienteAPartirDoOrcamento(request.getCliente());
+        orcamento.setIdCliente(idCliente);
+        limparAssociacoesSomenteLeitura(orcamento);
+        if (novo) {
+            if (request.getTpStatus() != null && request.getTpStatus() != StatusOrcamento.RASCUNHO) {
+                throw new BusinessException("Novos orcamentos devem ser criados como rascunho");
+            }
+            orcamento.setTpStatus(StatusOrcamento.RASCUNHO);
+        } else {
+            orcamento.setTpStatus(statusAtual);
+        }
+        validarReferencias(orcamento, idOrganizacao);
         prepararItensAntesDeConsultas(orcamento);
         if (orcamento.getIdEmpresaMetodoPrecificacao() == null) {
             orcamento.setIdEmpresaMetodoPrecificacao(
@@ -107,13 +135,13 @@ public class OrcamentoService {
         }
 
         validarObjeto(orcamento);
-        clienteService.registrarClienteAPartirDoOrcamento(orcamento);
 
         if (novo) {
             orcamento.setCdPublico(UUID.randomUUID().toString());
         }
         orcamento.setVlPrecoBase(totalOrcamento);
         orcamento.setVlPrecoFinal(totalOrcamento);
+        limparAssociacoesSomenteLeitura(orcamento);
 
         Orcamento salvo = repository.save(orcamento);
         if (novo) {
@@ -140,7 +168,7 @@ public class OrcamentoService {
         }
         for (OrcamentoItem item : orcamento.getItens()) {
             if (item.getIdCatalogo() == null) {
-                return total;
+                throw new BusinessException("Catalogo do item nao informado");
             }
             total = total.add(calcularPrecoItem(item, orcamento.getIdEmpresaMetodoPrecificacao()));
         }
@@ -270,15 +298,10 @@ public class OrcamentoService {
         orcamento.setNuOrcamento(request.getNuOrcamento());
         orcamento.setDtEmissao(request.getDtEmissao());
         orcamento.setDtValido(request.getDtValido());
-        orcamento.setIdCliente(request.getIdCliente());
-        orcamento.setCliente(request.getCliente());
         orcamento.setIdEmpresaMetodoPrecificacao(request.getIdEmpresaMetodoPrecificacao());
         orcamento.setIdCondicaoPagamento(request.getIdCondicaoPagamento());
         orcamento.setNuPrazoEntrega(request.getNuPrazoEntrega() != null ? request.getNuPrazoEntrega() : 20);
         orcamento.setDsObservacoes(request.getDsObservacoes());
-        if (request.getTpStatus() != null) {
-            orcamento.setTpStatus(request.getTpStatus());
-        }
         if (request.getItens() != null) {
             if (orcamento.getIdOrcamento() == null) {
                 List<OrcamentoItem> itens = request.getItens().stream()
@@ -335,7 +358,7 @@ public class OrcamentoService {
         sincronizarCamposValor(item, request.getCamposValor());
     }
 
-    private void sincronizarCamposValor(OrcamentoItem item, List<OrcamentoItemCampoValor> camposRequest) {
+    private void sincronizarCamposValor(OrcamentoItem item, List<OrcamentoItemCampoValorRequest> camposRequest) {
         List<OrcamentoItemCampoValor> campos = item.getCamposValor();
         if (campos == null) {
             campos = new ArrayList<>();
@@ -347,7 +370,7 @@ public class OrcamentoService {
         }
 
         Set<Long> idsRequest = new HashSet<>();
-        for (OrcamentoItemCampoValor campo : camposRequest) {
+        for (OrcamentoItemCampoValorRequest campo : camposRequest) {
             if (campo.getIdOrcamentoItemCampoValor() != null) {
                 idsRequest.add(campo.getIdOrcamentoItemCampoValor());
             }
@@ -355,7 +378,7 @@ public class OrcamentoService {
         campos.removeIf(campo -> campo.getIdOrcamentoItemCampoValor() != null
                 && !idsRequest.contains(campo.getIdOrcamentoItemCampoValor()));
 
-        for (OrcamentoItemCampoValor campoRequest : camposRequest) {
+        for (OrcamentoItemCampoValorRequest campoRequest : camposRequest) {
             if (campoRequest.getIdOrcamentoItemCampoValor() != null) {
                 campos.stream()
                         .filter(campo -> campoRequest.getIdOrcamentoItemCampoValor()
@@ -371,11 +394,30 @@ public class OrcamentoService {
         }
     }
 
-    private void copiarCamposValor(OrcamentoItemCampoValor destino, OrcamentoItemCampoValor origem) {
+    private void copiarCamposValor(OrcamentoItemCampoValor destino, OrcamentoItemCampoValorRequest origem) {
         destino.setIdCampoPersonalizado(origem.getIdCampoPersonalizado());
         destino.setTpValor(origem.getTpValor());
         destino.setVlInformado(origem.getVlInformado());
         destino.setDsDescricao(origem.getDsDescricao());
+        destino.setCampoPersonalizado(null);
+    }
+
+    private void limparAssociacoesSomenteLeitura(Orcamento orcamento) {
+        orcamento.setCliente(null);
+        orcamento.setCondicaoPagamento(null);
+        orcamento.setEmpresaMetodoPrecificacao(null);
+        if (orcamento.getItens() == null) {
+            return;
+        }
+        for (OrcamentoItem item : orcamento.getItens()) {
+            item.setCatalogo(null);
+            if (item.getCamposValor() == null) {
+                continue;
+            }
+            for (OrcamentoItemCampoValor campo : item.getCamposValor()) {
+                campo.setCampoPersonalizado(null);
+            }
+        }
     }
 
     private void validarObjeto(Orcamento orcamento) {
@@ -427,6 +469,30 @@ public class OrcamentoService {
                 || (atual == StatusOrcamento.ENVIADO && (novo == StatusOrcamento.APROVADO || novo == StatusOrcamento.REJEITADO));
         if (!valida) {
             throw new BusinessException("Transicao de status invalida: " + atual + " -> " + novo);
+        }
+    }
+
+    private void validarEditavel(StatusOrcamento status) {
+        if (status != null && STATUS_NAO_EDITAVEL.contains(status)) {
+            throw new BusinessException("Orcamento com status " + status + " nao pode ser alterado");
+        }
+    }
+
+    private void validarReferencias(Orcamento orcamento, Long idOrganizacao) {
+        condicaoPagamentoRepository.findByIdCondicaoPagamentoAndIdOrganizacao(
+                        orcamento.getIdCondicaoPagamento(), idOrganizacao)
+                .orElseThrow(() -> new BusinessException("Condicao de pagamento nao encontrada"));
+        if (orcamento.getIdEmpresaMetodoPrecificacao() != null) {
+            empresaMetodoPrecificacaoService.buscarEntidadePorId(orcamento.getIdEmpresaMetodoPrecificacao());
+        }
+        if (orcamento.getItens() != null) {
+            for (OrcamentoItem item : orcamento.getItens()) {
+                if (item.getIdCatalogo() != null) {
+                    catalogoRepository.findByIdCatalogoAndIdOrganizacao(item.getIdCatalogo(), idOrganizacao)
+                            .orElseThrow(() -> new BusinessException(
+                                    "Catalogo do item nao encontrado: " + item.getIdCatalogo()));
+                }
+            }
         }
     }
 }

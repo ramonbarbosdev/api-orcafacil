@@ -7,8 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.api_orcafacil.dto.ApiResponseDTO;
+import com.api_orcafacil.dto.condicao.CondicaoPagamentoRequest;
 import com.api_orcafacil.model.CondicaoPagamento;
 import com.api_orcafacil.service.CondicaoPagamentoService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/condicoes-pagamento")
@@ -36,14 +39,14 @@ public class CondicaoPagamentoController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<CondicaoPagamento>> criar(@RequestBody CondicaoPagamento request) {
+    public ResponseEntity<ApiResponseDTO<CondicaoPagamento>> criar(@Valid @RequestBody CondicaoPagamentoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Condicao salva", service.salvar(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<CondicaoPagamento>> atualizar(@PathVariable Long id,
-            @RequestBody CondicaoPagamento request) {
+            @Valid @RequestBody CondicaoPagamentoRequest request) {
         request.setIdCondicaoPagamento(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Condicao atualizada", service.salvar(request)));
     }

@@ -9,20 +9,26 @@ import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.common.TipoItem;
 import com.api_orcafacil.dto.catalogo.CatalogoRequest;
 import com.api_orcafacil.dto.catalogo.CatalogoResponse;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Catalogo;
 import com.api_orcafacil.model.CatalogoCampo;
 import com.api_orcafacil.repository.CatalogoRepository;
+import com.api_orcafacil.repository.OrcamentoItemRepository;
 
 @Service
 public class CatalogoService {
 
     private final CatalogoRepository repository;
+    private final OrcamentoItemRepository orcamentoItemRepository;
     private final TenantContextService tenantContextService;
 
-    public CatalogoService(CatalogoRepository repository, TenantContextService tenantContextService) {
+    public CatalogoService(CatalogoRepository repository,
+            OrcamentoItemRepository orcamentoItemRepository,
+            TenantContextService tenantContextService) {
         this.repository = repository;
+        this.orcamentoItemRepository = orcamentoItemRepository;
         this.tenantContextService = tenantContextService;
     }
 
@@ -64,6 +70,9 @@ public class CatalogoService {
     public void excluir(Long id) {
         Catalogo catalogo = repository.findByIdCatalogoAndIdOrganizacao(id, tenantContextService.idOrganizacaoObrigatoria())
                 .orElseThrow(() -> new ResourceNotFoundException("Catalogo nao encontrado"));
+        if (orcamentoItemRepository.existsByIdCatalogo(id)) {
+            throw new BusinessException("Catalogo possui itens em orcamentos e nao pode ser excluido");
+        }
         repository.delete(catalogo);
     }
 

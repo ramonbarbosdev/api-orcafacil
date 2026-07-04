@@ -57,7 +57,13 @@ public class PrecificacaoService {
     private BigDecimal aplicarMetodo(BigDecimal base, TipoPrecificacao tipo, Map<String, Object> config) {
         return switch (tipo) {
             case MARKUP -> base.multiply(BigDecimal.ONE.add(obterDecimal(config, "percentual")));
-            case MARGEM -> base.divide(BigDecimal.ONE.subtract(obterDecimal(config, "percentual")), 4, RoundingMode.HALF_UP);
+            case MARGEM -> {
+                BigDecimal percentual = obterDecimal(config, "percentual");
+                if (percentual.compareTo(BigDecimal.ONE) >= 0) {
+                    throw new BusinessException("Percentual de margem deve ser menor que 100%");
+                }
+                yield base.divide(BigDecimal.ONE.subtract(percentual), 4, RoundingMode.HALF_UP);
+            }
             case FIXO -> base.add(obterDecimal(config, "valor"));
             case SIMPLES -> base;
         };

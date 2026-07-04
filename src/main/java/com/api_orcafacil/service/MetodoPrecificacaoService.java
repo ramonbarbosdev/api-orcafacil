@@ -7,7 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.common.TipoPrecificacao;
 import com.api_orcafacil.dto.precificacao.CampoMetodoDTO;
+import com.api_orcafacil.dto.precificacao.MetodoPrecificacaoRequest;
 import com.api_orcafacil.dto.precificacao.MetodoPrecificacaoResponse;
+import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.MetodoPrecificacao;
 import com.api_orcafacil.repository.MetodoPrecificacaoRepository;
@@ -30,8 +32,16 @@ public class MetodoPrecificacaoService {
     }
 
     @Transactional
-    public MetodoPrecificacao salvar(MetodoPrecificacao objeto) {
-        return repository.save(objeto);
+    public MetodoPrecificacaoResponse salvar(MetodoPrecificacaoRequest request) {
+        repository.findByCdMetodoPrecificacao(request.getCdMetodoPrecificacao())
+                .ifPresent(existente -> {
+                    throw new ConflictException("Metodo de precificacao ja cadastrado: " + request.getCdMetodoPrecificacao());
+                });
+        MetodoPrecificacao objeto = new MetodoPrecificacao();
+        objeto.setCdMetodoPrecificacao(request.getCdMetodoPrecificacao());
+        objeto.setNmMetodoPrecificacao(request.getNmMetodoPrecificacao());
+        objeto.setDsMetodoPrecificacao(request.getDsMetodoPrecificacao());
+        return montar(repository.save(objeto));
     }
 
     public MetodoPrecificacaoResponse montar(MetodoPrecificacao metodo) {

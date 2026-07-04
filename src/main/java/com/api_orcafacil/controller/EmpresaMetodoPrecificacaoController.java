@@ -17,6 +17,8 @@ import com.api_orcafacil.dto.precificacao.EmpresaMetodoPrecificacaoRequest;
 import com.api_orcafacil.dto.precificacao.EmpresaMetodoPrecificacaoResponse;
 import com.api_orcafacil.service.EmpresaMetodoPrecificacaoService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/empresa-metodos-precificacao")
 public class EmpresaMetodoPrecificacaoController {
@@ -39,7 +41,7 @@ public class EmpresaMetodoPrecificacaoController {
 
     @PostMapping
     public ResponseEntity<ApiResponseDTO<EmpresaMetodoPrecificacaoResponse>> criar(
-            @RequestBody EmpresaMetodoPrecificacaoRequest request) {
+            @Valid @RequestBody EmpresaMetodoPrecificacaoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Metodo salvo", service.salvar(request)));
     }
@@ -47,7 +49,7 @@ public class EmpresaMetodoPrecificacaoController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<EmpresaMetodoPrecificacaoResponse>> atualizar(
             @PathVariable Long id,
-            @RequestBody EmpresaMetodoPrecificacaoRequest request) {
+            @Valid @RequestBody EmpresaMetodoPrecificacaoRequest request) {
         request.setIdEmpresaMetodoPrecificacao(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Metodo atualizado", service.salvar(request)));
     }

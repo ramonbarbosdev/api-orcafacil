@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.api_orcafacil.common.TipoPrecificacao;
 import com.api_orcafacil.dto.precificacao.EmpresaMetodoPrecificacaoRequest;
 import com.api_orcafacil.dto.precificacao.EmpresaMetodoPrecificacaoResponse;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.EmpresaMetodoPrecificacao;
@@ -63,10 +64,11 @@ public class EmpresaMetodoPrecificacaoService {
         objeto.setIdOrganizacao(idOrganizacao);
         objeto.setIdMetodoPrecificacao(request.getIdMetodoPrecificacao());
         objeto.setConfiguracao(request.getConfiguracao());
+        MetodoPrecificacao metodo = metodoPrecificacaoRepository.findById(request.getIdMetodoPrecificacao())
+                .orElseThrow(() -> new ResourceNotFoundException("Metodo de precificacao nao encontrado"));
+        validarConfiguracao(metodo.getCdMetodoPrecificacao(), request.getConfiguracao());
         validarDuplicidade(objeto);
         EmpresaMetodoPrecificacao salvo = repository.save(objeto);
-        MetodoPrecificacao metodo = metodoPrecificacaoRepository.findById(salvo.getIdMetodoPrecificacao())
-                .orElseThrow(() -> new ResourceNotFoundException("Metodo de precificacao nao encontrado"));
         return EmpresaMetodoPrecificacaoResponse.from(salvo, metodo);
     }
 
@@ -93,6 +95,16 @@ public class EmpresaMetodoPrecificacaoService {
                         throw new ConflictException("Metodo de precificacao ja cadastrado para esta organizacao");
                     }
                 });
+    }
+
+    private void validarConfiguracao(TipoPrecificacao tipo, Map<String, Object> config) {
+        if (tipo == TipoPrecificacao.SIMPLES) {
+            return;
+        }
+        String chave = tipo == TipoPrecificacao.FIXO ? "valor" : "percentual";
+        if (config == null || !config.containsKey(chave)) {
+            throw new BusinessException("Configuracao obrigatoria nao encontrada: " + chave);
+        }
     }
 
     private EmpresaMetodoPrecificacaoResponse montarResponse(EmpresaMetodoPrecificacao empresa) {

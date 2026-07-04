@@ -13,6 +13,6 @@ public interface MetodoAjusteRepository extends TenantRepository<MetodoAjuste> {
 
     List<MetodoAjuste> findByIdOrganizacao(Long idOrganizacao);
 
-    @Query(value = "SELECT * FROM metodo_ajustes b WHERE b.id_campopersonalizado = ?1 LIMIT 1", nativeQuery = true)
-    Optional<MetodoAjuste> findByIdCampoPersonalizado(Long idCampoPersonalizado);
+    @Query(value = "SELECT * FROM metodo_ajustes b WHERE b.id_campopersonalizado = ?1 AND b.id_organizacao = ?2 LIMIT 1", nativeQuery = true)
+    Optional<MetodoAjuste> findByIdCampoPersonalizadoAndIdOrganizacao(Long idCampoPersonalizado, Long idOrganizacao);
 }

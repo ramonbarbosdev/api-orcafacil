@@ -13,6 +13,8 @@ import com.api_orcafacil.dto.precificacao.CampoPersonalizadoRequest;
 import com.api_orcafacil.model.CampoPersonalizado;
 import com.api_orcafacil.service.CampoPersonalizadoService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/campos-personalizados")
 public class CampoPersonalizadoController {
@@ -44,14 +46,14 @@ public class CampoPersonalizadoController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<CampoPersonalizado>> criar(@RequestBody CampoPersonalizadoRequest request) {
+    public ResponseEntity<ApiResponseDTO<CampoPersonalizado>> criar(@Valid @RequestBody CampoPersonalizadoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Campo salvo", service.salvar(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<CampoPersonalizado>> atualizar(@PathVariable Long id,
-            @RequestBody CampoPersonalizadoRequest request) {
+            @Valid @RequestBody CampoPersonalizadoRequest request) {
         request.setIdCampoPersonalizado(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Campo atualizado", service.salvar(request)));
     }

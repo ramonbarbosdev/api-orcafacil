@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.api_orcafacil.common.StatusOrcamento;
-import com.api_orcafacil.model.Cliente;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -26,7 +25,8 @@ public class OrcamentoRequest {
     private LocalDate dtValido;
     private Long idCliente;
     @NotNull(message = "Cliente e obrigatorio")
-    private Cliente cliente;
+    @Valid
+    private ClienteOrcamentoRequest cliente;
     private Long idEmpresaMetodoPrecificacao;
     @NotNull(message = "Condicao de pagamento e obrigatoria")
     private Long idCondicaoPagamento;

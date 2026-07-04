@@ -16,6 +16,8 @@ import com.api_orcafacil.dto.precificacao.PlanoAssinaturaRequest;
 import com.api_orcafacil.dto.precificacao.PlanoAssinaturaResponse;
 import com.api_orcafacil.service.PlanoAssinaturaPlatformService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/admin/planos-assinatura")
 @ConditionalOnProperty(name = "app.saas.central.enabled", havingValue = "true")
@@ -38,14 +40,14 @@ public class PlanoAssinaturaAdminController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<PlanoAssinaturaResponse>> criar(@RequestBody PlanoAssinaturaRequest request) {
+    public ResponseEntity<ApiResponseDTO<PlanoAssinaturaResponse>> criar(@Valid @RequestBody PlanoAssinaturaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Plano criado", service.criar(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<PlanoAssinaturaResponse>> atualizar(@PathVariable Long id,
-            @RequestBody PlanoAssinaturaRequest request) {
+            @Valid @RequestBody PlanoAssinaturaRequest request) {
         return ResponseEntity.ok(new ApiResponseDTO<>("Plano atualizado", service.atualizar(id, request)));
     }
 

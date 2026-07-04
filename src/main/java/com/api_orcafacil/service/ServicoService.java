@@ -10,23 +10,28 @@ import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.SequenciaUtil;
 import com.api_orcafacil.dto.servico.ServicoRequest;
 import com.api_orcafacil.dto.servico.ServicoResponse;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Servico;
+import com.api_orcafacil.repository.CategoriaServicoRepository;
 import com.api_orcafacil.repository.ServicoRepository;
 
 @Service
 public class ServicoService {
 
     private final ServicoRepository repository;
+    private final CategoriaServicoRepository categoriaServicoRepository;
     private final TenantContextService tenantContextService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
     public ServicoService(
             ServicoRepository repository,
+            CategoriaServicoRepository categoriaServicoRepository,
             TenantContextService tenantContextService,
             ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.repository = repository;
+        this.categoriaServicoRepository = categoriaServicoRepository;
         this.tenantContextService = tenantContextService;
         this.politicaPlanoService = politicaPlanoService;
     }
@@ -51,6 +56,11 @@ public class ServicoService {
                 : new Servico();
         if (request.getIdServico() == null) {
             politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.SERVICOS));
+        }
+        if (request.getIdCategoriaServico() != null) {
+            categoriaServicoRepository.findByIdCategoriaServicoAndIdOrganizacao(
+                            request.getIdCategoriaServico(), idOrganizacao)
+                    .orElseThrow(() -> new BusinessException("Categoria de servico nao encontrada"));
         }
         servico.setIdOrganizacao(idOrganizacao);
         servico.setIdCategoriaServico(request.getIdCategoriaServico());

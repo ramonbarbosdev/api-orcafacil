@@ -7,8 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.api_orcafacil.dto.ApiResponseDTO;
+import com.api_orcafacil.dto.servico.CategoriaServicoRequest;
 import com.api_orcafacil.model.CategoriaServico;
 import com.api_orcafacil.service.CategoriaServicoService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/categorias-servico")
@@ -36,14 +39,14 @@ public class CategoriaServicoController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponseDTO<CategoriaServico>> criar(@RequestBody CategoriaServico request) {
+    public ResponseEntity<ApiResponseDTO<CategoriaServico>> criar(@Valid @RequestBody CategoriaServicoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponseDTO<>("Categoria salva", service.salvar(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponseDTO<CategoriaServico>> atualizar(@PathVariable Long id,
-            @RequestBody CategoriaServico request) {
+            @Valid @RequestBody CategoriaServicoRequest request) {
         request.setIdCategoriaServico(id);
         return ResponseEntity.ok(new ApiResponseDTO<>("Categoria atualizada", service.salvar(request)));
     }

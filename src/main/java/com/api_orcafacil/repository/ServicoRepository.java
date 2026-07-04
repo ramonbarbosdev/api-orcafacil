@@ -17,4 +17,6 @@ public interface ServicoRepository extends TenantRepository<Servico> {
     Optional<Servico> findByCdServicoAndIdOrganizacao(String cd, Long idOrganizacao);
 
     long countByIdOrganizacao(Long idOrganizacao);
+
+    boolean existsByIdCategoriaServico(Long idCategoriaServico);
 }

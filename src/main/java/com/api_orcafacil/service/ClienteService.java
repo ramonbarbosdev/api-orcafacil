@@ -10,25 +10,30 @@ import org.springframework.transaction.annotation.Transactional;
 import com.api_orcafacil.common.ChaveLimite;
 import com.api_orcafacil.common.TipoCliente;
 import com.api_orcafacil.dto.cliente.ClienteRequest;
+import com.api_orcafacil.dto.orcamento.ClienteOrcamentoRequest;
 import com.api_orcafacil.dto.cliente.ClienteResponse;
 import com.api_orcafacil.exception.ConflictException;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Cliente;
-import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.repository.ClienteRepository;
+import com.api_orcafacil.repository.OrcamentoRepository;
 
 @Service
 public class ClienteService {
 
     private final ClienteRepository repository;
+    private final OrcamentoRepository orcamentoRepository;
     private final TenantContextService tenantContextService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
 
     public ClienteService(
             ClienteRepository repository,
+            OrcamentoRepository orcamentoRepository,
             TenantContextService tenantContextService,
             ObjectProvider<PoliticaPlanoService> politicaPlanoService) {
         this.repository = repository;
+        this.orcamentoRepository = orcamentoRepository;
         this.tenantContextService = tenantContextService;
         this.politicaPlanoService = politicaPlanoService;
     }
@@ -68,20 +73,26 @@ public class ClienteService {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         Cliente cliente = repository.findByIdClienteAndIdOrganizacao(id, idOrganizacao)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente nao encontrado"));
+        if (orcamentoRepository.existsByIdCliente(id)) {
+            throw new BusinessException("Cliente possui orcamentos vinculados e nao pode ser excluido");
+        }
         repository.delete(cliente);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Cliente registrarClienteAPartirDoOrcamento(Orcamento orcamento) {
+    public Long registrarClienteAPartirDoOrcamento(ClienteOrcamentoRequest entrada) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
-        Cliente entrada = orcamento.getCliente();
         if (entrada == null || entrada.getNuCpfcnpj() == null || entrada.getNuCpfcnpj().isBlank()) {
             throw new ConflictException("CPF/CNPJ do cliente e obrigatorio");
         }
 
-        Cliente cliente = repository.findByNuCpfcnpjAndIdOrganizacao(entrada.getNuCpfcnpj(), idOrganizacao)
-                .orElseGet(Cliente::new);
+        Optional<Cliente> existente = repository.findByNuCpfcnpjAndIdOrganizacao(entrada.getNuCpfcnpj(), idOrganizacao);
+        if (existente.isPresent()) {
+            return existente.get().getIdCliente();
+        }
 
+        politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.CLIENTES));
+        Cliente cliente = new Cliente();
         cliente.setIdOrganizacao(idOrganizacao);
         cliente.setTpCliente(entrada.getNuCpfcnpj().length() > 11 ? TipoCliente.Juridico : TipoCliente.Fisico);
         cliente.setNuCpfcnpj(entrada.getNuCpfcnpj());
@@ -89,11 +100,7 @@ public class ClienteService {
         cliente.setNuTelefone(entrada.getNuTelefone());
         cliente.setDsEmail(entrada.getDsEmail());
         cliente.setDsObservacoes(entrada.getDsObservacoes());
-
-        cliente = repository.save(cliente);
-        orcamento.setCliente(cliente);
-        orcamento.setIdCliente(cliente.getIdCliente());
-        return cliente;
+        return repository.save(cliente).getIdCliente();
     }
 
     private void aplicar(Cliente cliente, ClienteRequest request, Long idOrganizacao) {

@@ -3,6 +3,7 @@ package com.api_orcafacil.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.api_orcafacil.dto.orcamento.ConfiguracaoOrcamentoRequest;
 import com.api_orcafacil.model.ConfiguracaoOrcamento;
 import com.api_orcafacil.repository.ConfiguracaoOrcamentoRepository;
 
@@ -23,7 +24,7 @@ public class ConfiguracaoOrcamentoService {
     }
 
     @Transactional
-    public ConfiguracaoOrcamento salvar(ConfiguracaoOrcamento dados) {
+    public ConfiguracaoOrcamento salvar(ConfiguracaoOrcamentoRequest dados) {
         ConfiguracaoOrcamento atual = obterOuCriarPadrao();
         atual.setPrefixoNumero(dados.getPrefixoNumero());
         atual.setValidadeDias(dados.getValidadeDias());

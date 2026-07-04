@@ -15,4 +15,6 @@ public interface OrcamentoItemCampoValorRepository extends JpaRepository<Orcamen
     @Modifying
     @Query("DELETE FROM OrcamentoItemCampoValor c WHERE c.orcamentoItem.idOrcamentoItem = :idOrcamentoItem")
     void deleteByIdOrcamentoItem(Long idOrcamentoItem);
+
+    boolean existsByIdCampoPersonalizado(Long idCampoPersonalizado);
 }

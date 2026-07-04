@@ -7,6 +7,7 @@ import java.util.List;
 import com.api_orcafacil.model.OrcamentoItem;
 import com.api_orcafacil.model.OrcamentoItemCampoValor;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -33,7 +34,8 @@ public class OrcamentoItemRequest {
     @DecimalMin(value = "0.0", message = "Preco unitario invalido")
     private BigDecimal vlPrecoUnitario;
 
-    private List<OrcamentoItemCampoValor> camposValor = new ArrayList<>();
+    @Valid
+    private List<OrcamentoItemCampoValorRequest> camposValor = new ArrayList<>();
 
     public OrcamentoItem toEntity() {
         OrcamentoItem item = new OrcamentoItem();
@@ -50,12 +52,13 @@ public class OrcamentoItemRequest {
             return new ArrayList<>();
         }
         List<OrcamentoItemCampoValor> copia = new ArrayList<>(camposValor.size());
-        for (OrcamentoItemCampoValor origem : camposValor) {
+        for (OrcamentoItemCampoValorRequest origem : camposValor) {
             OrcamentoItemCampoValor campo = new OrcamentoItemCampoValor();
             campo.setIdCampoPersonalizado(origem.getIdCampoPersonalizado());
             campo.setTpValor(origem.getTpValor());
             campo.setVlInformado(origem.getVlInformado());
             campo.setDsDescricao(origem.getDsDescricao());
+            campo.setCampoPersonalizado(null);
             copia.add(campo);
         }
         return copia;

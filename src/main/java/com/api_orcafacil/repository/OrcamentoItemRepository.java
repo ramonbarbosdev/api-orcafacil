@@ -12,6 +12,8 @@ public interface OrcamentoItemRepository extends JpaRepository<OrcamentoItem, Lo
 
     List<OrcamentoItem> findByOrcamento_IdOrcamento(Long idOrcamento);
 
+    boolean existsByIdCatalogo(Long idCatalogo);
+
     @Modifying
     @Query("DELETE FROM OrcamentoItem i WHERE i.orcamento.idOrcamento = :idOrcamento")
     void deleteByIdOrcamento(Long idOrcamento);

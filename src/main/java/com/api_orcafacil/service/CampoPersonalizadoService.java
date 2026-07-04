@@ -6,19 +6,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.dto.precificacao.CampoPersonalizadoRequest;
+import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ConflictException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.CampoPersonalizado;
 import com.api_orcafacil.repository.CampoPersonalizadoRepository;
+import com.api_orcafacil.repository.MetodoAjusteRepository;
+import com.api_orcafacil.repository.OrcamentoItemCampoValorRepository;
 
 @Service
 public class CampoPersonalizadoService {
 
     private final CampoPersonalizadoRepository repository;
+    private final MetodoAjusteRepository metodoAjusteRepository;
+    private final OrcamentoItemCampoValorRepository orcamentoItemCampoValorRepository;
     private final TenantContextService tenantContextService;
 
-    public CampoPersonalizadoService(CampoPersonalizadoRepository repository, TenantContextService tenantContextService) {
+    public CampoPersonalizadoService(CampoPersonalizadoRepository repository,
+            MetodoAjusteRepository metodoAjusteRepository,
+            OrcamentoItemCampoValorRepository orcamentoItemCampoValorRepository,
+            TenantContextService tenantContextService) {
         this.repository = repository;
+        this.metodoAjusteRepository = metodoAjusteRepository;
+        this.orcamentoItemCampoValorRepository = orcamentoItemCampoValorRepository;
         this.tenantContextService = tenantContextService;
     }
 
@@ -51,7 +61,15 @@ public class CampoPersonalizadoService {
 
     @Transactional
     public void excluir(Long id) {
-        repository.delete(buscar(id));
+        CampoPersonalizado campo = buscar(id);
+        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        if (metodoAjusteRepository.findByIdCampoPersonalizadoAndIdOrganizacao(id, idOrganizacao).isPresent()) {
+            throw new BusinessException("Campo possui metodos de ajuste vinculados e nao pode ser excluido");
+        }
+        if (orcamentoItemCampoValorRepository.existsByIdCampoPersonalizado(id)) {
+            throw new BusinessException("Campo possui itens em orcamentos e nao pode ser excluido");
+        }
+        repository.delete(campo);
     }
 
     private void validarCodigo(CampoPersonalizado campo) {

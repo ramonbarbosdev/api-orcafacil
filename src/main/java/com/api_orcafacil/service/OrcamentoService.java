@@ -268,6 +268,7 @@ public class OrcamentoService {
                 item.getDsMensagem(),
                 item.getDtCriacao());
     }
+    
 
     /** Reservado para fluxo futuro de aprovacao/rejeicao. */
     @Transactional(rollbackFor = Exception.class)

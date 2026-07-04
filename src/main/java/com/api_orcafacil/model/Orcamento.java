@@ -83,7 +83,7 @@ public class Orcamento extends TenantEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tp_status", nullable = false, length = 30)
-    private StatusOrcamento tpStatus = StatusOrcamento.RASCUNHO;
+    private StatusOrcamento tpStatus = StatusOrcamento.GERADO;
 
     @Column(name = "cd_publico", unique = true, length = 64)
     private String cdPublico;

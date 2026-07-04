@@ -67,13 +67,8 @@ public class VisualizacaoOrcamentoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Orcamento nao encontrado"));
             return visualizarPublico(orcamento.getIdOrcamento(), orcamento.getIdOrganizacao());
         }
-        return publicoService.executarComCdPublico(cdPublico, ref -> {
-            OrcamentoVisualizacaoDTO dto = visualizarPublico(ref.idOrcamento(), ref.idOrganizacao());
-            if (dto.getStatus() == com.api_orcafacil.common.StatusOrcamento.RASCUNHO) {
-                throw new ResourceNotFoundException("Orcamento nao encontrado");
-            }
-            return dto;
-        });
+        return publicoService.executarComCdPublico(cdPublico, ref ->
+                visualizarPublico(ref.idOrcamento(), ref.idOrganizacao()));
     }
 
     private void inicializarAssociacoes(Orcamento orcamento) {

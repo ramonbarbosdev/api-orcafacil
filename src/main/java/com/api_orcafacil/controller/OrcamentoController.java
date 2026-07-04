@@ -76,18 +76,14 @@ public class OrcamentoController {
     @PostMapping("/rascunho")
     @RequerPermissao(modulo = "orcamentos", acao = "criar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> rascunho(@Valid @RequestBody OrcamentoRequest request) {
-        request.setTpStatus(StatusOrcamento.RASCUNHO);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponseDTO<>("Rascunho salvo", service.salvar(request)));
+                .body(new ApiResponseDTO<>("Orcamento salvo", service.salvar(request)));
     }
 
     @PostMapping("/{id}/gerar")
     @RequerPermissao(modulo = "orcamentos", acao = "editar")
     public ResponseEntity<ApiResponseDTO<OrcamentoResponse>> gerar(@PathVariable Long id, @Valid @RequestBody OrcamentoRequest request) {
-        request.setIdOrcamento(id);
-        service.salvar(request);
-        OrcamentoResponse response = service.alterarStatus(id, StatusOrcamento.GERADO);
-        return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento gerado", response));
+        return ResponseEntity.ok(new ApiResponseDTO<>("Orcamento gerado", service.gerar(id, request)));
     }
 
     @PostMapping("/{id}/enviar")

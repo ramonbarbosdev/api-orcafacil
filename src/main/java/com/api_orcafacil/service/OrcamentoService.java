@@ -5,11 +5,12 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,8 +42,7 @@ import com.api_orcafacil.repository.OrcamentoRepository;
 @Service
 public class OrcamentoService {
 
-    private static final Set<StatusOrcamento> STATUS_NAO_EDITAVEL = Set.of(
-            StatusOrcamento.ENVIADO, StatusOrcamento.APROVADO, StatusOrcamento.REJEITADO);
+    private static final Logger log = LoggerFactory.getLogger(OrcamentoService.class);
 
     private final OrcamentoRepository repository;
     private final CatalogoRepository catalogoRepository;
@@ -54,8 +54,8 @@ public class OrcamentoService {
     private final EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService;
     private final OrcamentoStatusHistoricoService statusHistoricoService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
-    private final ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService;
     private final ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService;
+    private final ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService;
 
     public OrcamentoService(OrcamentoRepository repository,
             CatalogoRepository catalogoRepository,
@@ -67,8 +67,8 @@ public class OrcamentoService {
             EmpresaMetodoPrecificacaoService empresaMetodoPrecificacaoService,
             OrcamentoStatusHistoricoService statusHistoricoService,
             ObjectProvider<PoliticaPlanoService> politicaPlanoService,
-            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService,
-            ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService) {
+            ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService,
+            ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService) {
         this.repository = repository;
         this.catalogoRepository = catalogoRepository;
         this.condicaoPagamentoRepository = condicaoPagamentoRepository;
@@ -79,8 +79,8 @@ public class OrcamentoService {
         this.empresaMetodoPrecificacaoService = empresaMetodoPrecificacaoService;
         this.statusHistoricoService = statusHistoricoService;
         this.politicaPlanoService = politicaPlanoService;
-        this.orcamentoPublicoService = orcamentoPublicoService;
         this.orcamentoNotificacaoService = orcamentoNotificacaoService;
+        this.orcamentoCentralSyncService = orcamentoCentralSyncService;
     }
 
     @Transactional(readOnly = true)
@@ -103,22 +103,11 @@ public class OrcamentoService {
             politicaPlanoService.ifAvailable(p -> p.validarLimiteNovoRegistroAtual(ChaveLimite.ORCAMENTOS_MES));
         }
         Orcamento orcamento = novo ? new Orcamento() : buscarEntidade(request.getIdOrcamento());
-        StatusOrcamento statusAtual = novo ? null : orcamento.getTpStatus();
-        if (!novo) {
-            validarEditavel(statusAtual);
-        }
         aplicarRequest(orcamento, request, idOrganizacao);
         Long idCliente = clienteService.registrarClienteAPartirDoOrcamento(request.getCliente());
         orcamento.setIdCliente(idCliente);
         limparAssociacoesSomenteLeitura(orcamento);
-        if (novo) {
-            if (request.getTpStatus() != null && request.getTpStatus() != StatusOrcamento.RASCUNHO) {
-                throw new BusinessException("Novos orcamentos devem ser criados como rascunho");
-            }
-            orcamento.setTpStatus(StatusOrcamento.RASCUNHO);
-        } else {
-            orcamento.setTpStatus(statusAtual);
-        }
+        orcamento.setTpStatus(StatusOrcamento.GERADO);
         prepararItensAntesDeConsultas(orcamento);
         validarReferencias(orcamento, idOrganizacao);
         if (orcamento.getIdEmpresaMetodoPrecificacao() == null) {
@@ -152,7 +141,7 @@ public class OrcamentoService {
 
         Orcamento salvo = repository.save(orcamento);
         if (novo) {
-            statusHistoricoService.registrar(salvo, null, orcamento.getTpStatus());
+            statusHistoricoService.registrar(salvo, null, StatusOrcamento.GERADO);
         }
 
         OrcamentoResponse response = OrcamentoResponse.from(salvo);
@@ -181,9 +170,15 @@ public class OrcamentoService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    public OrcamentoResponse gerar(Long idOrcamento, OrcamentoRequest request) {
+        request.setIdOrcamento(idOrcamento);
+        return salvar(request);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
     public OrcamentoEnviarResponse enviarComNotificacao(Long idOrcamento, OrcamentoEnviarRequest request) {
-        OrcamentoResponse orcamento = alterarStatus(idOrcamento, StatusOrcamento.ENVIADO);
         Orcamento entidade = buscarEntidade(idOrcamento);
+        OrcamentoResponse orcamento = OrcamentoResponse.from(entidade);
         OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
         var notificacoes = notificacaoService != null
                 ? notificacaoService.notificarOrcamentoEnviado(entidade, request)
@@ -191,11 +186,11 @@ public class OrcamentoService {
         return new OrcamentoEnviarResponse(orcamento, notificacoes);
     }
 
+    /** Reservado para fluxo futuro de aprovacao/rejeicao. */
     @Transactional(rollbackFor = Exception.class)
     public OrcamentoResponse alterarStatus(Long idOrcamento, StatusOrcamento novoStatus) {
         Orcamento orcamento = buscarEntidade(idOrcamento);
         StatusOrcamento statusAtual = orcamento.getTpStatus();
-        validarTransicao(statusAtual, novoStatus);
         orcamento.setTpStatus(novoStatus);
         Orcamento salvo = repository.save(orcamento);
         statusHistoricoService.registrar(salvo, statusAtual, novoStatus);
@@ -240,14 +235,17 @@ public class OrcamentoService {
     }
 
     private void aplicarEfeitosCentrais(Orcamento salvo, boolean novo) {
-        if (novo) {
-            politicaPlanoService.ifAvailable(p -> p.registrarConsumo(
-                    salvo.getIdOrganizacao(), ChaveLimite.ORCAMENTOS_MES, 1));
-        }
-        if (salvo.getCdPublico() != null && !salvo.getCdPublico().isBlank()) {
-            orcamentoPublicoService.ifAvailable(p -> p.registrar(
-                    salvo.getCdPublico(), salvo.getIdOrganizacao(), salvo.getIdOrcamento()));
-        }
+        orcamentoCentralSyncService.ifAvailable(sync -> {
+            try {
+                sync.aplicarPosCommitSalvar(
+                        salvo.getIdOrganizacao(), salvo.getCdPublico(), salvo.getIdOrcamento(), novo);
+            } catch (Exception ex) {
+                log.error(
+                        "Falha ao sincronizar orcamento {} com banco central apos commit do tenant",
+                        salvo.getIdOrcamento(),
+                        ex);
+            }
+        });
     }
 
     private void agendarLimpezaCentraisAposCommit(
@@ -266,11 +264,16 @@ public class OrcamentoService {
 
     private void aplicarLimpezaCentrais(
             String cdPublico, Long idOrganizacao, Long idOrcamento, boolean consumoMesAtual) {
-        orcamentoPublicoService.ifAvailable(p -> p.excluir(cdPublico, idOrganizacao, idOrcamento));
-        if (consumoMesAtual) {
-            politicaPlanoService.ifAvailable(p -> p.registrarConsumo(
-                    idOrganizacao, ChaveLimite.ORCAMENTOS_MES, -1));
-        }
+        orcamentoCentralSyncService.ifAvailable(sync -> {
+            try {
+                sync.aplicarPosCommitExcluir(cdPublico, idOrganizacao, idOrcamento, consumoMesAtual);
+            } catch (Exception ex) {
+                log.error(
+                        "Falha ao limpar dados centrais do orcamento {} apos exclusao no tenant",
+                        idOrcamento,
+                        ex);
+            }
+        });
     }
 
 
@@ -456,6 +459,9 @@ public class OrcamentoService {
         if (orcamento.getItens() == null || orcamento.getItens().isEmpty()) {
             throw new BusinessException("O orcamento deve possuir ao menos um item");
         }
+        if (orcamento.getDtEmissao() == null || orcamento.getDtValido() == null) {
+            throw new BusinessException("Datas de emissao e validade sao obrigatorias");
+        }
         if (orcamento.getDtValido().isBefore(orcamento.getDtEmissao())) {
             throw new BusinessException("A data de validade nao pode ser anterior a emissao");
         }
@@ -466,7 +472,7 @@ public class OrcamentoService {
             throw new BusinessException("Catalogo do item nao informado");
         }
         boolean repetido = itens.stream()
-                .filter(i -> !Objects.equals(i.getIdOrcamentoItem(), item.getIdOrcamentoItem()))
+                .filter(i -> i != item)
                 .filter(i -> i.getIdCatalogo() != null)
                 .anyMatch(i -> i.getIdCatalogo().equals(item.getIdCatalogo()));
         if (repetido) {
@@ -487,21 +493,6 @@ public class OrcamentoService {
 
     private BigDecimal calcularPrecoItem(OrcamentoItem item, Long idEmpresaMetodoPrecificacao) {
         return aplicarMetodoPrecificacao(item, idEmpresaMetodoPrecificacao);
-    }
-
-    private void validarTransicao(StatusOrcamento atual, StatusOrcamento novo) {
-        boolean valida = (atual == StatusOrcamento.RASCUNHO && novo == StatusOrcamento.GERADO)
-                || (atual == StatusOrcamento.GERADO && novo == StatusOrcamento.ENVIADO)
-                || (atual == StatusOrcamento.ENVIADO && (novo == StatusOrcamento.APROVADO || novo == StatusOrcamento.REJEITADO));
-        if (!valida) {
-            throw new BusinessException("Transicao de status invalida: " + atual + " -> " + novo);
-        }
-    }
-
-    private void validarEditavel(StatusOrcamento status) {
-        if (status != null && STATUS_NAO_EDITAVEL.contains(status)) {
-            throw new BusinessException("Orcamento com status " + status + " nao pode ser alterado");
-        }
     }
 
     private void validarReferencias(Orcamento orcamento, Long idOrganizacao) {

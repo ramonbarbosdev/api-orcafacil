@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.dto.organizacao.OrganizacaoLogoMetadadosDTO;
 import com.api_orcafacil.exception.BusinessException;
 import com.api_orcafacil.exception.ResourceNotFoundException;
@@ -90,9 +89,6 @@ public class OrganizacaoLogoService {
         }
         Orcamento orcamento = orcamentoRepository.findByCdPublico(cdPublico)
                 .orElseThrow(() -> new ResourceNotFoundException("Orcamento nao encontrado"));
-        if (orcamento.getTpStatus() == StatusOrcamento.RASCUNHO) {
-            throw new ResourceNotFoundException("Orcamento nao encontrado");
-        }
         return obterConteudoPublicoInterno(orcamento.getIdOrganizacao());
     }
 
@@ -192,7 +188,6 @@ public class OrganizacaoLogoService {
             }
         }
         return orcamentoRepository.findByCdPublico(cdPublico)
-                .filter(o -> o.getTpStatus() != StatusOrcamento.RASCUNHO)
                 .map(Orcamento::getIdOrganizacao)
                 .flatMap(logoRepository::findByIdOrganizacaoAndFlAtivoTrue)
                 .isPresent();

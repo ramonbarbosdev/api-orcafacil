@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.api_orcafacil.common.ChaveLimite;
@@ -79,7 +80,7 @@ public class ClienteService {
         repository.delete(cliente);
     }
 
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.MANDATORY)
     public Long registrarClienteAPartirDoOrcamento(ClienteOrcamentoRequest entrada) {
         Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
         if (entrada == null || entrada.getNuCpfcnpj() == null || entrada.getNuCpfcnpj().isBlank()) {

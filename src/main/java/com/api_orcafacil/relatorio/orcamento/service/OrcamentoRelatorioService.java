@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.api_orcafacil.common.StatusOrcamento;
 import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Cliente;
 import com.api_orcafacil.model.Orcamento;
@@ -64,9 +63,6 @@ public class OrcamentoRelatorioService {
     public byte[] gerarComTransacao(String cdPublico) {
         Orcamento orcamento = repository.findByCdPublico(cdPublico)
                 .orElseThrow(() -> new ResourceNotFoundException("Orcamento nao encontrado"));
-        if (orcamento.getTpStatus() == StatusOrcamento.RASCUNHO) {
-            throw new ResourceNotFoundException("Orcamento nao encontrado");
-        }
 
         inicializarAssociacoes(orcamento);
         String nomeOrganizacao = buscarNomeOrganizacao(orcamento.getIdOrganizacao());

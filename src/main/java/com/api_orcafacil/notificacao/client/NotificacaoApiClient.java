@@ -25,6 +25,7 @@ import com.api_orcafacil.notificacao.dto.NotificacaoLoginResponse;
 import com.api_orcafacil.notificacao.dto.NotificacaoSelecionarOrganizacaoRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoSelecionarOrganizacaoResponse;
 import com.api_orcafacil.notificacao.dto.NotificacaoTemplateEnviarRequest;
+import com.api_orcafacil.notificacao.dto.WhatsappSessaoStatusDTO;
 
 @Component
 @ConditionalOnProperty(name = "app.notificacao.enabled", havingValue = "true")
@@ -86,6 +87,26 @@ public class NotificacaoApiClient {
     public void atualizarEmailAlertas(NotificacaoCredenciais credenciais, String emailAlertas) {
         validarCredenciais(credenciais);
         put(credenciais, "/app/integracao/email-alertas", new NotificacaoEmailAlertasRequest(emailAlertas), Void.class);
+    }
+
+    public WhatsappSessaoStatusDTO obterWhatsappStatus(NotificacaoCredenciais credenciais) {
+        validarCredenciais(credenciais);
+        return get(credenciais, "/app/integracao/whatsapp/status", WhatsappSessaoStatusDTO.class);
+    }
+
+    public WhatsappSessaoStatusDTO conectarWhatsapp(NotificacaoCredenciais credenciais) {
+        validarCredenciais(credenciais);
+        return post(credenciais, "/app/integracao/whatsapp/conectar", Map.of(), WhatsappSessaoStatusDTO.class);
+    }
+
+    public WhatsappSessaoStatusDTO desconectarWhatsapp(NotificacaoCredenciais credenciais) {
+        validarCredenciais(credenciais);
+        return post(credenciais, "/app/integracao/whatsapp/desconectar", Map.of(), WhatsappSessaoStatusDTO.class);
+    }
+
+    public WhatsappSessaoStatusDTO cancelarConexaoWhatsapp(NotificacaoCredenciais credenciais) {
+        validarCredenciais(credenciais);
+        return post(credenciais, "/app/integracao/whatsapp/cancelar-conexao", Map.of(), WhatsappSessaoStatusDTO.class);
     }
 
     private void validarCredenciais(NotificacaoCredenciais credenciais) {

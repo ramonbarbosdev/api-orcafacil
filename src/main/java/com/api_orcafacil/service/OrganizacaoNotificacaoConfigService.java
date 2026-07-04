@@ -3,94 +3,83 @@ package com.api_orcafacil.service;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import com.api_orcafacil.dto.integracao.OrganizacaoNotificacaoConfigDTO;
-import com.api_orcafacil.dto.integracao.OrganizacaoNotificacaoConfigRequest;
-import com.api_orcafacil.exception.ResourceNotFoundException;
-import com.api_orcafacil.notificacao.client.NotificacaoApiClient;
-import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
-import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
-import com.api_orcafacil.repository.central.CentralOrganizacaoRepository;
-import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
+import com.api_orcafacil.dto.integracao.OrganizacaoNotificacaoTenantDTO;
+import com.api_orcafacil.notificacao.dto.WhatsappSessaoStatusDTO;
+import com.api_orcafacil.notificacao.support.NotificacaoErroParser;
+
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 @ConditionalOnProperty(name = "app.saas.central.enabled", havingValue = "true")
 public class OrganizacaoNotificacaoConfigService {
 
-    private final CentralOrganizacaoRepository organizacaoRepository;
+    private final ObjectProvider<OrganizacaoNotificacaoAdminService> adminService;
     private final TenantContextService tenantContextService;
-    private final ObjectProvider<NotificacaoApiClient> notificacaoApiClient;
 
     public OrganizacaoNotificacaoConfigService(
-            CentralOrganizacaoRepository organizacaoRepository,
-            TenantContextService tenantContextService,
-            ObjectProvider<NotificacaoApiClient> notificacaoApiClient) {
-        this.organizacaoRepository = organizacaoRepository;
+            ObjectProvider<OrganizacaoNotificacaoAdminService> adminService,
+            TenantContextService tenantContextService) {
+        this.adminService = adminService;
         this.tenantContextService = tenantContextService;
-        this.notificacaoApiClient = notificacaoApiClient;
     }
 
-    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
-    public OrganizacaoNotificacaoConfigDTO obterAtual() {
-        CentralOrganizacao organizacao = buscarOrganizacaoAtual();
-        return paraDto(organizacao);
+    public OrganizacaoNotificacaoTenantDTO obterAtual() {
+        OrganizacaoNotificacaoAdminService service = adminService.getIfAvailable();
+        if (service == null) {
+            return new OrganizacaoNotificacaoTenantDTO(false, false, "Central SaaS desabilitada");
+        }
+        return service.obterVisaoTenant();
     }
 
-    @Transactional(transactionManager = "centralTransactionManager")
-    public OrganizacaoNotificacaoConfigDTO salvar(OrganizacaoNotificacaoConfigRequest request) {
-        CentralOrganizacao organizacao = buscarOrganizacaoAtual();
-        if (request.getIdOrganizacaoNotificacao() != null) {
-            organizacao.setIdOrganizacaoNotificacao(request.getIdOrganizacaoNotificacao());
-        }
-        if (StringUtils.hasText(request.getApiKey())) {
-            organizacao.setDsApiKeyNotificacao(request.getApiKey().trim());
-        }
-        if (request.getEmailAlertas() != null) {
-            String email = request.getEmailAlertas().trim();
-            organizacao.setDsEmailAlertasNotificacao(StringUtils.hasText(email) ? email : null);
-        }
-
-        CentralOrganizacao salva = organizacaoRepository.save(organizacao);
-        sincronizarEmailAlertasNotificacao(salva);
-        return paraDto(salva);
+    public WhatsappSessaoStatusDTO whatsappStatus() {
+        return executarWhatsapp(() -> exigirAdmin().whatsappStatus(idOrganizacaoAtual()));
     }
 
-    private void sincronizarEmailAlertasNotificacao(CentralOrganizacao organizacao) {
-        String apiKey = organizacao.getDsApiKeyNotificacao();
-        if (!StringUtils.hasText(apiKey)) {
-            return;
-        }
+    public WhatsappSessaoStatusDTO whatsappConectar() {
+        return executarWhatsapp(() -> exigirAdmin().whatsappConectar(idOrganizacaoAtual()));
+    }
+
+    public WhatsappSessaoStatusDTO whatsappDesconectar() {
+        return executarWhatsapp(() -> exigirAdmin().whatsappDesconectar(idOrganizacaoAtual()));
+    }
+
+    public WhatsappSessaoStatusDTO whatsappCancelarConexao() {
+        return executarWhatsapp(() -> exigirAdmin().whatsappCancelarConexao(idOrganizacaoAtual()));
+    }
+
+    private WhatsappSessaoStatusDTO executarWhatsapp(java.util.function.Supplier<WhatsappSessaoStatusDTO> acao) {
         try {
-            NotificacaoApiClient client = notificacaoApiClient.getIfAvailable();
-            if (client == null) {
-                return;
+            WhatsappSessaoStatusDTO resposta = acao.get();
+            if (resposta != null && resposta.getErro() != null && !resposta.getErro().isBlank()) {
+                resposta.setSucesso(false);
             }
-            NotificacaoCredenciais credenciais = new NotificacaoCredenciais(
-                    organizacao.getIdOrganizacaoNotificacao(),
-                    apiKey);
-            client.atualizarEmailAlertas(
-                    credenciais,
-                    organizacao.getDsEmailAlertasNotificacao());
-        } catch (Exception ignored) {
-            // sincronizacao best-effort; admin pode configurar no painel de notificacoes
+            return resposta;
+        } catch (RestClientResponseException ex) {
+            return erroWhatsapp(NotificacaoErroParser.interpretar(ex).mensagemUsuario());
+        } catch (Exception ex) {
+            return erroWhatsapp(NotificacaoErroParser.interpretarGenerico(ex).mensagemUsuario());
         }
     }
 
-    private CentralOrganizacao buscarOrganizacaoAtual() {
-        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
-        return organizacaoRepository.findById(idOrganizacao)
-                .orElseThrow(() -> new ResourceNotFoundException("Organizacao nao encontrada"));
+    private WhatsappSessaoStatusDTO erroWhatsapp(String mensagem) {
+        WhatsappSessaoStatusDTO dto = new WhatsappSessaoStatusDTO();
+        dto.setSucesso(false);
+        dto.setStatus("ERRO");
+        dto.setConectado(false);
+        dto.setErro(mensagem);
+        return dto;
     }
 
-    private OrganizacaoNotificacaoConfigDTO paraDto(CentralOrganizacao organizacao) {
-        String apiKey = organizacao.getDsApiKeyNotificacao();
-        return new OrganizacaoNotificacaoConfigDTO(
-                organizacao.getIdOrganizacao(),
-                organizacao.getIdOrganizacaoNotificacao(),
-                apiKey,
-                StringUtils.hasText(apiKey),
-                organizacao.getDsEmailAlertasNotificacao());
+    private Long idOrganizacaoAtual() {
+        return tenantContextService.idOrganizacaoObrigatoria();
+    }
+
+    private OrganizacaoNotificacaoAdminService exigirAdmin() {
+        OrganizacaoNotificacaoAdminService service = adminService.getIfAvailable();
+        if (service == null) {
+            throw new IllegalStateException("Central SaaS desabilitada");
+        }
+        return service;
     }
 }

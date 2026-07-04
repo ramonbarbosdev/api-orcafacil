@@ -17,6 +17,10 @@ public class OrcamentoEnviarResponse {
 
     private OrcamentoResponse orcamento;
     private List<ResultadoNotificacao> notificacoes;
+    /** Integracao liberada e configurada pelo super admin. */
+    private boolean integracaoNotificacaoAtiva;
+    /** Mensagem pronta para copiar quando a integracao nao esta ativa. */
+    private String mensagemCompartilhamento;
 
     @Getter
     @Setter

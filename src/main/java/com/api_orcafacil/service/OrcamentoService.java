@@ -39,6 +39,7 @@ import com.api_orcafacil.model.OrcamentoItemCampoValor;
 import com.api_orcafacil.model.OrcamentoNotificacaoEnviada;
 import com.api_orcafacil.notificacao.service.OrcamentoNotificacaoHistoricoService;
 import com.api_orcafacil.notificacao.service.OrcamentoNotificacaoService;
+import com.api_orcafacil.notificacao.service.NotificacaoOrganizacaoResolver;
 import com.api_orcafacil.repository.OrcamentoNotificacaoEnviadaRepository;
 import com.api_orcafacil.repository.CatalogoRepository;
 import com.api_orcafacil.repository.CondicaoPagamentoRepository;
@@ -60,6 +61,7 @@ public class OrcamentoService {
     private final OrcamentoStatusHistoricoService statusHistoricoService;
     private final ObjectProvider<PoliticaPlanoService> politicaPlanoService;
     private final ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService;
+    private final ObjectProvider<NotificacaoOrganizacaoResolver> notificacaoOrganizacaoResolver;
     private final ObjectProvider<OrcamentoNotificacaoHistoricoService> orcamentoNotificacaoHistoricoService;
     private final ObjectProvider<OrcamentoNotificacaoEnviadaRepository> orcamentoNotificacaoRepository;
     private final ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService;
@@ -76,6 +78,7 @@ public class OrcamentoService {
             OrcamentoStatusHistoricoService statusHistoricoService,
             ObjectProvider<PoliticaPlanoService> politicaPlanoService,
             ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService,
+            ObjectProvider<NotificacaoOrganizacaoResolver> notificacaoOrganizacaoResolver,
             ObjectProvider<OrcamentoNotificacaoHistoricoService> orcamentoNotificacaoHistoricoService,
             ObjectProvider<OrcamentoNotificacaoEnviadaRepository> orcamentoNotificacaoRepository,
             ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService,
@@ -91,6 +94,7 @@ public class OrcamentoService {
         this.statusHistoricoService = statusHistoricoService;
         this.politicaPlanoService = politicaPlanoService;
         this.orcamentoNotificacaoService = orcamentoNotificacaoService;
+        this.notificacaoOrganizacaoResolver = notificacaoOrganizacaoResolver;
         this.orcamentoNotificacaoHistoricoService = orcamentoNotificacaoHistoricoService;
         this.orcamentoNotificacaoRepository = orcamentoNotificacaoRepository;
         this.orcamentoCentralSyncService = orcamentoCentralSyncService;
@@ -193,21 +197,25 @@ public class OrcamentoService {
     public OrcamentoEnviarResponse enviarComNotificacao(Long idOrcamento, OrcamentoEnviarRequest request) {
         Orcamento entidade = buscarEntidade(idOrcamento);
         OrcamentoResponse orcamento = OrcamentoResponse.from(entidade);
-        OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
-        var notificacoes = notificacaoService != null
-                ? notificacaoService.notificarOrcamentoEnviado(entidade, request)
-                : List.<OrcamentoEnviarResponse.ResultadoNotificacao>of();
+        boolean integracaoAtiva = integracaoNotificacaoAtiva(entidade.getIdOrganizacao());
 
-        String mensagemEnviada = notificacaoService != null
+        OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
+        String mensagemCompartilhamento = notificacaoService != null
                 ? notificacaoService.resolverMensagemPreview(entidade, request != null ? request.getMensagem() : null)
                 : null;
-        orcamentoNotificacaoHistoricoService.ifAvailable(historico -> {
-            for (OrcamentoEnviarResponse.ResultadoNotificacao resultado : notificacoes) {
-                historico.registrar(idOrcamento, resultado, mensagemEnviada);
-            }
-        });
 
-        return new OrcamentoEnviarResponse(orcamento, notificacoes);
+        List<OrcamentoEnviarResponse.ResultadoNotificacao> notificacoes = List.of();
+        if (integracaoAtiva && notificacaoService != null) {
+            notificacoes = notificacaoService.notificarOrcamentoEnviado(entidade, request);
+            String mensagemEnviada = mensagemCompartilhamento;
+            orcamentoNotificacaoHistoricoService.ifAvailable(historico -> {
+                for (OrcamentoEnviarResponse.ResultadoNotificacao resultado : notificacoes) {
+                    historico.registrar(idOrcamento, resultado, mensagemEnviada);
+                }
+            });
+        }
+
+        return new OrcamentoEnviarResponse(orcamento, notificacoes, integracaoAtiva, mensagemCompartilhamento);
     }
 
     @Transactional(readOnly = true)
@@ -217,7 +225,15 @@ public class OrcamentoService {
         if (notificacaoService == null) {
             throw new BusinessException("Integracao de notificacoes desabilitada");
         }
-        return notificacaoService.previewMensagemCompartilhamento(entidade);
+        OrcamentoMensagemCompartilhamentoResponse resposta =
+                notificacaoService.previewMensagemCompartilhamento(entidade);
+        resposta.setIntegracaoNotificacaoAtiva(integracaoNotificacaoAtiva(entidade.getIdOrganizacao()));
+        return resposta;
+    }
+
+    private boolean integracaoNotificacaoAtiva(Long idOrganizacao) {
+        NotificacaoOrganizacaoResolver resolver = notificacaoOrganizacaoResolver.getIfAvailable();
+        return resolver != null && resolver.integracaoConfigurada(idOrganizacao);
     }
 
     @Transactional(readOnly = true)

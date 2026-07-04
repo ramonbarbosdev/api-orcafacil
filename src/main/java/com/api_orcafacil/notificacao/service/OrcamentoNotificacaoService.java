@@ -72,8 +72,8 @@ public class OrcamentoNotificacaoService {
         }
 
         NotificacaoCredenciais credenciais = organizacaoResolver.resolverCredenciais(orcamento.getIdOrganizacao());
-        if (!credenciais.usaApiKey()) {
-            return List.of(erro(null, null, NotificacaoOrganizacaoResolver.MSG_INTEGRACAO_NAO_CONFIGURADA));
+        if (!organizacaoResolver.integracaoConfigurada(orcamento.getIdOrganizacao())) {
+            return List.of();
         }
 
         String link = montarLinkPublico(orcamento.getCdPublico());

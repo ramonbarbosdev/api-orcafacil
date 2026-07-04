@@ -15,7 +15,7 @@ import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
 public class NotificacaoOrganizacaoResolver {
 
     public static final String MSG_INTEGRACAO_NAO_CONFIGURADA =
-            "Integracao de notificacoes nao configurada. Informe a API Key em Configuracoes > Integracao WhatsApp.";
+            "Integracao de notificacoes nao configurada. Contate o administrador da plataforma.";
 
     private final CentralOrganizacaoRepository organizacaoRepository;
     private final TenantContextService tenantContextService;
@@ -49,7 +49,12 @@ public class NotificacaoOrganizacaoResolver {
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public boolean integracaoConfigurada(Long idOrganizacaoOrcafacil) {
-        return resolverCredenciais(idOrganizacaoOrcafacil).usaApiKey();
+        if (idOrganizacaoOrcafacil == null) {
+            return false;
+        }
+        return organizacaoRepository.findById(idOrganizacaoOrcafacil)
+                .map(org -> org.isFlNotificacaoHabilitada() && resolverCredenciais(idOrganizacaoOrcafacil).usaApiKey())
+                .orElse(false);
     }
 
     private NotificacaoCredenciais credenciaisDaOrganizacao(CentralOrganizacao organizacao) {

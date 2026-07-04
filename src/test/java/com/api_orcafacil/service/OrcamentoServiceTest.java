@@ -79,6 +79,8 @@ class OrcamentoServiceTest {
     @Mock
     private ObjectProvider<OrcamentoNotificacaoService> orcamentoNotificacaoService;
     @Mock
+    private ObjectProvider<com.api_orcafacil.notificacao.service.NotificacaoOrganizacaoResolver> notificacaoOrganizacaoResolver;
+    @Mock
     private ObjectProvider<OrcamentoCentralSyncService> orcamentoCentralSyncService;
     @Mock
     private ObjectProvider<OrcamentoCentralSyncRetryService> orcamentoCentralSyncRetryService;

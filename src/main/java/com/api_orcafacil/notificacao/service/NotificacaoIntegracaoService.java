@@ -11,7 +11,9 @@ import com.api_orcafacil.notificacao.client.NotificacaoApiClient;
 import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
 import com.api_orcafacil.notificacao.dto.NotificacaoIntegracaoStatusDTO;
 import com.api_orcafacil.notificacao.support.NotificacaoErroParser;
+import com.api_orcafacil.repository.central.CentralOrganizacaoRepository;
 import com.api_orcafacil.service.TenantContextService;
+import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
 
 @Service
 @ConditionalOnProperty(name = "app.notificacao.enabled", havingValue = "true")
@@ -20,25 +22,40 @@ public class NotificacaoIntegracaoService {
     private final NotificacaoApiClient client;
     private final NotificacaoOrganizacaoResolver organizacaoResolver;
     private final TenantContextService tenantContextService;
+    private final CentralOrganizacaoRepository organizacaoRepository;
 
     public NotificacaoIntegracaoService(
             NotificacaoApiClient client,
             NotificacaoOrganizacaoResolver organizacaoResolver,
-            TenantContextService tenantContextService) {
+            TenantContextService tenantContextService,
+            CentralOrganizacaoRepository organizacaoRepository) {
         this.client = client;
         this.organizacaoResolver = organizacaoResolver;
         this.tenantContextService = tenantContextService;
+        this.organizacaoRepository = organizacaoRepository;
     }
 
     public NotificacaoIntegracaoStatusDTO verificarIntegracaoAtual() {
-        Long idOrgOrcafacil = tenantContextService.idOrganizacaoObrigatoria();
+        return verificarIntegracao(tenantContextService.idOrganizacaoObrigatoria());
+    }
+
+    public NotificacaoIntegracaoStatusDTO verificarIntegracao(Long idOrgOrcafacil) {
+        CentralOrganizacao organizacao = organizacaoRepository.findById(idOrgOrcafacil).orElse(null);
+        if (organizacao == null) {
+            return statusErro(idOrgOrcafacil, null, "Organizacao nao encontrada");
+        }
+        if (!organizacao.isFlNotificacaoHabilitada()) {
+            return statusErro(idOrgOrcafacil, organizacao.getIdOrganizacaoNotificacao(),
+                    "Integracao de notificacoes nao liberada para esta organizacao.");
+        }
+
         NotificacaoCredenciais credenciais = organizacaoResolver.resolverCredenciais(idOrgOrcafacil);
         if (!credenciais.usaApiKey()) {
             return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(),
                     NotificacaoOrganizacaoResolver.MSG_INTEGRACAO_NAO_CONFIGURADA);
         }
 
-        if (credenciais.usaApiKey() && !credenciais.apiKey().contains(".")) {
+        if (!credenciais.apiKey().contains(".")) {
             return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(),
                     "API Key incompleta. Use o formato nak_prefixo.segredo.");
         }

@@ -9,13 +9,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrganizacaoNotificacaoConfigDTO {
+public class OrganizacaoNotificacaoAdminDTO {
 
     private Long idOrganizacaoOrcafacil;
     private Long idOrganizacaoNotificacao;
-    /** API Key completa da organizacao (visivel para o admin do tenant). */
     private String apiKey;
     private boolean configurada;
-    /** E-mail para alertas operacionais da integracao. */
+    private boolean habilitada;
     private String emailAlertas;
 }

@@ -13,4 +13,6 @@ public class OrcamentoMensagemCompartilhamentoResponse {
 
     private String mensagem;
     private String linkOrcamento;
+    /** Integracao liberada e configurada pelo super admin. */
+    private boolean integracaoNotificacaoAtiva;
 }

@@ -75,6 +75,10 @@ public class CentralOrganizacao {
     @Column(name = "ds_email_alertas_notificacao")
     private String dsEmailAlertasNotificacao;
 
+    /** Integracao com notificacao-api liberada pelo super admin da plataforma. */
+    @Column(name = "fl_notificacao_habilitada", nullable = false)
+    private boolean flNotificacaoHabilitada = false;
+
     /** URL externa da logo (alternativa ao upload de arquivo). */
     @Column(name = "ds_logo_url", length = 512)
     private String dsLogoUrl;

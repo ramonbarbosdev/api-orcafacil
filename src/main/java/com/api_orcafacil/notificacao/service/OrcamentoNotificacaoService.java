@@ -95,7 +95,7 @@ public class OrcamentoNotificacaoService {
         }
         String link = montarLinkPublico(orcamento.getCdPublico());
         String mensagem = montarMensagemPadrao(orcamento, cliente, link);
-        return new OrcamentoMensagemCompartilhamentoResponse(mensagem, link);
+        return new OrcamentoMensagemCompartilhamentoResponse(mensagem, link, false);
     }
 
     public String resolverMensagemPreview(Orcamento orcamento, String mensagemPersonalizada) {

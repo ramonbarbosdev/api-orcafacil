@@ -197,16 +197,19 @@ public class OrcamentoService {
     public OrcamentoEnviarResponse enviarComNotificacao(Long idOrcamento, OrcamentoEnviarRequest request) {
         Orcamento entidade = buscarEntidade(idOrcamento);
         OrcamentoResponse orcamento = OrcamentoResponse.from(entidade);
-        boolean integracaoAtiva = integracaoNotificacaoAtiva(entidade.getIdOrganizacao());
+        boolean integracaoAtiva = integracaoNotificacaoAtiva(tenantContextService.idOrganizacaoObrigatoria());
 
         OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
         String mensagemCompartilhamento = notificacaoService != null
                 ? notificacaoService.resolverMensagemPreview(entidade, request != null ? request.getMensagem() : null)
                 : null;
 
-        List<OrcamentoEnviarResponse.ResultadoNotificacao> notificacoes = List.of();
+        List<OrcamentoEnviarResponse.ResultadoNotificacao> notificacoes =
+                integracaoAtiva && notificacaoService != null
+                        ? notificacaoService.notificarOrcamentoEnviado(entidade, request)
+                        : List.of();
+
         if (integracaoAtiva && notificacaoService != null) {
-            notificacoes = notificacaoService.notificarOrcamentoEnviado(entidade, request);
             String mensagemEnviada = mensagemCompartilhamento;
             orcamentoNotificacaoHistoricoService.ifAvailable(historico -> {
                 for (OrcamentoEnviarResponse.ResultadoNotificacao resultado : notificacoes) {
@@ -227,13 +230,17 @@ public class OrcamentoService {
         }
         OrcamentoMensagemCompartilhamentoResponse resposta =
                 notificacaoService.previewMensagemCompartilhamento(entidade);
-        resposta.setIntegracaoNotificacaoAtiva(integracaoNotificacaoAtiva(entidade.getIdOrganizacao()));
+        resposta.setIntegracaoNotificacaoAtiva(integracaoNotificacaoAtiva(tenantContextService.idOrganizacaoObrigatoria()));
         return resposta;
     }
 
     private boolean integracaoNotificacaoAtiva(Long idOrganizacao) {
         NotificacaoOrganizacaoResolver resolver = notificacaoOrganizacaoResolver.getIfAvailable();
-        return resolver != null && resolver.integracaoConfigurada(idOrganizacao);
+        if (resolver == null) {
+            return false;
+        }
+        Long orgId = idOrganizacao != null ? idOrganizacao : tenantContextService.idOrganizacaoObrigatoria();
+        return resolver.integracaoConfigurada(orgId);
     }
 
     @Transactional(readOnly = true)

@@ -7,7 +7,9 @@ import java.sql.Statement;
 import java.util.Locale;
 import java.util.Map;
 
+import com.api_orcafacil.tenant.flyway.TenantFlywayMigrationService;
 import org.flywaydb.core.Flyway;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +27,7 @@ public class DatabaseTenantProvisioningService implements TenantProvisioningServ
     private final String password;
     private final String adminDatabase;
     private final String migrationsLocation;
+    private final ObjectProvider<TenantFlywayMigrationService> tenantFlywayMigrationService;
 
     public DatabaseTenantProvisioningService(
             @Qualifier("centralNamedParameterJdbcTemplate") NamedParameterJdbcTemplate centralJdbcTemplate,
@@ -33,7 +36,8 @@ public class DatabaseTenantProvisioningService implements TenantProvisioningServ
             @Value("${app.saas.tenant-db.username:postgres}") String username,
             @Value("${app.saas.tenant-db.password:postgres}") String password,
             @Value("${app.saas.provisioning.admin-database:postgres}") String adminDatabase,
-            @Value("${app.saas.provisioning.migrations-location:classpath:db/migration}") String migrationsLocation) {
+            @Value("${app.saas.provisioning.migrations-location:classpath:db/migration}") String migrationsLocation,
+            ObjectProvider<TenantFlywayMigrationService> tenantFlywayMigrationService) {
         this.centralJdbcTemplate = centralJdbcTemplate;
         this.host = host;
         this.port = port;
@@ -41,6 +45,7 @@ public class DatabaseTenantProvisioningService implements TenantProvisioningServ
         this.password = password;
         this.adminDatabase = adminDatabase;
         this.migrationsLocation = migrationsLocation;
+        this.tenantFlywayMigrationService = tenantFlywayMigrationService;
     }
 
     @Override
@@ -148,6 +153,11 @@ public class DatabaseTenantProvisioningService implements TenantProvisioningServ
     }
 
     private void executarMigrations(String databaseName) {
+        TenantFlywayMigrationService migrationService = tenantFlywayMigrationService.getIfAvailable();
+        if (migrationService != null) {
+            migrationService.migrar(databaseName);
+            return;
+        }
         Flyway.configure()
                 .dataSource(jdbcUrl(databaseName), username, password)
                 .locations(migrationsLocation)

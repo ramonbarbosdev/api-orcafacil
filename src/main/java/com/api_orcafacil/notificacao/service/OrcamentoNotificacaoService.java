@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.api_orcafacil.dto.orcamento.OrcamentoEnviarRequest;
 import com.api_orcafacil.dto.orcamento.OrcamentoEnviarResponse.ResultadoNotificacao;
 import com.api_orcafacil.model.Cliente;
 import com.api_orcafacil.model.Orcamento;
@@ -26,7 +26,6 @@ import com.api_orcafacil.notificacao.dto.NotificacaoCanal;
 import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
 import com.api_orcafacil.notificacao.dto.NotificacaoEnviarRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoEnviarResponse;
-import com.api_orcafacil.notificacao.dto.NotificacaoTemplateEnviarRequest;
 import com.api_orcafacil.notificacao.support.NotificacaoErroParser;
 import com.api_orcafacil.repository.ClienteRepository;
 
@@ -53,7 +52,10 @@ public class OrcamentoNotificacaoService {
         this.organizacaoResolver = organizacaoResolver;
     }
 
-    public List<ResultadoNotificacao> notificarOrcamentoEnviado(Orcamento orcamento, List<NotificacaoCanal> canais) {
+    public List<ResultadoNotificacao> notificarOrcamentoEnviado(Orcamento orcamento, OrcamentoEnviarRequest request) {
+        List<NotificacaoCanal> canaisSolicitados = request != null ? request.getCanais() : List.of();
+        String mensagemPersonalizada = request != null ? request.getMensagem() : null;
+
         Cliente cliente = clienteRepository.findByIdClienteAndIdOrganizacao(
                         orcamento.getIdCliente(), orcamento.getIdOrganizacao())
                 .orElse(null);
@@ -61,7 +63,7 @@ public class OrcamentoNotificacaoService {
             return List.of(erro(null, null, "Cliente do orcamento nao encontrado"));
         }
 
-        Set<NotificacaoCanal> canaisEfetivos = resolverCanais(canais, cliente);
+        Set<NotificacaoCanal> canaisEfetivos = resolverCanais(canaisSolicitados, cliente);
         if (canaisEfetivos.isEmpty()) {
             return List.of(erro(null, null, "Nenhum canal disponivel para o cliente"));
         }
@@ -74,16 +76,22 @@ public class OrcamentoNotificacaoService {
         }
 
         String link = montarLinkPublico(orcamento.getCdPublico());
+        String mensagem = resolverMensagem(orcamento, cliente, link, mensagemPersonalizada);
         List<ResultadoNotificacao> resultados = new ArrayList<>();
 
         for (NotificacaoCanal canal : canaisEfetivos) {
-            resultados.add(enviarPorCanal(credenciais, canal, orcamento, cliente, link));
+            resultados.add(enviarPorCanal(credenciais, canal, orcamento, cliente, link, mensagem));
         }
         return resultados;
     }
 
     private ResultadoNotificacao enviarPorCanal(
-            NotificacaoCredenciais credenciais, NotificacaoCanal canal, Orcamento orcamento, Cliente cliente, String link) {
+            NotificacaoCredenciais credenciais,
+            NotificacaoCanal canal,
+            Orcamento orcamento,
+            Cliente cliente,
+            String link,
+            String mensagem) {
         String destinatario = resolverDestinatario(canal, cliente);
         if (!StringUtils.hasText(destinatario)) {
             return erro(canal, destinatario, "Destinatario nao informado para o canal " + canal);
@@ -94,8 +102,9 @@ public class OrcamentoNotificacaoService {
                 client.registrarConsentimento(credenciais, canal, destinatario, cliente.getNmCliente());
             }
 
-            NotificacaoEnviarResponse resposta = enviarMensagem(
-                    credenciais, canal, orcamento, cliente, link, destinatario);
+            String assunto = "Orcamento " + orcamento.getNuOrcamento();
+            NotificacaoEnviarResponse resposta = client.enviar(
+                    credenciais, new NotificacaoEnviarRequest(canal, destinatario, assunto, mensagem));
             boolean sucesso = Boolean.TRUE.equals(resposta.sucesso());
             return new ResultadoNotificacao(
                     canal, destinatario, sucesso, resposta.idNotificacao(), resposta.erro());
@@ -108,29 +117,28 @@ public class OrcamentoNotificacaoService {
         }
     }
 
-    private NotificacaoEnviarResponse enviarMensagem(
-            NotificacaoCredenciais credenciais,
-            NotificacaoCanal canal,
-            Orcamento orcamento,
-            Cliente cliente,
-            String link,
-            String destinatario) {
-        String templateKey = properties.getTemplateOrcamentoEnviado();
-        if (StringUtils.hasText(templateKey)) {
-            return client.enviarTemplate(credenciais, new NotificacaoTemplateEnviarRequest(
-                    templateKey,
-                    destinatario,
-                    Map.of(
-                            "nomeCliente", cliente.getNmCliente(),
-                            "numeroOrcamento", orcamento.getNuOrcamento(),
-                            "valorTotal", formatarMoeda(orcamento.getVlPrecoFinal()),
-                            "dataValidade", orcamento.getDtValido().format(DATA_BR),
-                            "linkOrcamento", link)));
+    private String resolverMensagem(
+            Orcamento orcamento, Cliente cliente, String link, String mensagemPersonalizada) {
+        if (StringUtils.hasText(mensagemPersonalizada)) {
+            return aplicarPlaceholders(mensagemPersonalizada.trim(), orcamento, cliente, link);
         }
+        return montarMensagemPadrao(orcamento, cliente, link);
+    }
 
-        String assunto = "Orcamento " + orcamento.getNuOrcamento();
-        String mensagem = montarMensagemTexto(orcamento, cliente, link);
-        return client.enviar(credenciais, new NotificacaoEnviarRequest(canal, destinatario, assunto, mensagem));
+    private String aplicarPlaceholders(
+            String texto, Orcamento orcamento, Cliente cliente, String link) {
+        return texto
+                .replace("{nomeCliente}", valor(cliente.getNmCliente()))
+                .replace("{numeroOrcamento}", valor(orcamento.getNuOrcamento()))
+                .replace("{valorTotal}", formatarMoeda(orcamento.getVlPrecoFinal()))
+                .replace("{dataValidade}", orcamento.getDtValido() != null
+                        ? orcamento.getDtValido().format(DATA_BR)
+                        : "")
+                .replace("{linkOrcamento}", valor(link));
+    }
+
+    private String valor(String texto) {
+        return texto != null ? texto : "";
     }
 
     private Set<NotificacaoCanal> resolverCanais(List<NotificacaoCanal> solicitados, Cliente cliente) {
@@ -161,22 +169,30 @@ public class OrcamentoNotificacaoService {
         if (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
         }
-        return base + "/orcamentos/visualizacao/" + cdPublico;
+        String path = properties.getPublicOrcamentoPath();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return base + path + "/" + cdPublico;
     }
 
-    private String montarMensagemTexto(Orcamento orcamento, Cliente cliente, String link) {
+    private String montarMensagemPadrao(Orcamento orcamento, Cliente cliente, String link) {
         return """
-                Ola, %s!
+                Ola, %s! 👋
 
-                Seu orcamento %s no valor de %s esta disponivel.
+                Seu orcamento *%s* no valor de *%s* esta disponivel.
                 Validade: %s
 
-                Visualize aqui: %s
+                Visualize aqui:
+                %s
                 """.formatted(
                 cliente.getNmCliente(),
                 orcamento.getNuOrcamento(),
                 formatarMoeda(orcamento.getVlPrecoFinal()),
-                orcamento.getDtValido().format(DATA_BR),
+                orcamento.getDtValido() != null ? orcamento.getDtValido().format(DATA_BR) : "nao informada",
                 link).trim();
     }
 

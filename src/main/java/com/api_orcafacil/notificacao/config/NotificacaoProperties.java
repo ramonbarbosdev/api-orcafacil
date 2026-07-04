@@ -18,10 +18,10 @@ public class NotificacaoProperties {
     private String apiKey;
     /** ID da organizacao na notificacao-api (pode diferir do orcafacil). */
     private Long idOrganizacao;
-    /** URL publica do OrcaFacil para montar links do orcamento (ex: https://app.exemplo.com/orcafacil). */
-    private String publicBaseUrl = "http://localhost:8080/orcafacil";
-    /** Chave de template opcional na notificacao-api (ex: orcamento-enviado). */
-    private String templateOrcamentoEnviado;
+    /** URL publica do frontend OrcaFacil (ex: https://app.exemplo.com). */
+    private String publicBaseUrl = "http://localhost:4200";
+    /** Caminho da rota publica do orcamento no frontend (ex: /public/orcamento). */
+    private String publicOrcamentoPath = "/public/orcamento";
     private boolean registrarConsentimentoWhatsapp = true;
     private int connectTimeoutMs = 5_000;
     private int readTimeoutMs = 30_000;

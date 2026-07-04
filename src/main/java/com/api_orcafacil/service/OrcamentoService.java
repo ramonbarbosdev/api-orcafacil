@@ -186,8 +186,7 @@ public class OrcamentoService {
         Orcamento entidade = buscarEntidade(idOrcamento);
         OrcamentoNotificacaoService notificacaoService = orcamentoNotificacaoService.getIfAvailable();
         var notificacoes = notificacaoService != null
-                ? notificacaoService.notificarOrcamentoEnviado(
-                        entidade, request != null ? request.getCanais() : List.of())
+                ? notificacaoService.notificarOrcamentoEnviado(entidade, request)
                 : List.<OrcamentoEnviarResponse.ResultadoNotificacao>of();
         return new OrcamentoEnviarResponse(orcamento, notificacoes);
     }

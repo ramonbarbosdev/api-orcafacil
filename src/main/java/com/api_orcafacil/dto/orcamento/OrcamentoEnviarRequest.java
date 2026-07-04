@@ -14,4 +14,7 @@ public class OrcamentoEnviarRequest {
 
     /** Canais desejados. Se vazio, usa WhatsApp (se tiver telefone) e/ou e-mail (se tiver e-mail). */
     private List<NotificacaoCanal> canais = new ArrayList<>();
+
+    /** Mensagem opcional. Se vazia, o OrcaFacil monta o texto automaticamente. */
+    private String mensagem;
 }

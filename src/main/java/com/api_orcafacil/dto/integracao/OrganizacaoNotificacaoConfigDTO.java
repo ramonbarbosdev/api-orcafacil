@@ -13,8 +13,9 @@ public class OrganizacaoNotificacaoConfigDTO {
 
     private Long idOrganizacaoOrcafacil;
     private Long idOrganizacaoNotificacao;
-    /** Indica se ha API Key configurada (valor mascarado). */
-    private String apiKeyMascarada;
-    private boolean usaApiKeyTenant;
-    private boolean usaApiKeyGlobal;
+    /** API Key completa da organizacao (visivel para o admin do tenant). */
+    private String apiKey;
+    private boolean configurada;
+    /** E-mail para alertas operacionais da integracao. */
+    private String emailAlertas;
 }

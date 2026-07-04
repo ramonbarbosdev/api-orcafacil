@@ -11,9 +11,7 @@ import com.api_orcafacil.notificacao.client.NotificacaoApiClient;
 import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
 import com.api_orcafacil.notificacao.dto.NotificacaoIntegracaoStatusDTO;
 import com.api_orcafacil.notificacao.support.NotificacaoErroParser;
-import com.api_orcafacil.repository.central.CentralOrganizacaoRepository;
 import com.api_orcafacil.service.TenantContextService;
-import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
 
 @Service
 @ConditionalOnProperty(name = "app.notificacao.enabled", havingValue = "true")
@@ -22,57 +20,43 @@ public class NotificacaoIntegracaoService {
     private final NotificacaoApiClient client;
     private final NotificacaoOrganizacaoResolver organizacaoResolver;
     private final TenantContextService tenantContextService;
-    private final CentralOrganizacaoRepository organizacaoRepository;
 
     public NotificacaoIntegracaoService(
             NotificacaoApiClient client,
             NotificacaoOrganizacaoResolver organizacaoResolver,
-            TenantContextService tenantContextService,
-            CentralOrganizacaoRepository organizacaoRepository) {
+            TenantContextService tenantContextService) {
         this.client = client;
         this.organizacaoResolver = organizacaoResolver;
         this.tenantContextService = tenantContextService;
-        this.organizacaoRepository = organizacaoRepository;
     }
 
     public NotificacaoIntegracaoStatusDTO verificarIntegracaoAtual() {
         Long idOrgOrcafacil = tenantContextService.idOrganizacaoObrigatoria();
         NotificacaoCredenciais credenciais = organizacaoResolver.resolverCredenciais(idOrgOrcafacil);
-        boolean usaApiKeyTenant = usaApiKeyTenant(idOrgOrcafacil);
-
-        if (!credenciais.usaApiKey() && credenciais.idOrganizacaoNotificacao() == null) {
-            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(), usaApiKeyTenant,
-                    "Configure API Key ou id_organizacao_notificacao nas configuracoes de integracao.");
+        if (!credenciais.usaApiKey()) {
+            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(),
+                    NotificacaoOrganizacaoResolver.MSG_INTEGRACAO_NAO_CONFIGURADA);
         }
 
         if (credenciais.usaApiKey() && !credenciais.apiKey().contains(".")) {
-            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(), usaApiKeyTenant,
+            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(),
                     "API Key incompleta. Use o formato nak_prefixo.segredo.");
         }
 
         try {
-            if (credenciais.usaApiKey()) {
-                Map<String, Object> remoto = client.obterStatusIntegracao(credenciais);
-                return montarStatusOk(idOrgOrcafacil, credenciais, usaApiKeyTenant, remoto);
-            }
-            client.verificarConexao(credenciais);
-            return new NotificacaoIntegracaoStatusDTO(
-                    true, true, idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(),
-                    "Conexao com notificacao-api OK (JWT)",
-                    true, false, null, null, usaApiKeyTenant);
+            Map<String, Object> remoto = client.obterStatusIntegracao(credenciais);
+            return montarStatusOk(idOrgOrcafacil, credenciais, remoto);
         } catch (RestClientResponseException ex) {
-            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(), usaApiKeyTenant,
+            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(),
                     NotificacaoErroParser.extrairMensagem(ex));
         } catch (Exception ex) {
-            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(), usaApiKeyTenant,
-                    ex.getMessage());
+            return statusErro(idOrgOrcafacil, credenciais.idOrganizacaoNotificacao(), ex.getMessage());
         }
     }
 
     private NotificacaoIntegracaoStatusDTO montarStatusOk(
             Long idOrgOrcafacil,
             NotificacaoCredenciais credenciais,
-            boolean usaApiKeyTenant,
             Map<String, Object> remoto) {
         boolean whatsappConectado = Boolean.TRUE.equals(remoto.get("whatsappConectado"));
         String whatsappStatus = valorTexto(remoto.get("whatsappStatus"));
@@ -99,24 +83,16 @@ public class NotificacaoIntegracaoService {
                 whatsappConectado,
                 whatsappStatus,
                 whatsappTelefone,
-                usaApiKeyTenant);
+                true);
     }
 
     private NotificacaoIntegracaoStatusDTO statusErro(
             Long idOrgOrcafacil,
             Long idOrgNotificacao,
-            boolean usaApiKeyTenant,
             String mensagem) {
         return new NotificacaoIntegracaoStatusDTO(
                 true, false, idOrgOrcafacil, idOrgNotificacao, mensagem,
-                false, false, null, null, usaApiKeyTenant);
-    }
-
-    private boolean usaApiKeyTenant(Long idOrgOrcafacil) {
-        return organizacaoRepository.findById(idOrgOrcafacil)
-                .map(CentralOrganizacao::getDsApiKeyNotificacao)
-                .filter(StringUtils::hasText)
-                .isPresent();
+                false, false, null, null, false);
     }
 
     private String valorTexto(Object valor) {

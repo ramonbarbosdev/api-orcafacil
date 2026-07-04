@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import com.api_orcafacil.notificacao.config.NotificacaoProperties;
 import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
 import com.api_orcafacil.repository.central.CentralOrganizacaoRepository;
 import com.api_orcafacil.service.TenantContextService;
@@ -15,15 +14,15 @@ import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
 @ConditionalOnProperty(name = "app.notificacao.enabled", havingValue = "true")
 public class NotificacaoOrganizacaoResolver {
 
-    private final NotificacaoProperties properties;
+    public static final String MSG_INTEGRACAO_NAO_CONFIGURADA =
+            "Integracao de notificacoes nao configurada. Informe a API Key em Configuracoes > Integracao WhatsApp.";
+
     private final CentralOrganizacaoRepository organizacaoRepository;
     private final TenantContextService tenantContextService;
 
     public NotificacaoOrganizacaoResolver(
-            NotificacaoProperties properties,
             CentralOrganizacaoRepository organizacaoRepository,
             TenantContextService tenantContextService) {
-        this.properties = properties;
         this.organizacaoRepository = organizacaoRepository;
         this.tenantContextService = tenantContextService;
     }
@@ -36,33 +35,33 @@ public class NotificacaoOrganizacaoResolver {
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public NotificacaoCredenciais resolverCredenciais(Long idOrganizacaoOrcafacil) {
         if (idOrganizacaoOrcafacil == null) {
-            return credenciaisGlobais();
+            return semCredenciais();
         }
 
         return organizacaoRepository.findById(idOrganizacaoOrcafacil)
                 .map(this::credenciaisDaOrganizacao)
-                .orElseGet(this::credenciaisGlobais);
+                .orElseGet(this::semCredenciais);
     }
 
     public NotificacaoCredenciais resolverCredenciaisAtual() {
         return resolverCredenciais(tenantContextService.idOrganizacaoObrigatoria());
     }
 
-    private NotificacaoCredenciais credenciaisDaOrganizacao(CentralOrganizacao organizacao) {
-        Long idOrg = organizacao.getIdOrganizacaoNotificacao();
-        if (idOrg == null || idOrg <= 0) {
-            idOrg = properties.getIdOrganizacao();
-        }
-
-        String apiKey = organizacao.getDsApiKeyNotificacao();
-        if (!StringUtils.hasText(apiKey)) {
-            apiKey = properties.getApiKey();
-        }
-
-        return new NotificacaoCredenciais(idOrg, apiKey);
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public boolean integracaoConfigurada(Long idOrganizacaoOrcafacil) {
+        return resolverCredenciais(idOrganizacaoOrcafacil).usaApiKey();
     }
 
-    private NotificacaoCredenciais credenciaisGlobais() {
-        return new NotificacaoCredenciais(properties.getIdOrganizacao(), properties.getApiKey());
+    private NotificacaoCredenciais credenciaisDaOrganizacao(CentralOrganizacao organizacao) {
+        String apiKey = organizacao.getDsApiKeyNotificacao();
+        Long idOrgNotificacao = organizacao.getIdOrganizacaoNotificacao();
+        if (idOrgNotificacao != null && idOrgNotificacao <= 0) {
+            idOrgNotificacao = null;
+        }
+        return new NotificacaoCredenciais(idOrgNotificacao, apiKey);
+    }
+
+    private NotificacaoCredenciais semCredenciais() {
+        return new NotificacaoCredenciais(null, null);
     }
 }

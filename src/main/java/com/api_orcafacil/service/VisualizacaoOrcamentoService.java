@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,19 +31,19 @@ public class VisualizacaoOrcamentoService {
     private final OrcamentoRepository repository;
     private final OrcamentoStatusHistoricoService historicoService;
     private final ObjectProvider<NamedParameterJdbcTemplate> centralJdbc;
-    private final OrganizacaoLogoService organizacaoLogoService;
     private final ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService;
+    private final ObjectProvider<VisualizacaoOrcamentoService> self;
 
     public VisualizacaoOrcamentoService(OrcamentoRepository repository,
             OrcamentoStatusHistoricoService historicoService,
-            ObjectProvider<NamedParameterJdbcTemplate> centralJdbcProvider,
-            OrganizacaoLogoService organizacaoLogoService,
-            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService) {
+            @Qualifier("centralNamedParameterJdbcTemplate") ObjectProvider<NamedParameterJdbcTemplate> centralJdbcProvider,
+            ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService,
+            ObjectProvider<VisualizacaoOrcamentoService> self) {
         this.repository = repository;
         this.historicoService = historicoService;
         this.centralJdbc = centralJdbcProvider;
-        this.organizacaoLogoService = organizacaoLogoService;
         this.orcamentoPublicoService = orcamentoPublicoService;
+        this.self = self;
     }
 
     @Transactional(readOnly = true)
@@ -59,16 +60,15 @@ public class VisualizacaoOrcamentoService {
         return dto;
     }
 
-    @Transactional(readOnly = true)
     public OrcamentoVisualizacaoDTO visualizarPorCdPublico(String cdPublico) {
         OrcamentoPublicoService publicoService = orcamentoPublicoService.getIfAvailable();
         if (publicoService == null) {
             Orcamento orcamento = repository.findByCdPublico(cdPublico)
                     .orElseThrow(() -> new ResourceNotFoundException("Orcamento nao encontrado"));
-            return visualizarPublico(orcamento.getIdOrcamento(), orcamento.getIdOrganizacao());
+            return self.getObject().visualizarPublico(orcamento.getIdOrcamento(), orcamento.getIdOrganizacao());
         }
         return publicoService.executarComCdPublico(cdPublico, ref ->
-                visualizarPublico(ref.idOrcamento(), ref.idOrganizacao()));
+                self.getObject().visualizarPublico(ref.idOrcamento(), ref.idOrganizacao()));
     }
 
     private void inicializarAssociacoes(Orcamento orcamento) {
@@ -112,10 +112,38 @@ public class VisualizacaoOrcamentoService {
         dto.setNuPrazoEntrega(orcamento.getNuPrazoEntrega());
         dto.setTotalDesconto(new BigDecimal("0.00"));
         dto.setObservacoes(orcamento.getDsObservacoes());
-        boolean possuiLogo = organizacaoLogoService.possuiLogo(orcamento.getIdOrganizacao());
-        dto.setPossuiLogo(possuiLogo);
-        if (possuiLogo && orcamento.getCdPublico() != null) {
-            dto.setLogoUrl(OrganizacaoLogoService.URL_LOGO_PUBLICA_PREFIXO + orcamento.getCdPublico() + "/logo");
+        mapearLogo(orcamento.getIdOrganizacao(), orcamento.getCdPublico(), dto);
+    }
+
+    private void mapearLogo(Long idOrganizacao, String cdPublico, OrcamentoVisualizacaoDTO dto) {
+        NamedParameterJdbcTemplate jdbc = centralJdbc.getIfAvailable();
+        if (jdbc == null) {
+            dto.setPossuiLogo(false);
+            return;
+        }
+        try {
+            boolean possuiUpload = Boolean.TRUE.equals(jdbc.queryForObject("""
+                    select exists(
+                        select 1 from organizacao_logo
+                        where id_organizacao = :id and fl_ativo = true
+                    )
+                    """, Map.of("id", idOrganizacao), Boolean.class));
+            String logoUrlExterna = jdbc.queryForObject("""
+                    select ds_logo_url from organizacao where id_organizacao = :id
+                    """, Map.of("id", idOrganizacao), String.class);
+            boolean possuiUrl = logoUrlExterna != null && !logoUrlExterna.isBlank();
+            boolean possuiLogo = possuiUpload || possuiUrl;
+            dto.setPossuiLogo(possuiLogo);
+            if (!possuiLogo) {
+                return;
+            }
+            if (possuiUpload && cdPublico != null && !cdPublico.isBlank()) {
+                dto.setLogoUrl(OrganizacaoLogoService.URL_LOGO_PUBLICA_PREFIXO + cdPublico + "/logo");
+            } else if (possuiUrl) {
+                dto.setLogoUrl(logoUrlExterna.trim());
+            }
+        } catch (Exception ex) {
+            dto.setPossuiLogo(false);
         }
     }
 

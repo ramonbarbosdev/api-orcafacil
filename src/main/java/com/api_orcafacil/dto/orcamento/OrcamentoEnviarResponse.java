@@ -27,6 +27,13 @@ public class OrcamentoEnviarResponse {
         private String destinatario;
         private boolean sucesso;
         private Long idNotificacao;
+        private String status;
         private String erro;
+        private String mensagemUsuario;
+        private String codigoErro;
+        private boolean equipeNotificada;
+        private Long tempoEstimadoEnvioSegundos;
+        private Integer posicaoFila;
+        private String tempoEstimadoEnvioTexto;
     }
 }

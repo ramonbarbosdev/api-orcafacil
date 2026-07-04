@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,8 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.api_orcafacil.dto.ApiResponseDTO;
 import com.api_orcafacil.dto.organizacao.OrganizacaoLogoMetadadosDTO;
+import com.api_orcafacil.dto.organizacao.OrganizacaoLogoUrlRequest;
 import com.api_orcafacil.service.logo.OrganizacaoLogoService;
 import com.api_orcafacil.service.logo.OrganizacaoLogoService.ConteudoLogo;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/organizacao")
@@ -50,6 +55,17 @@ public class OrganizacaoLogoController {
     public ResponseEntity<ApiResponseDTO<OrganizacaoLogoMetadadosDTO>> removerLogo() throws Exception {
         service.remover();
         return ResponseEntity.ok(new ApiResponseDTO<>("Logo removida", service.obterMetadadosAtual()));
+    }
+
+    @PutMapping("/logo/url")
+    public ResponseEntity<ApiResponseDTO<OrganizacaoLogoMetadadosDTO>> salvarLogoUrl(
+            @Valid @RequestBody OrganizacaoLogoUrlRequest request) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("URL da logo atualizada", service.salvarLogoUrl(request.logoUrl())));
+    }
+
+    @DeleteMapping("/logo/url")
+    public ResponseEntity<ApiResponseDTO<OrganizacaoLogoMetadadosDTO>> removerLogoUrl() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("URL da logo removida", service.removerLogoUrl()));
     }
 
     static ResponseEntity<byte[]> respostaImagem(ConteudoLogo conteudo) {

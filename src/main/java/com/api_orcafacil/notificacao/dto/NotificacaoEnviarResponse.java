@@ -5,5 +5,8 @@ public record NotificacaoEnviarResponse(
         Long idNotificacao,
         NotificacaoCanal canal,
         String status,
-        String erro) {
+        String erro,
+        Long tempoEstimadoEnvioSegundos,
+        Integer posicaoFila,
+        String tempoEstimadoEnvioTexto) {
 }

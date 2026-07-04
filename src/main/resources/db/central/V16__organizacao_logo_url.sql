@@ -1,0 +1,1 @@
+ALTER TABLE organizacao ADD COLUMN IF NOT EXISTS ds_logo_url VARCHAR(512);

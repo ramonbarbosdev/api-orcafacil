@@ -1,5 +1,6 @@
 package com.api_orcafacil.service;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,7 +9,9 @@ import org.springframework.util.StringUtils;
 import com.api_orcafacil.dto.integracao.OrganizacaoNotificacaoConfigDTO;
 import com.api_orcafacil.dto.integracao.OrganizacaoNotificacaoConfigRequest;
 import com.api_orcafacil.exception.ResourceNotFoundException;
-import com.api_orcafacil.notificacao.config.NotificacaoProperties;
+import com.api_orcafacil.notificacao.client.NotificacaoApiClient;
+import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
+import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
 import com.api_orcafacil.repository.central.CentralOrganizacaoRepository;
 import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
 
@@ -18,15 +21,15 @@ public class OrganizacaoNotificacaoConfigService {
 
     private final CentralOrganizacaoRepository organizacaoRepository;
     private final TenantContextService tenantContextService;
-    private final NotificacaoProperties notificacaoProperties;
+    private final ObjectProvider<NotificacaoApiClient> notificacaoApiClient;
 
     public OrganizacaoNotificacaoConfigService(
             CentralOrganizacaoRepository organizacaoRepository,
             TenantContextService tenantContextService,
-            NotificacaoProperties notificacaoProperties) {
+            ObjectProvider<NotificacaoApiClient> notificacaoApiClient) {
         this.organizacaoRepository = organizacaoRepository;
         this.tenantContextService = tenantContextService;
-        this.notificacaoProperties = notificacaoProperties;
+        this.notificacaoApiClient = notificacaoApiClient;
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -44,7 +47,35 @@ public class OrganizacaoNotificacaoConfigService {
         if (StringUtils.hasText(request.getApiKey())) {
             organizacao.setDsApiKeyNotificacao(request.getApiKey().trim());
         }
-        return paraDto(organizacaoRepository.save(organizacao));
+        if (request.getEmailAlertas() != null) {
+            String email = request.getEmailAlertas().trim();
+            organizacao.setDsEmailAlertasNotificacao(StringUtils.hasText(email) ? email : null);
+        }
+
+        CentralOrganizacao salva = organizacaoRepository.save(organizacao);
+        sincronizarEmailAlertasNotificacao(salva);
+        return paraDto(salva);
+    }
+
+    private void sincronizarEmailAlertasNotificacao(CentralOrganizacao organizacao) {
+        String apiKey = organizacao.getDsApiKeyNotificacao();
+        if (!StringUtils.hasText(apiKey)) {
+            return;
+        }
+        try {
+            NotificacaoApiClient client = notificacaoApiClient.getIfAvailable();
+            if (client == null) {
+                return;
+            }
+            NotificacaoCredenciais credenciais = new NotificacaoCredenciais(
+                    organizacao.getIdOrganizacaoNotificacao(),
+                    apiKey);
+            client.atualizarEmailAlertas(
+                    credenciais,
+                    organizacao.getDsEmailAlertasNotificacao());
+        } catch (Exception ignored) {
+            // sincronizacao best-effort; admin pode configurar no painel de notificacoes
+        }
     }
 
     private CentralOrganizacao buscarOrganizacaoAtual() {
@@ -54,30 +85,12 @@ public class OrganizacaoNotificacaoConfigService {
     }
 
     private OrganizacaoNotificacaoConfigDTO paraDto(CentralOrganizacao organizacao) {
-        String apiKeyTenant = organizacao.getDsApiKeyNotificacao();
-        boolean usaTenant = StringUtils.hasText(apiKeyTenant);
-        boolean usaGlobal = !usaTenant && StringUtils.hasText(notificacaoProperties.getApiKey());
+        String apiKey = organizacao.getDsApiKeyNotificacao();
         return new OrganizacaoNotificacaoConfigDTO(
                 organizacao.getIdOrganizacao(),
                 organizacao.getIdOrganizacaoNotificacao(),
-                mascararApiKey(usaTenant ? apiKeyTenant : notificacaoProperties.getApiKey()),
-                usaTenant,
-                usaGlobal);
-    }
-
-    static String mascararApiKey(String apiKey) {
-        if (!StringUtils.hasText(apiKey)) {
-            return null;
-        }
-        int dot = apiKey.indexOf('.');
-        if (dot <= 0 || dot >= apiKey.length() - 1) {
-            return apiKey.length() <= 8 ? "********" : apiKey.substring(0, 4) + "****";
-        }
-        String prefixo = apiKey.substring(0, dot);
-        String segredo = apiKey.substring(dot + 1);
-        if (segredo.length() <= 4) {
-            return prefixo + ".****";
-        }
-        return prefixo + "." + segredo.substring(0, 2) + "****" + segredo.substring(segredo.length() - 2);
+                apiKey,
+                StringUtils.hasText(apiKey),
+                organizacao.getDsEmailAlertasNotificacao());
     }
 }

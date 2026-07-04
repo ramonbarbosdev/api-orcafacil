@@ -23,11 +23,13 @@ import com.api_orcafacil.model.Cliente;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.notificacao.client.NotificacaoApiClient;
 import com.api_orcafacil.notificacao.config.NotificacaoProperties;
+import com.api_orcafacil.notificacao.dto.NotificacaoAlertaRegistrarRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoCanal;
 import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
 import com.api_orcafacil.notificacao.dto.NotificacaoEnviarRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoEnviarResponse;
 import com.api_orcafacil.notificacao.support.NotificacaoErroParser;
+import com.api_orcafacil.notificacao.support.NotificacaoErroUsuario;
 import com.api_orcafacil.repository.ClienteRepository;
 
 @Service
@@ -69,11 +71,9 @@ public class OrcamentoNotificacaoService {
             return List.of(erro(null, null, "Nenhum canal disponivel para o cliente"));
         }
 
-        Long idOrgNotificacao = organizacaoResolver.resolverIdOrganizacaoNotificacao(orcamento.getIdOrganizacao());
         NotificacaoCredenciais credenciais = organizacaoResolver.resolverCredenciais(orcamento.getIdOrganizacao());
-        if (idOrgNotificacao == null && !credenciais.usaApiKey()) {
-            return List.of(erro(null, null,
-                    "Organizacao sem mapeamento na notificacao-api. Configure id_organizacao_notificacao, NOTIFICACAO_API_KEY ou NOTIFICACAO_ID_ORGANIZACAO."));
+        if (!credenciais.usaApiKey()) {
+            return List.of(erro(null, null, NotificacaoOrganizacaoResolver.MSG_INTEGRACAO_NAO_CONFIGURADA));
         }
 
         String link = montarLinkPublico(orcamento.getCdPublico());
@@ -131,14 +131,103 @@ public class OrcamentoNotificacaoService {
             NotificacaoEnviarResponse resposta = client.enviar(
                     credenciais, new NotificacaoEnviarRequest(canal, destinatario, assunto, mensagem));
             boolean sucesso = Boolean.TRUE.equals(resposta.sucesso());
+            if (!sucesso) {
+                NotificacaoErroUsuario erroUsuario = new NotificacaoErroUsuario(
+                        "ERRO_ENVIO",
+                        "Não foi possível enfileirar a mensagem. Sua equipe foi avisada — tente novamente.",
+                        resposta.erro(),
+                        true);
+                return erroComAlerta(
+                        credenciais,
+                        canal,
+                        destinatario,
+                        orcamento,
+                        erroUsuario,
+                        resposta.idNotificacao(),
+                        resposta.status());
+            }
             return new ResultadoNotificacao(
-                    canal, destinatario, sucesso, resposta.idNotificacao(), resposta.erro());
+                    canal,
+                    destinatario,
+                    true,
+                    resposta.idNotificacao(),
+                    resposta.status(),
+                    null,
+                    null,
+                    null,
+                    false,
+                    resposta.tempoEstimadoEnvioSegundos(),
+                    resposta.posicaoFila(),
+                    resposta.tempoEstimadoEnvioTexto());
         } catch (RestClientResponseException ex) {
             log.warn("Falha ao enviar notificacao {} para {}: {}", canal, destinatario, ex.getMessage());
-            return erro(canal, destinatario, NotificacaoErroParser.extrairMensagem(ex));
+            NotificacaoErroUsuario erroUsuario = NotificacaoErroParser.interpretar(ex);
+            return erroComAlerta(credenciais, canal, destinatario, orcamento, erroUsuario, null, null);
         } catch (Exception ex) {
             log.warn("Erro inesperado ao enviar notificacao {} para {}", canal, destinatario, ex);
-            return erro(canal, destinatario, ex.getMessage());
+            NotificacaoErroUsuario erroUsuario = NotificacaoErroParser.interpretarGenerico(ex);
+            return erroComAlerta(credenciais, canal, destinatario, orcamento, erroUsuario, null, null);
+        }
+    }
+
+    private ResultadoNotificacao erroComAlerta(
+            NotificacaoCredenciais credenciais,
+            NotificacaoCanal canal,
+            String destinatario,
+            Orcamento orcamento,
+            NotificacaoErroUsuario erroUsuario,
+            Long idNotificacao,
+            String status) {
+        boolean equipeNotificada = false;
+        if (erroUsuario.notificarEquipe()) {
+            equipeNotificada = registrarAlertaEquipe(
+                    credenciais,
+                    canal,
+                    destinatario,
+                    orcamento,
+                    erroUsuario,
+                    idNotificacao);
+        }
+        return erro(canal, destinatario, erroUsuario, equipeNotificada, idNotificacao, status);
+    }
+
+    private boolean registrarAlertaEquipe(
+            NotificacaoCredenciais credenciais,
+            NotificacaoCanal canal,
+            String destinatario,
+            Orcamento orcamento,
+            NotificacaoErroUsuario erroUsuario,
+            Long idNotificacao) {
+        try {
+            String titulo = "Falha ao enviar orcamento " + orcamento.getNuOrcamento();
+            String mensagem = """
+                    Falha na integracao OrcaFacil ao enviar notificacao.
+
+                    Orcamento: %s (ID %s)
+                    Canal: %s
+                    Destinatario: %s
+                    Codigo: %s
+                    Detalhe tecnico: %s
+                    """.formatted(
+                    orcamento.getNuOrcamento(),
+                    orcamento.getIdOrcamento(),
+                    canal,
+                    destinatario,
+                    erroUsuario.codigoErro(),
+                    erroUsuario.mensagemTecnica()).trim();
+            client.registrarAlertaOperacional(
+                    credenciais,
+                    new NotificacaoAlertaRegistrarRequest(
+                            titulo,
+                            mensagem,
+                            destinatario,
+                            canal != null ? canal.name() : null,
+                            erroUsuario.codigoErro(),
+                            idNotificacao));
+            return true;
+        } catch (Exception ex) {
+            log.warn("Nao foi possivel registrar alerta operacional: {}", ex.getMessage());
+            return false;
         }
     }
 
@@ -251,6 +340,34 @@ public class OrcamentoNotificacaoService {
     }
 
     private ResultadoNotificacao erro(NotificacaoCanal canal, String destinatario, String mensagem) {
-        return new ResultadoNotificacao(canal, destinatario, false, null, mensagem);
+        return erro(
+                canal,
+                destinatario,
+                new NotificacaoErroUsuario("ERRO_ENVIO", mensagem, mensagem, false),
+                false,
+                null,
+                null);
+    }
+
+    private ResultadoNotificacao erro(
+            NotificacaoCanal canal,
+            String destinatario,
+            NotificacaoErroUsuario erroUsuario,
+            boolean equipeNotificada,
+            Long idNotificacao,
+            String status) {
+        return new ResultadoNotificacao(
+                canal,
+                destinatario,
+                false,
+                idNotificacao,
+                status,
+                erroUsuario.mensagemTecnica(),
+                erroUsuario.mensagemUsuario(),
+                erroUsuario.codigoErro(),
+                equipeNotificada,
+                null,
+                null,
+                null);
     }
 }

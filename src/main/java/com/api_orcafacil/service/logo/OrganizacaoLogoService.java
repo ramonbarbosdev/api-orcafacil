@@ -17,10 +17,12 @@ import com.api_orcafacil.exception.ResourceNotFoundException;
 import com.api_orcafacil.model.Orcamento;
 import com.api_orcafacil.repository.OrcamentoRepository;
 import com.api_orcafacil.repository.central.CentralOrganizacaoLogoRepository;
+import com.api_orcafacil.repository.central.CentralOrganizacaoRepository;
 import com.api_orcafacil.service.OrcamentoPublicoService;
 import com.api_orcafacil.service.PoliticaPlanoService;
 import com.api_orcafacil.service.TenantContextService;
 import com.api_orcafacil.service.logo.LogoImagemValidacaoService.ResultadoValidacao;
+import com.api_orcafacil.tenant.central.model.CentralOrganizacao;
 import com.api_orcafacil.tenant.central.model.CentralOrganizacaoLogo;
 
 @Service
@@ -32,6 +34,7 @@ public class OrganizacaoLogoService {
     public static final String URL_LOGO_PUBLICA_PREFIXO = "/orcamentos/visualizacao/";
 
     private final CentralOrganizacaoLogoRepository logoRepository;
+    private final CentralOrganizacaoRepository organizacaoRepository;
     private final LogoArmazenamentoLocalService armazenamento;
     private final LogoImagemValidacaoService validacao;
     private final TenantContextService tenantContextService;
@@ -41,6 +44,7 @@ public class OrganizacaoLogoService {
 
     public OrganizacaoLogoService(
             CentralOrganizacaoLogoRepository logoRepository,
+            CentralOrganizacaoRepository organizacaoRepository,
             LogoArmazenamentoLocalService armazenamento,
             LogoImagemValidacaoService validacao,
             TenantContextService tenantContextService,
@@ -48,6 +52,7 @@ public class OrganizacaoLogoService {
             ObjectProvider<PoliticaPlanoService> politicaPlanoService,
             ObjectProvider<OrcamentoPublicoService> orcamentoPublicoService) {
         this.logoRepository = logoRepository;
+        this.organizacaoRepository = organizacaoRepository;
         this.armazenamento = armazenamento;
         this.validacao = validacao;
         this.tenantContextService = tenantContextService;
@@ -64,8 +69,38 @@ public class OrganizacaoLogoService {
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public OrganizacaoLogoMetadadosDTO obterMetadados(Long idOrganizacao, String urlBase) {
         return logoRepository.findByIdOrganizacaoAndFlAtivoTrue(idOrganizacao)
-                .map(logo -> paraMetadados(logo, urlBase))
-                .orElseGet(() -> new OrganizacaoLogoMetadadosDTO(false, null, null, null, null, null, null));
+                .map(logo -> paraMetadadosUpload(logo, urlBase))
+                .orElseGet(() -> paraMetadadosUrlOuVazio(idOrganizacao));
+    }
+
+    private OrganizacaoLogoMetadadosDTO paraMetadadosUrlOuVazio(Long idOrganizacao) {
+        String logoUrl = obterLogoUrlExterna(idOrganizacao);
+        if (logoUrl != null) {
+            return new OrganizacaoLogoMetadadosDTO(
+                    true,
+                    OrganizacaoLogoMetadadosDTO.MODO_URL,
+                    null,
+                    logoUrl,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
+        }
+        return metadadosVazio();
+    }
+
+    private OrganizacaoLogoMetadadosDTO metadadosVazio() {
+        return new OrganizacaoLogoMetadadosDTO(
+                false,
+                OrganizacaoLogoMetadadosDTO.MODO_NENHUM,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
@@ -134,7 +169,34 @@ public class OrganizacaoLogoService {
 
         CentralOrganizacaoLogo salva = logoRepository.save(logo);
         log.info("Logo da organizacao {} enviada por usuario {}", idOrganizacao, idUsuario);
-        return paraMetadados(salva, URL_LOGO_AUTENTICADA);
+        return paraMetadadosUpload(salva, URL_LOGO_AUTENTICADA);
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager")
+    public OrganizacaoLogoMetadadosDTO salvarLogoUrl(String logoUrl) {
+        validarPlanoParaAlteracao();
+        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        String urlNormalizada = normalizarLogoUrl(logoUrl);
+
+        CentralOrganizacao organizacao = organizacaoRepository.findById(idOrganizacao)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizacao nao encontrada"));
+        organizacao.setDsLogoUrl(urlNormalizada);
+        organizacaoRepository.save(organizacao);
+
+        log.info("URL da logo da organizacao {} atualizada por usuario {}", idOrganizacao, tenantContextService.idUsuario());
+        return obterMetadados(idOrganizacao, URL_LOGO_AUTENTICADA);
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager")
+    public OrganizacaoLogoMetadadosDTO removerLogoUrl() {
+        validarPlanoParaRemocao();
+        Long idOrganizacao = tenantContextService.idOrganizacaoObrigatoria();
+        CentralOrganizacao organizacao = organizacaoRepository.findById(idOrganizacao)
+                .orElseThrow(() -> new ResourceNotFoundException("Organizacao nao encontrada"));
+        organizacao.setDsLogoUrl(null);
+        organizacaoRepository.save(organizacao);
+        log.info("URL da logo da organizacao {} removida por usuario {}", idOrganizacao, tenantContextService.idUsuario());
+        return obterMetadados(idOrganizacao, URL_LOGO_AUTENTICADA);
     }
 
     @Transactional(transactionManager = "centralTransactionManager")
@@ -174,7 +236,28 @@ public class OrganizacaoLogoService {
 
     @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
     public boolean possuiLogo(Long idOrganizacao) {
+        return possuiLogoUpload(idOrganizacao) || obterLogoUrlExterna(idOrganizacao) != null;
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public boolean possuiLogoUpload(Long idOrganizacao) {
         return logoRepository.findByIdOrganizacaoAndFlAtivoTrue(idOrganizacao).isPresent();
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public String obterLogoUrlExterna(Long idOrganizacao) {
+        return organizacaoRepository.findById(idOrganizacao)
+                .map(CentralOrganizacao::getDsLogoUrl)
+                .filter(url -> url != null && !url.isBlank())
+                .orElse(null);
+    }
+
+    @Transactional(transactionManager = "centralTransactionManager", readOnly = true)
+    public String resolverUrlLogoPublica(Long idOrganizacao, String cdPublico) {
+        if (possuiLogoUpload(idOrganizacao) && cdPublico != null && !cdPublico.isBlank()) {
+            return URL_LOGO_PUBLICA_PREFIXO + cdPublico + "/logo";
+        }
+        return obterLogoUrlExterna(idOrganizacao);
     }
 
     private boolean logoPublicaDisponivel(String cdPublico) {
@@ -221,15 +304,31 @@ public class OrganizacaoLogoService {
         }
     }
 
-    private OrganizacaoLogoMetadadosDTO paraMetadados(CentralOrganizacaoLogo logo, String url) {
+    private OrganizacaoLogoMetadadosDTO paraMetadadosUpload(CentralOrganizacaoLogo logo, String url) {
         return new OrganizacaoLogoMetadadosDTO(
                 true,
+                OrganizacaoLogoMetadadosDTO.MODO_UPLOAD,
                 url,
+                null,
                 logo.getDsContentType(),
                 logo.getNuTamanhoBytes(),
                 logo.getNuLargura(),
                 logo.getNuAltura(),
                 logo.getDtAtualizacao());
+    }
+
+    private String normalizarLogoUrl(String logoUrl) {
+        if (logoUrl == null || logoUrl.isBlank()) {
+            throw new BusinessException("Informe a URL da logo");
+        }
+        String url = logoUrl.trim();
+        if (url.length() > 512) {
+            throw new BusinessException("A URL da logo deve ter no maximo 512 caracteres");
+        }
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            throw new BusinessException("A URL da logo deve comecar com http:// ou https://");
+        }
+        return url;
     }
 
     private String extrairNomeSalvo(String caminhoInterno) {

@@ -14,8 +14,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.api_orcafacil.notificacao.config.NotificacaoProperties;
+import com.api_orcafacil.notificacao.dto.NotificacaoAlertaRegistrarRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoCanal;
 import com.api_orcafacil.notificacao.dto.NotificacaoCredenciais;
+import com.api_orcafacil.notificacao.dto.NotificacaoEmailAlertasRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoEnviarRequest;
 import com.api_orcafacil.notificacao.dto.NotificacaoEnviarResponse;
 import com.api_orcafacil.notificacao.dto.NotificacaoLoginRequest;
@@ -74,6 +76,16 @@ public class NotificacaoApiClient {
     public Map<String, Object> obterStatusIntegracao(NotificacaoCredenciais credenciais) {
         validarCredenciais(credenciais);
         return get(credenciais, "/app/integracao/status", Map.class);
+    }
+
+    public void registrarAlertaOperacional(NotificacaoCredenciais credenciais, NotificacaoAlertaRegistrarRequest request) {
+        validarCredenciais(credenciais);
+        post(credenciais, "/app/integracao/alertas-operacionais", request, Void.class);
+    }
+
+    public void atualizarEmailAlertas(NotificacaoCredenciais credenciais, String emailAlertas) {
+        validarCredenciais(credenciais);
+        put(credenciais, "/app/integracao/email-alertas", new NotificacaoEmailAlertasRequest(emailAlertas), Void.class);
     }
 
     private void validarCredenciais(NotificacaoCredenciais credenciais) {
@@ -157,6 +169,18 @@ public class NotificacaoApiClient {
         RestClient.RequestHeadersSpec<?> spec = restClient.get().uri(path);
         aplicarAutenticacao(spec, credenciais);
         return spec.retrieve().body(responseType);
+    }
+
+    private <T> T put(NotificacaoCredenciais credenciais, String path, Object body, Class<T> responseType) {
+        RestClient.RequestBodySpec spec = restClient.put()
+                .uri(path)
+                .contentType(MediaType.APPLICATION_JSON);
+        aplicarAutenticacao(spec, credenciais);
+        if (responseType == Void.class) {
+            spec.body(body).retrieve().toBodilessEntity();
+            return null;
+        }
+        return spec.body(body).retrieve().body(responseType);
     }
 
     private <T> T executarPost(NotificacaoCredenciais credenciais, String path, Object body, Class<T> responseType) {

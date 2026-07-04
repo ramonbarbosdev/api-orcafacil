@@ -71,6 +71,14 @@ public class CentralOrganizacao {
     @Column(name = "ds_api_key_notificacao", length = 512)
     private String dsApiKeyNotificacao;
 
+    /** E-mail para receber alertas de falha na integracao de notificacoes. */
+    @Column(name = "ds_email_alertas_notificacao")
+    private String dsEmailAlertasNotificacao;
+
+    /** URL externa da logo (alternativa ao upload de arquivo). */
+    @Column(name = "ds_logo_url", length = 512)
+    private String dsLogoUrl;
+
     @Column(name = "fl_ativo", nullable = false)
     private boolean flAtivo = true;
 

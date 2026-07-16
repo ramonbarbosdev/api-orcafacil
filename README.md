@@ -1,4 +1,4 @@
-# 💼 Sistema de Orçamentos SaaS
+# Sistema de Orçamentos SaaS
 
 Plataforma **SaaS para criação, simulação e gestão de orçamentos**, desenvolvida com foco em **flexibilidade, precificação dinâmica e arquitetura escalável**.
 
@@ -6,7 +6,7 @@ O sistema foi projetado para atender diferentes empresas, permitindo configurar 
 
 ---
 
-## ✨ Visão Geral
+##  Visão Geral
 
 Este projeto tem como objetivo resolver o problema de **orçamentos rígidos e pouco escaláveis**, oferecendo uma solução moderna, extensível e preparada para múltiplos clientes (**multi-tenant**).
 
@@ -19,19 +19,19 @@ A aplicação segue boas práticas de arquitetura, priorizando:
 
 ---
 
-## 🧩 Funcionalidades Principais
+##  Funcionalidades Principais
 
-- 📊 Criação e gestão de orçamentos
-- ⚙️ Precificação dinâmica baseada em regras
-- 🧮 Simulação de valores em tempo real
-- 🏢 Suporte a múltiplas empresas (multi-tenant)
-- 🧱 Arquitetura modular e extensível
-- 🔌 APIs REST bem definidas
-- 📱 Interface moderna e responsiva
+-  Criação e gestão de orçamentos
+-  Precificação dinâmica baseada em regras
+-  Simulação de valores em tempo real
+-  Suporte a múltiplas empresas (multi-tenant)
+-  Arquitetura modular e extensível
+-  APIs REST bem definidas
+-  Interface moderna e responsiva
 
 ---
 
-## 🏗️ Arquitetura
+##  Arquitetura
 
 O sistema foi dividido em duas camadas principais:
 
@@ -47,7 +47,7 @@ O sistema foi dividido em duas camadas principais:
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 
 ### Backend
 - Java
@@ -79,15 +79,15 @@ O sistema foi dividido em duas camadas principais:
 
 ---
 
-## 🚀 Status do Projeto
+##  Status do Projeto
 
-🟡 **Em desenvolvimento (MVP)**
+ **Em desenvolvimento (MVP)**
 
 O projeto está em constante evolução, com foco inicial em consolidar a base arquitetural antes de expandir funcionalidades comerciais.
 
 ---
 
-## 👨‍💻 Autor
+## Autor
 
 **Ramon Barbosa**  
 Desenvolvedor Full Stack  
@@ -99,7 +99,7 @@ Foco em Backend, Arquitetura de Sistemas e APIs escaláveis
 🔗 Frontend: https://github.com/ramonbarbosdev/app-orcafacil
 ---
 
-## 📄 Licença
+##  Licença
 
 Este projeto está sob a licença MIT.  
 Sinta-se à vontade para estudar, adaptar e evoluir a solução.
